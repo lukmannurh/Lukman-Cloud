@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Neobrutalism cloud icon: flat, black border, yellow fill -->
+  <rect width="48" height="48" fill="#FFE600"/>
+  <path d="M36 30H14C10.134 30 7 26.866 7 23C7 19.467 9.586 16.546 13 16.07C13 16.047 13 16.023 13 16C13 11.582 16.582 8 21 8C24.483 8 27.452 10.097 28.688 13.09C29.435 12.403 30.42 12 31.5 12C33.985 12 36 14.015 36 16.5C36 16.668 35.99 16.833 35.971 16.996C38.888 17.931 41 20.718 41 24C41 27.314 38.314 30 35 30H36Z" fill="white" stroke="#0D0D0D" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M24 30V40M19 35L24 40L29 35" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="1" y="1" width="46" height="46" rx="0" stroke="#0D0D0D" stroke-width="2"/>
+</svg>

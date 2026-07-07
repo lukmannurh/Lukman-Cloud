@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+build/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Env
+.env
+.env.local
+.env.*.local
+*.env
+
+# Cache and DB
+.vfs_cache/
+.supabase/
+better-auth.local*
+*.db
+*.sqlite
+*.sqlite3
+
+# Framework
+.next/
+out/
+.nuxt/
+.vuepress/
+.serverless/
