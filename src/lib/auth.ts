@@ -1,6 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { username } from 'better-auth/plugins';
 import { supabase } from './services/supabaseClient';
+import pg from 'pg';
+const { Pool } = pg;
 
 const getEnv = (nodeKey: string, viteKey: string): string => {
   if (typeof process !== 'undefined' && process.env) {
@@ -18,8 +20,9 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
 export const auth = betterAuth({
   secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
   baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-  database: {
-  },
+  database: new Pool({
+    connectionString: getEnv('SUPABASE_URL', 'VITE_SUPABASE_URL').replace('https://', 'postgres://postgres:').replace('.supabase.co', '.supabase.co:6543/postgres'), // Rough fallback, really needs SUPABASE_DB_URL
+  }),
   emailAndPassword: {
     enabled: true,
   },
