@@ -2,6 +2,12 @@ import { betterAuth } from 'better-auth';
 import { toNodeHandler } from "better-auth/node";
 import { username } from 'better-auth/plugins';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 const getEnv = (nodeKey: string, viteKey: string): string => {
   if (typeof process !== 'undefined' && process.env) {
     if (process.env[nodeKey]) return process.env[nodeKey] as string;
