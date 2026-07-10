@@ -67,20 +67,18 @@ try {
 export default async function authHandler(req: any, res: any) {
   try {
     console.log('[Better Auth Debug] Request received:', req.method, req.url);
-    console.log('[Better Auth Debug] Creating toNodeHandler...');
-    const handler = toNodeHandler(auth);
+    // const handler = toNodeHandler(auth);
     
-    console.log('[Better Auth Debug] Awaiting handler...');
-    // We race the handler against a timeout!
-    const timeout = new Promise((resolve, reject) => setTimeout(() => reject(new Error('Handler Timed Out')), 5000));
+    // console.log('[Better Auth Debug] Awaiting handler...');
+    // const timeout = new Promise((resolve, reject) => setTimeout(() => reject(new Error('Handler Timed Out')), 5000));
     
-    await Promise.race([handler(req, res), timeout]);
-    console.log('[Better Auth Debug] Handler resolved!');
+    // await Promise.race([handler(req, res), timeout]);
+    // console.log('[Better Auth Debug] Handler resolved!');
     
     if (!res.writableEnded) {
       console.log('[Better Auth Debug] Response not ended by handler. Writing 404...');
       res.statusCode = 404;
-      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
+      res.end(JSON.stringify({ error: 'Bypass Test', url: req.url, headers: req.headers }));
     }
   } catch (error: any) {
     console.error('[Better Auth] Critical Node Error:', error);
