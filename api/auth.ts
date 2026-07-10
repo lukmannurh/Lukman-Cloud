@@ -30,16 +30,16 @@ const getAuth = () => {
     authInstance = betterAuth({
       secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
       baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-      database: {
-        // Dummy custom adapter to prevent better-auth from crashing or using Kysely
-        id: 'dummy',
-        create: async () => ({}),
-        findOne: async () => null,
-        findMany: async () => [],
-        update: async () => ({}),
-        delete: async () => ({}),
-        deleteMany: async () => 0,
-      } as any,
+      database: (config: any) => ({
+        id: 'dummy-adapter',
+        create: async (data: any) => ({}),
+        findOne: async (data: any) => null,
+        findMany: async (data: any) => [],
+        update: async (data: any) => ({}),
+        delete: async (data: any) => ({}),
+        deleteMany: async (data: any) => 0,
+        options: config,
+      }),
       emailAndPassword: {
         enabled: true,
       },
