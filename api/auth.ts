@@ -4,6 +4,7 @@ import { username } from 'better-auth/plugins';
 import { jwt } from 'better-auth/plugins';
 import { webcrypto } from 'crypto';
 import { SignJWT } from 'jose';
+import postgres from 'postgres';
 
 // Define our secret key resolver
 const getSupabaseSecret = () => {
@@ -36,8 +37,14 @@ const getAuth = () => {
   if (authInstance) return authInstance;
   
   try {
+    const sql = postgres(getEnv('DATABASE_URL', 'VITE_DATABASE_URL') || "", { ssl: 'require', max: 1 });
+
     authInstance = betterAuth({
-      secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
+      database: {
+        db: sql,
+        type: "postgres"
+      },
+      secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET') || "fallback-secret-for-dev",
       baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
       emailAndPassword: {
         enabled: true,
