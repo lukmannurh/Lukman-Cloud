@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { toNodeHandler } from "better-auth/node";
 import { username } from 'better-auth/plugins';
 
 export const config = {
@@ -63,19 +64,18 @@ try {
   };
 }
 
-export const config = {
-  runtime: 'edge'
-};
-
-export default async function authHandler(req: Request) {
+export default async function authHandler(req: any, res: any) {
   try {
-    const response = await auth.handler(req);
-    return response;
+    const handler = toNodeHandler(auth);
+    await handler(req, res);
+    
+    if (!res.writableEnded) {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
+    }
   } catch (error: any) {
-    console.error('[Better Auth] Critical Edge Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error', details: error?.message || String(error) }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('[Better Auth] Critical Node Error:', error);
+    res.statusCode = 500;
+    res.end(JSON.stringify({ error: 'Internal Server Error', details: error?.message || String(error), stack: error?.stack }));
   }
 }
