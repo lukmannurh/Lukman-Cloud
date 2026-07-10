@@ -21,64 +21,62 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
   return "";
 };
 
-export let auth: any = null;
-try {
-  auth = betterAuth({
-    secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
-    baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-    database: {
-      // Dummy adapter
-      dialect: { name: 'postgres' },
-      create: async () => ({}),
-      findOne: async () => null,
-      findMany: async () => [],
-      update: async () => ({}),
-      delete: async () => ({}),
-      deleteMany: async () => 0,
-    } as any,
-    emailAndPassword: {
-      enabled: true,
-    },
-    plugins: [
-      username()
-    ],
-    socialProviders: {
-      google: {
-        clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
-        clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
-        scope: ["https://www.googleapis.com/auth/drive.file"]
-      }
-    }
-  });
-} catch (err: any) {
-  console.error("[BetterAuth INIT ERROR]:", err);
-  auth = {
-    options: {},
-    handler: async (req: any, res: any) => {
-      res.statusCode = 500;
-      res.end(JSON.stringify({ error: 'BetterAuth Init Failed', details: err?.message || String(err), stack: err?.stack }));
-    },
-    api: {
-      signInSocial: async () => { throw new Error("BetterAuth Init Failed: " + err.message) }
-    }
-  };
-}
+let authInstance: any = null;
+
+const getAuth = () => {
+  if (authInstance) return authInstance;
+  
+  try {
+    authInstance = betterAuth({
+      secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
+      baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
+      database: {
+        // Dummy adapter
+        dialect: { name: 'postgres' },
+        create: async () => ({}),
+        findOne: async () => null,
+        findMany: async () => [],
+        update: async () => ({}),
+        delete: async () => ({}),
+        deleteMany: async () => 0,
+      } as any,
+      emailAndPassword: {
+        enabled: true,
+      },
+      socialProviders: {
+        google: {
+          clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
+          clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
+          scope: ["https://www.googleapis.com/auth/drive.file"]
+        }
+      },
+      plugins: [username()]
+    });
+    return authInstance;
+  } catch (err: any) {
+    console.error("[BetterAuth INIT ERROR]:", err);
+    throw err;
+  }
+};
 
 export default async function authHandler(req: any, res: any) {
   try {
     console.log('[Better Auth Debug] Request received:', req.method, req.url);
-    // const handler = toNodeHandler(auth);
+    const auth = getAuth();
+    console.log('[Better Auth Debug] Creating toNodeHandler...');
+    const handler = toNodeHandler(auth);
     
-    // console.log('[Better Auth Debug] Awaiting handler...');
-    // const timeout = new Promise((resolve, reject) => setTimeout(() => reject(new Error('Handler Timed Out')), 5000));
+    console.log('[Better Auth Debug] Awaiting handler...');
+    // We race the handler against a timeout!
+    const timeout = new Promise((resolve, reject) => setTimeout(() => reject(new Error('Handler Timed Out')), 5000));
     
-    // await Promise.race([handler(req, res), timeout]);
-    // console.log('[Better Auth Debug] Handler resolved!');
+    await Promise.race([handler(req, res), timeout]);
+    console.log('[Better Auth Debug] Handler resolved!');
     
     if (!res.writableEnded) {
       console.log('[Better Auth Debug] Response not ended by handler. Writing 404...');
       res.statusCode = 404;
-      res.end(JSON.stringify({ error: 'Bypass Test', url: req.url, headers: req.headers }));
+      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
     }
   } catch (error: any) {
     console.error('[Better Auth] Critical Node Error:', error);
