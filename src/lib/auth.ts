@@ -19,8 +19,8 @@ export const auth = betterAuth({
   ],
   socialProviders: {
     google: {
-      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || "",
-      clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || "",
+      clientId: (typeof process !== 'undefined' && process.env?.GOOGLE_CLIENT_ID) || import.meta.env?.VITE_GOOGLE_CLIENT_ID || import.meta.env?.VITE_APP_GOOGLE_CLIENT_ID || "",
+      clientSecret: (typeof process !== 'undefined' && process.env?.GOOGLE_CLIENT_SECRET) || import.meta.env?.VITE_GOOGLE_CLIENT_SECRET || "",
       scope: ["https://www.googleapis.com/auth/drive.file"]
     }
   }
