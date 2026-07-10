@@ -30,16 +30,6 @@ const getAuth = () => {
     authInstance = betterAuth({
       secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
       baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-      database: (config: any) => ({
-        id: 'dummy-adapter',
-        create: async (data: any) => ({}),
-        findOne: async (data: any) => null,
-        findMany: async (data: any) => [],
-        update: async (data: any) => ({}),
-        delete: async (data: any) => ({}),
-        deleteMany: async (data: any) => 0,
-        options: config,
-      }),
       emailAndPassword: {
         enabled: true,
       },
