@@ -41,17 +41,18 @@ export const authClient = {
   signUp: {
     email: async (payload: any) => {
       try {
-        const res = await fetch(`${baseURL}/api/auth/sign-up/email`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify(payload)
+        const { data, error } = await supabase.auth.signUp({
+          email: payload.email,
+          password: payload.password,
+          options: {
+            data: {
+              name: payload.name,
+              username: payload.username,
+            }
+          }
         });
-        await syncToken(res);
-        if (!res.ok) {
-          const err = await res.json();
-          return { data: null, error: { message: err.error || 'Sign up failed' } };
-        }
-        return { data: await res.json(), error: null };
+        if (error) throw error;
+        return { data, error: null };
       } catch (err: any) {
         return { data: null, error: { message: err.message } };
       }
@@ -60,17 +61,12 @@ export const authClient = {
   signIn: {
     email: async (payload: any) => {
       try {
-        const res = await fetch(`${baseURL}/api/auth/sign-in/email`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify(payload)
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: payload.email,
+          password: payload.password,
         });
-        await syncToken(res);
-        if (!res.ok) {
-          const err = await res.json();
-          return { data: null, error: { message: err.error || 'Sign in failed' } };
-        }
-        return { data: await res.json(), error: null };
+        if (error) throw error;
+        return { data, error: null };
       } catch (err: any) {
         return { data: null, error: { message: err.message } };
       }
@@ -85,19 +81,14 @@ export const authClient = {
   },
   getSession: async () => {
     try {
-      const res = await fetch(`${baseURL}/api/auth/get-session`, {
-        method: 'GET',
-        headers: getHeaders()
-      });
-      await syncToken(res);
-      if (!res.ok) return { data: null, error: { message: 'No session' } };
-      return { data: await res.json(), error: null };
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) return { data: null, error: { message: 'No session' } };
+      return { data: { user: session.user, session }, error: null };
     } catch (err: any) {
       return { data: null, error: { message: err.message } };
     }
   },
   signOut: async () => {
-    localStorage.removeItem("custom_auth_token");
     await supabase.auth.signOut();
     return { error: null };
   }
