@@ -147,7 +147,7 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
 
       await client.connect();
 
-      const botToken = process.env.VITE_TELEGRAM_BOT_TOKEN || (import.meta as any).env?.VITE_TELEGRAM_BOT_TOKEN;
+      const botToken = import.meta.env?.VITE_TELEGRAM_BOT_TOKEN;
       if (botToken) {
         await client.start({
           botAuthToken: botToken

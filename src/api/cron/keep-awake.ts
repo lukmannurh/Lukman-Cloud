@@ -2,7 +2,7 @@ import { supabase } from '../../lib/services/supabaseClient';
 
 export default async function handler(req: Request) {
   const authHeader = req.headers.get('authorization');
-  const expectedToken = `Bearer ${process.env.CRON_SECRET || import.meta.env?.CRON_SECRET}`;
+  const expectedToken = `Bearer ${import.meta.env.VITE_CRON_SECRET || import.meta.env.CRON_SECRET}`;
 
   if (!authHeader || authHeader !== expectedToken) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

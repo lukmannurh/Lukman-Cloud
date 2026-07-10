@@ -2,7 +2,6 @@ import { VFSNode } from '../../types';
 import { supabase } from './supabaseClient';
 import { authClient } from '../auth-client';
 import { retrieveCredential, storeCredential } from './vault.service';
-import { authClient } from '../auth-client';
 
 /**
  * Isolated Virtual File System (VFS) Service - Supabase Postgres Edition
@@ -76,7 +75,7 @@ class VFSService {
        if (existingStr) {
          return JSON.parse(existingStr);
        } else {
-         const rootNode = await this.initializeRootFolder();
+         const rootNode = await this.createRootFolder(userId);
          return [rootNode];
        }
     }
@@ -91,7 +90,7 @@ class VFSService {
     
     // If empty, create the root folder
     if (!data || data.length === 0) {
-      const rootNode = await this.initializeRootFolder();
+      const rootNode = await this.createRootFolder(userId);
       return [rootNode];
     }
     
