@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { toNodeHandler } from "better-auth/node";
 import { username } from 'better-auth/plugins';
+import { webcrypto } from 'crypto';
 
 export const config = {
   api: {
@@ -32,6 +33,19 @@ const getAuth = () => {
       baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
       emailAndPassword: {
         enabled: true,
+        hash: async (password) => {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(password as string);
+          const hash = await webcrypto.subtle.digest('SHA-256', data);
+          return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        },
+        verify: async ({ password, hash }) => {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(password as string);
+          const pHash = await webcrypto.subtle.digest('SHA-256', data);
+          const pHashStr = Array.from(new Uint8Array(pHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+          return pHashStr === hash;
+        }
       },
       socialProviders: {
         google: {
