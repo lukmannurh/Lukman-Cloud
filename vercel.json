@@ -33,7 +33,11 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/api/auth/(.*)",
+      "destination": "/api/auth"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
