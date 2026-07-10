@@ -15,31 +15,45 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
   return "";
 };
 
-export const auth = betterAuth({
-  secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
-  baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-  database: {
-    // Dummy adapter to prevent BetterAuth from crashing when DATABASE_URL is not provided
-    // This allows the build to succeed and lambda to initialize even if DB is missing.
-    dialect: { name: 'postgres' },
-    create: async () => ({}),
-    findOne: async () => null,
-    findMany: async () => [],
-    update: async () => ({}),
-    delete: async () => ({}),
-    deleteMany: async () => 0,
-  } as any,
-  emailAndPassword: {
-    enabled: true,
-  },
-  plugins: [
-    username()
-  ],
-  socialProviders: {
-    google: {
-      clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
-      clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
-      scope: ["https://www.googleapis.com/auth/drive.file"]
+export let auth: any = null;
+try {
+  auth = betterAuth({
+    secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
+    baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
+    database: {
+      // Dummy adapter
+      dialect: { name: 'postgres' },
+      create: async () => ({}),
+      findOne: async () => null,
+      findMany: async () => [],
+      update: async () => ({}),
+      delete: async () => ({}),
+      deleteMany: async () => 0,
+    } as any,
+    emailAndPassword: {
+      enabled: true,
+    },
+    plugins: [
+      username()
+    ],
+    socialProviders: {
+      google: {
+        clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
+        clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
+        scope: ["https://www.googleapis.com/auth/drive.file"]
+      }
     }
-  }
-});
+  });
+} catch (err: any) {
+  console.error("[BetterAuth INIT ERROR]:", err);
+  auth = {
+    options: {},
+    handler: async (req: any, res: any) => {
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: 'BetterAuth Init Failed', details: err?.message || String(err), stack: err?.stack }));
+    },
+    api: {
+      signInSocial: async () => { throw new Error("BetterAuth Init Failed: " + err.message) }
+    }
+  };
+}
