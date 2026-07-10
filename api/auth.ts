@@ -1,5 +1,4 @@
 import { betterAuth } from 'better-auth';
-import { toNodeHandler } from "better-auth/node";
 import { username } from 'better-auth/plugins';
 
 export const config = {
@@ -64,22 +63,19 @@ try {
   };
 }
 
-export default async function authHandler(req: any, res: any) {
+export const config = {
+  runtime: 'edge'
+};
+
+export default async function authHandler(req: Request) {
   try {
-    if (typeof process !== 'undefined' && !process.env?.GOOGLE_CLIENT_SECRET) {
-      console.warn('[Better Auth] WARNING: Missing GOOGLE_CLIENT_SECRET in server environment. OAuth will fail.');
-    }
-    
-    const handler = toNodeHandler(auth);
-    await handler(req, res);
-    
-    if (!res.writableEnded) {
-      res.statusCode = 404;
-      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
-    }
+    const response = await auth.handler(req);
+    return response;
   } catch (error: any) {
-    console.error('[Better Auth] Critical Serverless Error:', error);
-    res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Internal Server Error', details: error?.message || String(error), stack: error?.stack }));
+    console.error('[Better Auth] Critical Edge Error:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error', details: error?.message || String(error) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
