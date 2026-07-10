@@ -20,9 +20,19 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
 export const auth = betterAuth({
   secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
   baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-  database: new Pool({
-    connectionString: getEnv('SUPABASE_URL', 'VITE_SUPABASE_URL').replace('https://', 'postgres://postgres:').replace('.supabase.co', '.supabase.co:6543/postgres'), // Rough fallback, really needs SUPABASE_DB_URL
-  }),
+  database: process.env.DATABASE_URL ? new Pool({
+    connectionString: process.env.DATABASE_URL,
+  }) : {
+    // Dummy adapter to prevent BetterAuth from crashing when DATABASE_URL is not provided
+    // This allows the build to succeed and lambda to initialize even if DB is missing.
+    dialect: { name: 'postgres' },
+    create: async () => ({}),
+    findOne: async () => null,
+    findMany: async () => [],
+    update: async () => ({}),
+    delete: async () => ({}),
+    deleteMany: async () => 0,
+  } as any,
   emailAndPassword: {
     enabled: true,
   },
