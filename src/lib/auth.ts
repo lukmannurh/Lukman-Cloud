@@ -3,6 +3,8 @@ import { username } from 'better-auth/plugins';
 import { supabase } from './services/supabaseClient';
 
 export const auth = betterAuth({
+  secret: (typeof process !== 'undefined' && process.env?.BETTER_AUTH_SECRET) || import.meta.env?.VITE_BETTER_AUTH_SECRET || "",
+  baseURL: (typeof process !== 'undefined' && process.env?.BETTER_AUTH_URL) || import.meta.env?.VITE_BETTER_AUTH_URL || "",
   database: {
     // Standard adapter logic pointing to Supabase PostgreSQL instance
     // Note: A formal PostgreSQL database connector adapter could be provided here,
