@@ -226,7 +226,11 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
   try {
     // 1. Calculate SHA-256 of the entire file before chunking
     const arrayBuffer = await file.arrayBuffer();
-    const sha256 = await calculateSHA256(arrayBuffer);
+    const sha256Hex = async (buffer: ArrayBuffer) => { 
+      const hash = await crypto.subtle.digest('SHA-256', buffer); 
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''); 
+    };
+    const sha256 = await sha256Hex(arrayBuffer);
 
     // Recover the pristine original filename by stripping the `.partN` suffix
     // that upload.service.ts appends when slicing: `${file.name}.part${i}`.
@@ -239,6 +243,24 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
       targetChannel = `-100` + targetChannel.replace(/^-/, '');
     }
 
+    // --- MOCK BYPASS INTERCEPTOR ---
+    if (targetChannel.includes('MOCK') || (typeof import.meta !== 'undefined' && import.meta.env?.DEV && import.meta.env?.VITE_AUTH_MODE === 'mock' && targetChannel === '-100')) {
+      // MOCK channel detected. Simulating successful upload.
+      workerSelf.postMessage({ type: 'UPLOAD_PROGRESS', requestId, progress: 1.0 });
+      sendEvent({
+        type: 'UPLOAD_SUCCESS',
+        requestId,
+        result: {
+          provider: 'telegram',
+          messageId: 'mock_tele_file_9922',
+          mimeType: file.type || 'application/octet-stream',
+          sha256Hex,
+          accountId: 'mock_session',
+          message: "Simulated local worker success"
+        }
+      });
+      return;
+    }
     // ═══════════════════════════════════════════════════════════════════════
     // DIRECT RAW MTPROTO RPC CHUNKED UPLOAD
     // Completely bypasses client.sendFile and all high-level file type
@@ -260,7 +282,7 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
     const CHUNK_SIZE = 512 * 1024; // 512 KB — optimal for MTProto browser uploads
     const totalParts = Math.ceil(file.size / CHUNK_SIZE);
 
-    console.log(`[TelegramWorker] Starting raw RPC upload: "${file.name}" (${totalParts} parts, ${file.size} bytes)`);
+    // Starting raw RPC upload
 
     for (let i = 0; i < totalParts; i++) {
       const start = i * CHUNK_SIZE;
@@ -327,7 +349,7 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
       safeMessageId = Number(updates?.id ?? 0);
     }
 
-    console.log('[TelegramWorker] Raw RPC upload complete. Message ID:', safeMessageId);
+    // Raw RPC upload complete.
     sendEvent({ type: 'UPLOAD_COMPLETE', requestId, messageId: safeMessageId, sha256 });
   } catch (error: any) {
     console.error('[TelegramWorker] Upload error:', error);

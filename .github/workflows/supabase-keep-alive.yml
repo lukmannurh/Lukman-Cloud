@@ -1,0 +1,17 @@
+name: Supabase Anti-Pause Cron
+
+on:
+  schedule:
+    # Execute every 2 days at midnight
+    - cron: "0 0 */2 * *"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_LIVE_URL }}/rest/v1/vfs_nodes?limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"

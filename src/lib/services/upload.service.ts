@@ -140,7 +140,15 @@ export class UploadService {
   ): Promise<TelegramRef> {
     
     // Auto-resolve destination channel from the routing matrix
-    const channelId = resolveChannelId(file.name);
+    let channelId = resolveChannelId(file.name);
+
+    if (!channelId && import.meta.env.DEV) {
+      channelId = "MOCK_CH_9922";
+    }
+
+    if (!channelId) {
+      throw new Error("Storage Node not initialized. Please connect your Telegram channel in settings first.");
+    }
 
     // 1. Compute whole-file SHA-256 (pre-chunking) safely
     // Bypass for files > 500MB to prevent main-thread ArrayBuffer crashes

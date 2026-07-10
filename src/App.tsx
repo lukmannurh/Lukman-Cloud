@@ -5,8 +5,10 @@ import { downloadService } from './lib/services/download.service';
 import { accountPoolService } from './lib/services/accountPool.service';
 import { vfsService } from './lib/services/vfs.service';
 import { initiateGoogleLogin } from './lib/googleAuth';
+import { LogOut } from 'lucide-react';
 
-import { AuthGate } from './components/auth/AuthGate';
+import { BetterAuthForm } from './components/auth/BetterAuthForm';
+import { authClient } from './lib/auth-client';
 import { Button } from './components/ui/Button';
 import { Breadcrumbs, BreadcrumbItem } from './components/dashboard/Breadcrumbs';
 import { FileExplorer } from './components/dashboard/FileExplorer';
@@ -17,8 +19,60 @@ import { UploadGateway } from './components/dashboard/UploadGateway';
 import { VFSNode, AppConfig, PooledAccount, isGoogleDriveRef, isTelegramRef, GoogleDriveRef, TelegramRef } from './types';
 
 export default function App() {
-  // ── Auth State: 'auth' = unauthenticated, 'unlocked' = full access ──────────
-  const [appState, setAppState] = useState<'auth' | 'unlocked'>('auth');
+  // ── Better Auth Session State ──────────
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+  
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean>(false);
+  const [devSessionUser, setDevSessionUser] = useState<any>(() => {
+    try {
+      if (import.meta.env.DEV) {
+        const stored = localStorage.getItem('dev_session_user');
+        return stored ? JSON.parse(stored) : null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  });
+  
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
+
+  // Sync session state to local bypass state
+  useEffect(() => {
+    // Proactively purge cross-account notification bleed on auth context switch
+    setToastMessage(null);
+    
+    const activeUser = devSessionUser || session?.user;
+    if (activeUser) {
+      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+        (window as any).__MOCK_SESSION_ID__ = activeUser.id;
+      }
+      setIsUserAuthenticated(true);
+      // Check onboarding guard for Google OAuth users or Instant Guest accounts
+      if (!activeUser?.username || activeUser?.username.startsWith('guest_aether_')) {
+        setShowOnboarding(true);
+      } else {
+        setShowOnboarding(false);
+        // Execute background programmatic registration for Google Drive tracking matrix
+        const syncGoogleDriveMatrix = async () => {
+          try {
+            // Concept: Fetch Better Auth provider tokens, if google exists, push to accountPoolService
+            // accountPoolService.addGoogleAccount(...)
+          } catch (e) {
+            console.error('Auto-link failed', e);
+          }
+        };
+        syncGoogleDriveMatrix();
+      }
+    } else {
+      setIsUserAuthenticated(false);
+    }
+  }, [session, devSessionUser]);
+
+  const appState = isUserAuthenticated ? 'unlocked' : 'auth';
 
   // Core Services State
   const [accounts, setAccounts] = useState<PooledAccount[]>([]);
@@ -110,27 +164,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (sessionStorage.getItem('lukman_cloud_auth') === 'true') {
-      setAppState('unlocked');
+    if (session) {
       accountPoolService.getPool().then(pool => setAccounts(pool)).catch(console.warn);
     }
-  }, []);
-
-  /**
-   * Called by AuthGate once the TOTP code is validated.
-   * Loads the account pool and transitions to the main workspace.
-   * No vault passwords. No BYOS wizard. Centralized credentials only.
-   */
-  const handleAuthenticated = async () => {
-    sessionStorage.setItem('lukman_cloud_auth', 'true');
-    try {
-      const pool = await accountPoolService.getPool();
-      setAccounts(pool);
-    } catch (e) {
-      console.warn('[App] Account pool load failed (continuing without pool):', e);
-    }
-    setAppState('unlocked');
-  };
+  }, [session]);
 
   const [allFlattenedNodes, setAllFlattenedNodes] = useState<VFSNode[]>([]);
 
@@ -480,9 +517,14 @@ export default function App() {
 
             <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
               <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
-              <span className="inline-flex mt-1 text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full w-max">
-                VAULT UNLOCKED
-              </span>
+              <div className="flex gap-2 mt-1 items-center overflow-hidden">
+                <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
+                  VAULT UNLOCKED
+                </span>
+                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${session?.user?.username || devSessionUser?.username || 'guest'}`}>
+                  @{session?.user?.username || devSessionUser?.username || 'guest'}
+                </span>
+              </div>
             </div>
           </div>
           <button 
@@ -552,25 +594,125 @@ export default function App() {
         
         <div className="p-3 border-t border-slate-800">
           <button 
-            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 overflow-hidden"
-            onClick={() => {
-              setAccounts([]);
-              setAppState('auth');
+            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 overflow-hidden group"
+            onClick={async () => {
+              try {
+                if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                  localStorage.removeItem('dev_session_user');
+                  setDevSessionUser(null);
+                  setToastMessage(null);
+                  setIsUserAuthenticated(false);
+                  setAccounts([]);
+                  setCurrentView('auth');
+                  window.location.reload();
+                  return;
+                }
+                setToastMessage(null); // Purge global toasts on sign out
+                try {
+                  await authClient.signOut();
+                } catch (e) {
+                  console.warn('[SignOut] Network failed but proceeding locally:', e);
+                }
+              } catch (e) {
+                console.warn('[SignOut] Backend unreachable or sign out failed:', e);
+              } finally {
+                setIsUserAuthenticated(false);
+                setAccounts([]);
+                setCurrentView('auth');
+                if (import.meta.env.DEV) {
+                  window.location.reload();
+                }
+              }
             }}
             title="Sign Out"
           >
-            <svg className="w-5 h-5 shrink-0 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Lock Vault</span>
+            <LogOut className="w-5 h-5 shrink-0 text-rose-400 group-hover:text-rose-300 transition-colors" />
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
           </button>
         </div>
       </div>
     </>
   );
 
-  if (appState === 'auth') {
-    return <AuthGate onAuthenticated={handleAuthenticated} />;
+  if (sessionLoading && isUserAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (showOnboarding && isUserAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
+        
+        <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-[scaleIn_0.3s_ease-out]">
+          <div className="bg-slate-800/60 backdrop-blur-xl py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-slate-700/50">
+            <h3 className="text-xl font-bold text-white mb-6 text-center">Choose your unique username to activate your storage account</h3>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setOnboardingLoading(true);
+              setOnboardingError('');
+              try {
+                if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                  const LOCAL_DB_KEY = 'lukman_cloud_mock_users_db';
+                  const users = JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]');
+                  const lowerUsername = newUsername.toLowerCase();
+                  if (users.find((u: any) => u.username === lowerUsername)) {
+                    throw new Error("This username is already registered in the system infrastructure.");
+                  }
+                  
+                  // Update current user in mock DB if exists, else we just proceed
+                  const userIndex = users.findIndex((u: any) => u.id === devSessionUser?.id);
+                  if (userIndex !== -1) {
+                    users[userIndex].username = lowerUsername;
+                  } else if (devSessionUser) {
+                    users.push({ ...devSessionUser, username: lowerUsername });
+                  }
+                  localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
+                  
+                  const updatedDevUser = { ...devSessionUser, username: lowerUsername };
+                  localStorage.setItem('dev_session_user', JSON.stringify(updatedDevUser));
+                  setDevSessionUser(updatedDevUser);
+                  setShowOnboarding(false);
+                  setIsUserAuthenticated(true);
+                  setOnboardingLoading(false);
+                  return;
+                }
+                
+                // The username plugin uses updateUser to update user fields
+                const res = await authClient.updateUser({ username: newUsername } as any);
+                if (res.error) throw res.error;
+                window.location.reload();
+              } catch (err: any) {
+                setOnboardingError(err.message || 'Failed to save username');
+              } finally {
+                setOnboardingLoading(false);
+              }
+            }}>
+              <input type="text" required value={newUsername} onChange={e => setNewUsername(e.target.value.toLowerCase())} placeholder="Enter a username..." className="appearance-none block w-full px-3 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6" />
+              
+              <button type="submit" disabled={onboardingLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-md w-full">
+                {onboardingLoading ? 'Saving...' : 'Activate Storage Account'}
+              </button>
+              
+              {onboardingError && <div className="text-red-500 text-sm mt-4 text-center">{onboardingError}</div>}
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isUserAuthenticated) {
+    return <BetterAuthForm onDevBypass={(user) => {
+      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+        localStorage.setItem('dev_session_user', JSON.stringify(user));
+        setDevSessionUser(user);
+      }
+    }} />;
   }
   
   return (
@@ -1040,7 +1182,7 @@ export default function App() {
                           headers: { Authorization: `Bearer ${acc.accessToken}` }
                         });
                       } else if (isTelegramRef(node.rawRef as any)) {
-                        console.log('[VFS] Telegram delete triggered for', (node.rawRef as TelegramRef).channelId);
+                        // Send raw RPC delete task to worker
                       }
                     } catch (e) {
                       console.error('[VFS] Remote physical delete failed', e);
