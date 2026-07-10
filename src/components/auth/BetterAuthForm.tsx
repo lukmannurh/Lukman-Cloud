@@ -77,6 +77,10 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           return;
         }
       }
+    } catch (err: any) {
+      setError(err.message || 'Authentication error');
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
