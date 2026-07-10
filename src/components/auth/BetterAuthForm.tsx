@@ -52,32 +52,31 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       
       if (isSignUp) {
         const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
-        await authClient.signUp.email({
+        const { error: signUpError } = await authClient.signUp.email({
           email: dummyEmail,
           password,
           name: name || username,
           username: username.toLowerCase(),
-        }, {
-          onError: (ctx) => {
-            setError(ctx.error.message || 'Failed to create account');
-            setLoading(false);
-          }
         });
+        
+        if (signUpError) {
+          setError(signUpError.message || 'Failed to create account');
+          setLoading(false);
+          return;
+        }
       } else {
-        await authClient.signIn.username({
-          username: username.toLowerCase(),
+        const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
+        const { error: signInError } = await authClient.signIn.email({
+          email: dummyEmail,
           password,
-        }, {
-          onError: (ctx) => {
-            setError(ctx.error.message || 'Invalid credentials');
-            setLoading(false);
-          }
         });
+
+        if (signInError) {
+          setError(signInError.message || 'Invalid credentials');
+          setLoading(false);
+          return;
+        }
       }
-    } catch (err: any) {
-      setError(err.message || 'Authentication error');
-      setLoading(false);
-    }
   };
 
   const handleGoogleLogin = async () => {
@@ -135,22 +134,22 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         return;
       }
 
-      await authClient.signUp.email({
+      const { error: guestError } = await authClient.signUp.email({
         email: dummyEmail,
         password: generatedPassword,
         name: `Guest ${randomSuffix}`,
         username: generatedUsername,
-      }, {
-        onSuccess: () => {
-          setGuestCredentials({ username: generatedUsername, password: generatedPassword });
-          setShowGuestModal(true);
-          setLoading(false);
-        },
-        onError: (ctx) => {
-          setError(ctx.error.message || 'Failed to generate guest account');
-          setLoading(false);
-        }
       });
+
+      if (guestError) {
+        setError(guestError.message || 'Failed to generate guest account');
+        setLoading(false);
+        return;
+      }
+
+      setGuestCredentials({ username: generatedUsername, password: generatedPassword } as any);
+      setShowGuestModal(true);
+      setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Guest generation error');
       setLoading(false);

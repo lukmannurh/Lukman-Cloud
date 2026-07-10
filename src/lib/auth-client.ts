@@ -58,6 +58,13 @@ export const authClient = {
       } catch (err: any) {
         return { data: null, error: { message: err.message } };
       }
+    },
+    social: async (payload: { provider: any, callbackURL?: string }) => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: payload.provider,
+        options: { redirectTo: payload.callbackURL || window.location.origin }
+      });
+      return { error: error ? { message: error.message } : null };
     }
   },
   getSession: async () => {
