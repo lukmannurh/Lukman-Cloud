@@ -1,8 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { username } from 'better-auth/plugins';
 import { supabase } from './services/supabaseClient';
-import pg from 'pg';
-const { Pool } = pg;
 
 const getEnv = (nodeKey: string, viteKey: string): string => {
   if (typeof process !== 'undefined' && process.env) {
@@ -20,9 +18,7 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
 export const auth = betterAuth({
   secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
   baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-  database: process.env.DATABASE_URL ? new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }) : {
+  database: {
     // Dummy adapter to prevent BetterAuth from crashing when DATABASE_URL is not provided
     // This allows the build to succeed and lambda to initialize even if DB is missing.
     dialect: { name: 'postgres' },
