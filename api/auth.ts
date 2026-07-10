@@ -71,7 +71,12 @@ export default async function authHandler(req: any, res: any) {
     }
     
     const handler = toNodeHandler(auth);
-    return await handler(req, res);
+    await handler(req, res);
+    
+    if (!res.writableEnded) {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
+    }
   } catch (error: any) {
     console.error('[Better Auth] Critical Serverless Error:', error);
     res.statusCode = 500;
