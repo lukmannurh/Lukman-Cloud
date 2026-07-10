@@ -64,6 +64,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           setLoading(false);
           return;
         }
+        
+        window.location.reload();
       } else {
         const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
         const { error: signInError } = await authClient.signIn.email({
@@ -76,6 +78,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           setLoading(false);
           return;
         }
+        
+        window.location.reload();
       }
     } catch (err: any) {
       setError(err.message || 'Authentication error');
