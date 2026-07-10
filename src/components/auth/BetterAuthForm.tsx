@@ -52,11 +52,11 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       
       if (isSignUp) {
         const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
-        await authClient.signUp.username({
-          username: username.toLowerCase(),
+        await authClient.signUp.email({
           email: dummyEmail,
           password,
           name: name || username,
+          username: username.toLowerCase(),
         }, {
           onError: (ctx) => {
             setError(ctx.error.message || 'Failed to create account');
@@ -135,11 +135,11 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         return;
       }
 
-      await authClient.signUp.username({
-        username: generatedUsername,
+      await authClient.signUp.email({
         email: dummyEmail,
         password: generatedPassword,
         name: `Guest ${randomSuffix}`,
+        username: generatedUsername,
       }, {
         onSuccess: () => {
           setGuestCredentials({ username: generatedUsername, password: generatedPassword });
