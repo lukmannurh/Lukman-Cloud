@@ -3,8 +3,9 @@ import { username } from 'better-auth/plugins';
 import { supabase } from './services/supabaseClient';
 
 const getEnv = (nodeKey: string, viteKey: string): string => {
-  if (typeof process !== 'undefined' && process.env && process.env[nodeKey]) {
-    return process.env[nodeKey] as string;
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env[nodeKey]) return process.env[nodeKey] as string;
+    if (process.env[viteKey]) return process.env[viteKey] as string;
   }
   // @ts-ignore
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[viteKey]) {
