@@ -1,22 +1,4 @@
-import { betterAuth } from 'better-auth';
-import { toNodeHandler } from "better-auth/node";
-import { username } from 'better-auth/plugins';
-import { jwt } from 'better-auth/plugins';
-import { webcrypto } from 'crypto';
-import { SignJWT } from 'jose';
-import postgres from 'postgres';
-
-// Define our secret key resolver
-const getSupabaseSecret = () => {
-  const secretStr = process.env.SUPABASE_JWT_SECRET || process.env.VITE_SUPABASE_JWT_SECRET || 'your-super-secret-jwt-token-with-at-least-32-characters-long';
-  return new TextEncoder().encode(secretStr);
-};
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+import { createClient } from '@supabase/supabase-js';
 
 const getEnv = (nodeKey: string, viteKey: string): string => {
   if (typeof process !== 'undefined' && process.env) {
@@ -31,103 +13,94 @@ const getEnv = (nodeKey: string, viteKey: string): string => {
   return "";
 };
 
-let authInstance: any = null;
+const supabaseUrl = getEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
 
-const getAuth = () => {
-  if (authInstance) return authInstance;
-  
-  try {
-    const sql = postgres(getEnv('DATABASE_URL', 'VITE_DATABASE_URL') || "", { ssl: 'require', max: 1 });
-
-    authInstance = betterAuth({
-      database: {
-        db: sql,
-        type: "postgres"
-      },
-      secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET') || "fallback-secret-for-dev",
-      baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
-      emailAndPassword: {
-        enabled: true,
-        hash: async (password) => {
-          const encoder = new TextEncoder();
-          const data = encoder.encode(password as string);
-          const hash = await webcrypto.subtle.digest('SHA-256', data);
-          return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-        },
-        verify: async ({ password, hash }) => {
-          const encoder = new TextEncoder();
-          const data = encoder.encode(password as string);
-          const pHash = await webcrypto.subtle.digest('SHA-256', data);
-          const pHashStr = Array.from(new Uint8Array(pHash)).map(b => b.toString(16).padStart(2, '0')).join('');
-          return pHashStr === hash;
-        }
-      },
-      socialProviders: {
-        google: {
-          clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
-          clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
-          scope: ["https://www.googleapis.com/auth/drive.file"]
-        }
-      },
-      plugins: [
-        username(),
-        jwt({
-          jwks: {
-            remoteUrl: 'https://lukman-cloud.vercel.app/jwks', // bypass validation
-            keyPairConfig: { alg: 'EdDSA' }
-          },
-          jwt: {
-            expirationTime: '1h',
-            definePayload: (session) => {
-              return {
-                sub: session.user.id,
-                role: 'authenticated',
-                aud: 'authenticated',
-                email: session.user.email,
-              };
-            },
-            sign: async (payload) => {
-              return new SignJWT(payload)
-                .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-                .setIssuedAt()
-                .setExpirationTime('1h')
-                .sign(getSupabaseSecret());
-            }
-          }
-        })
-      ]
-    });
-    return authInstance;
-  } catch (err: any) {
-    console.error("[BetterAuth INIT ERROR]:", err);
-    throw err;
-  }
-};
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+});
 
 export default async function authHandler(req: any, res: any) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  res.setHeader('Access-Control-Expose-Headers', 'set-auth-jwt');
+
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 200;
+    return res.end();
+  }
+
+  const url = req.url || '';
+
   try {
-    console.log('[Better Auth Debug] Request received:', req.method, req.url);
-    const auth = getAuth();
-    console.log('[Better Auth Debug] Creating toNodeHandler...');
-    const handler = toNodeHandler(auth);
-    
-    console.log('[Better Auth Debug] Awaiting handler...');
-    // We race the handler against a timeout!
-    const timeout = new Promise((resolve, reject) => setTimeout(() => reject(new Error('Handler Timed Out')), 5000));
-    
-    await Promise.race([handler(req, res), timeout]);
-    console.log('[Better Auth Debug] Handler resolved!');
-    
-    if (!res.writableEnded) {
-      console.log('[Better Auth Debug] Response not ended by handler. Writing 404...');
-      res.statusCode = 404;
-      res.end(JSON.stringify({ error: 'Not Handled by BetterAuth', url: req.url, headers: req.headers }));
+    let body: any = {};
+    if (req.method === 'POST') {
+      body = await new Promise((resolve, reject) => {
+        let data = '';
+        req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
+        req.on('end', () => {
+          try { resolve(data ? JSON.parse(data) : {}); } catch (e) { resolve({}); }
+        });
+        req.on('error', reject);
+      });
     }
+
+    if (url.includes('/api/auth/sign-up/email')) {
+      const { email, password, name } = body;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } }
+      });
+
+      if (error) throw error;
+      
+      const token = data.session?.access_token || '';
+      res.setHeader('set-auth-jwt', token);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ user: data.user, session: { token } }));
+    }
+
+    if (url.includes('/api/auth/sign-in/email')) {
+      const { email, password } = body;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      const token = data.session?.access_token || '';
+      res.setHeader('set-auth-jwt', token);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ user: data.user, session: { token } }));
+    }
+
+    if (url.includes('/api/auth/get-session')) {
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.replace('Bearer ', '');
+      if (!token) {
+        res.statusCode = 401;
+        return res.end(JSON.stringify({ error: 'No token' }));
+      }
+      
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error || !data.user) {
+        res.statusCode = 401;
+        return res.end(JSON.stringify({ error: 'Invalid token' }));
+      }
+
+      res.setHeader('set-auth-jwt', token);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ user: data.user, session: { token } }));
+    }
+
+    res.statusCode = 404;
+    res.end(JSON.stringify({ error: 'Not found' }));
   } catch (error: any) {
-    console.error('[Better Auth] Critical Node Error:', error);
-    if (!res.writableEnded) {
-      res.statusCode = 500;
-      res.end(JSON.stringify({ error: 'Internal Server Error', details: error?.message || String(error), stack: error?.stack }));
-    }
+    console.error('Custom Auth Error:', error);
+    res.statusCode = error.status || 500;
+    res.end(JSON.stringify({ error: 'Internal Server Error', details: error?.message }));
   }
 }
