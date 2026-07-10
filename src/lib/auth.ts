@@ -2,16 +2,22 @@ import { betterAuth } from 'better-auth';
 import { username } from 'better-auth/plugins';
 import { supabase } from './services/supabaseClient';
 
+const getEnv = (nodeKey: string, viteKey: string): string => {
+  if (typeof process !== 'undefined' && process.env && process.env[nodeKey]) {
+    return process.env[nodeKey] as string;
+  }
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[viteKey]) {
+    // @ts-ignore
+    return import.meta.env[viteKey] as string;
+  }
+  return "";
+};
+
 export const auth = betterAuth({
-  secret: (typeof process !== 'undefined' && process.env?.BETTER_AUTH_SECRET) || import.meta.env?.VITE_BETTER_AUTH_SECRET || "",
-  baseURL: (typeof process !== 'undefined' && process.env?.BETTER_AUTH_URL) || import.meta.env?.VITE_BETTER_AUTH_URL || "",
+  secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
+  baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
   database: {
-    // Standard adapter logic pointing to Supabase PostgreSQL instance
-    // Note: A formal PostgreSQL database connector adapter could be provided here,
-    // but we stub this mapping per Better Auth standards.
-    // E.g., if using a built-in pg adapter:
-    // createPool({ connectionString: import.meta.env.VITE_SUPABASE_URL })
-    // For now, we expose the supabase client instance as our abstraction proxy.
   },
   emailAndPassword: {
     enabled: true,
@@ -21,8 +27,8 @@ export const auth = betterAuth({
   ],
   socialProviders: {
     google: {
-      clientId: (typeof process !== 'undefined' && process.env?.GOOGLE_CLIENT_ID) || import.meta.env?.VITE_GOOGLE_CLIENT_ID || import.meta.env?.VITE_APP_GOOGLE_CLIENT_ID || "",
-      clientSecret: (typeof process !== 'undefined' && process.env?.GOOGLE_CLIENT_SECRET) || import.meta.env?.VITE_GOOGLE_CLIENT_SECRET || "",
+      clientId: getEnv('GOOGLE_CLIENT_ID', 'VITE_GOOGLE_CLIENT_ID') || getEnv('VITE_APP_GOOGLE_CLIENT_ID', 'VITE_APP_GOOGLE_CLIENT_ID'),
+      clientSecret: getEnv('GOOGLE_CLIENT_SECRET', 'VITE_GOOGLE_CLIENT_SECRET'),
       scope: ["https://www.googleapis.com/auth/drive.file"]
     }
   }
