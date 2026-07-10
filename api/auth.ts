@@ -72,6 +72,10 @@ const getAuth = () => {
       plugins: [
         username(),
         jwt({
+          jwks: {
+            remoteUrl: 'https://lukman-cloud.vercel.app/jwks', // bypass validation
+            keyPairConfig: { alg: 'EdDSA' }
+          },
           jwt: {
             expirationTime: '1h',
             definePayload: (session) => {
