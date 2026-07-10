@@ -28,8 +28,8 @@ Follow these steps to deploy and run the local development environment safely.
 
 1. **Clone the Repository**
    ```bash
-   git clone <your-repo-url>
-   cd <your-repo-name>
+   git clone https://github.com/lukmannurh/Lukman-Cloud.git
+   cd Lukman-Cloud
    ```
 
 2. **Install Dependencies**

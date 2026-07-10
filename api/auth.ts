@@ -1,7 +1,15 @@
 import { betterAuth } from 'better-auth';
 import { toNodeHandler } from "better-auth/node";
 import { username } from 'better-auth/plugins';
+import { jwt } from 'better-auth/plugins';
 import { webcrypto } from 'crypto';
+import { SignJWT } from 'jose';
+
+// Define our secret key resolver
+const getSupabaseSecret = () => {
+  const secretStr = process.env.SUPABASE_JWT_SECRET || process.env.VITE_SUPABASE_JWT_SECRET || 'your-super-secret-jwt-token-with-at-least-32-characters-long';
+  return new TextEncoder().encode(secretStr);
+};
 
 export const config = {
   api: {
@@ -54,7 +62,29 @@ const getAuth = () => {
           scope: ["https://www.googleapis.com/auth/drive.file"]
         }
       },
-      plugins: [username()]
+      plugins: [
+        username(),
+        jwt({
+          jwt: {
+            expirationTime: '1h',
+            definePayload: (session) => {
+              return {
+                sub: session.user.id,
+                role: 'authenticated',
+                aud: 'authenticated',
+                email: session.user.email,
+              };
+            },
+            sign: async (payload) => {
+              return new SignJWT(payload)
+                .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+                .setIssuedAt()
+                .setExpirationTime('1h')
+                .sign(getSupabaseSecret());
+            }
+          }
+        })
+      ]
     });
     return authInstance;
   } catch (err: any) {
