@@ -31,8 +31,8 @@ const getAuth = () => {
       secret: getEnv('BETTER_AUTH_SECRET', 'VITE_BETTER_AUTH_SECRET'),
       baseURL: getEnv('BETTER_AUTH_URL', 'VITE_BETTER_AUTH_URL'),
       database: {
-        // Dummy adapter
-        dialect: { name: 'postgres' },
+        // Dummy custom adapter to prevent better-auth from crashing or using Kysely
+        id: 'dummy',
         create: async () => ({}),
         findOne: async () => null,
         findMany: async () => [],
