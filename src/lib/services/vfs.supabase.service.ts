@@ -1,6 +1,5 @@
 import { VFSNode } from '../../types';
 import { supabase } from './supabaseClient';
-import { authClient } from '../auth-client';
 import { retrieveCredential, storeCredential } from './vault.service';
 
 /**
@@ -23,7 +22,7 @@ class VFSService {
 
     let retries = 0;
     while (retries < 15) {
-      const { data: session, error } = await authClient.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       if (!error && session?.user?.id) {
         return session.user.id;
       }
@@ -31,7 +30,7 @@ class VFSService {
       retries++;
     }
 
-    const { data: session, error } = await authClient.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session || !session.user || !session.user.id) {
       throw new Error('Unauthorized: VFS access blocked due to missing session context.');
     }
