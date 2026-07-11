@@ -195,10 +195,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (session) {
+    if (activeUser) {
       accountPoolService.getPool().then(pool => setAccounts(pool)).catch(console.warn);
     }
-  }, [session]);
+  }, [activeUser]);
 
   const [allFlattenedNodes, setAllFlattenedNodes] = useState<VFSNode[]>([]);
 
@@ -574,8 +574,8 @@ export default function App() {
                 <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
                   VAULT UNLOCKED
                 </span>
-                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${session?.user?.username || devSessionUser?.username || 'guest'}`}>
-                  @{session?.user?.username || devSessionUser?.username || 'guest'}
+                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
+                  @{activeUser?.username || 'guest'}
                 </span>
               </div>
             </div>
