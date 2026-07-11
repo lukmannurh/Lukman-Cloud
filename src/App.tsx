@@ -513,7 +513,29 @@ export default function App() {
       >
         <div className="p-4 border-b border-slate-800 flex items-center justify-between h-20">
           <div className="flex items-center gap-2 overflow-hidden">
-            <img src="/src/assets/logo.webp" alt="Lukman Cloud Logo" className="w-8 h-8 shrink-0 object-contain rounded-md" />
+            {activeUser?.image ? (
+              <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
+                <img 
+                  src={activeUser.image} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      const fallback = e.currentTarget.parentElement.querySelector('.fallback-initial');
+                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                    }
+                  }}
+                />
+                <span className="fallback-initial hidden text-white font-bold text-sm">
+                  {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            ) : (
+              <div className="w-8 h-8 shrink-0 rounded-md bg-indigo-500 border border-indigo-400/30 text-white flex items-center justify-center font-bold text-sm">
+                {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+              </div>
+            )}
 
             <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
               <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>

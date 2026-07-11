@@ -289,6 +289,20 @@ class VFSService {
        return newNode;
     }
     
+    // Boundary check to prevent 409 Conflict
+    const { data: existing, error: fetchErr } = await supabase
+      .from('vfs_nodes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('name', name)
+      .eq('parent_id', parentId === 'root' ? null : parentId)
+      .eq('is_folder', true)
+      .maybeSingle();
+
+    if (existing) {
+      return this.mapRowToNode(existing);
+    }
+    
     const { data, error } = await supabase
       .from('vfs_nodes')
       .insert({
@@ -302,7 +316,20 @@ class VFSService {
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
+        const { data: raceExisting } = await supabase
+          .from('vfs_nodes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('name', name)
+          .eq('parent_id', parentId === 'root' ? null : parentId)
+          .eq('is_folder', true)
+          .single();
+        if (raceExisting) return this.mapRowToNode(raceExisting);
+      }
+      throw error;
+    }
     return this.mapRowToNode(data);
   }
 
@@ -312,6 +339,37 @@ class VFSService {
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
+    
+    // Boundary check to prevent 409 Conflict
+    const { data: existing, error: fetchErr } = await supabase
+      .from('vfs_nodes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('name', fileNode.name)
+      .eq('parent_id', (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId)
+      .eq('is_folder', false)
+      .maybeSingle();
+
+    if (existing) {
+      // Upsert pattern: Update the existing file entry
+      const { data: updated, error: updateErr } = await supabase
+        .from('vfs_nodes')
+        .update({
+          size: fileNode.size || existing.size,
+          telegram_channel_id: fileNode.telegramChannelId || existing.telegram_channel_id,
+          raw_ref: { 
+            googleDriveFileId: fileNode.googleDriveFileId || existing.raw_ref?.googleDriveFileId,
+            telegramMessageId: fileNode.telegramMessageId || existing.raw_ref?.telegramMessageId,
+            createdAt: existing.raw_ref?.createdAt || fileNode.createdAt, 
+            modifiedAt: new Date().toISOString()
+          }
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (updateErr) throw updateErr;
+      return this.mapRowToNode(updated);
+    }
     
     const { data, error } = await supabase
       .from('vfs_nodes')
@@ -326,14 +384,27 @@ class VFSService {
         raw_ref: { 
           googleDriveFileId: fileNode.googleDriveFileId,
           telegramMessageId: fileNode.telegramMessageId,
-          createdAt: fileNode.createdAt, 
-          modifiedAt: fileNode.modifiedAt 
+          createdAt: fileNode.createdAt || new Date().toISOString(), 
+          modifiedAt: fileNode.modifiedAt || new Date().toISOString()
         }
       })
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
+        const { data: raceExisting } = await supabase
+          .from('vfs_nodes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('name', fileNode.name)
+          .eq('parent_id', (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId)
+          .eq('is_folder', false)
+          .single();
+        if (raceExisting) return this.mapRowToNode(raceExisting);
+      }
+      throw error;
+    }
     return this.mapRowToNode(data);
   }
 

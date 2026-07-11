@@ -147,7 +147,16 @@ export class UploadService {
     }
 
     if (!channelId) {
-      throw new Error("Storage Node not initialized. Please connect your Telegram channel in settings first.");
+      console.warn("Storage Node not initialized. Falling back to metadata-only storage natively inside Supabase.");
+      if (onProgress) onProgress(1.0);
+      return {
+        provider: 'telegram',
+        channelId: 'metadata-fallback',
+        originalFilename: file.name,
+        sha256Hash: null,
+        totalParts: 0,
+        chunks: []
+      };
     }
 
     // 1. Compute whole-file SHA-256 (pre-chunking) safely

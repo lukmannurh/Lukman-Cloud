@@ -88,7 +88,8 @@ export const authClient = {
       const mappedUser = {
         ...session.user,
         name: session.user.user_metadata?.name,
-        username: session.user.user_metadata?.username
+        username: session.user.user_metadata?.username,
+        image: session.user.user_metadata?.avatar_url
       };
       
       return { data: { user: mappedUser, session }, error: null };
