@@ -9,6 +9,7 @@
  */
 
 import { GoogleDriveRef, TelegramRef, TelegramChunk, PooledAccount } from '../../types';
+import { supabase } from './supabaseClient';
 
 const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3';
 
@@ -139,8 +140,22 @@ export class UploadService {
     onProgress?: (progress: number, speedText?: string) => void
   ): Promise<TelegramRef> {
     
-    // Auto-resolve destination channel from the routing matrix
-    let channelId = resolveChannelId(file.name);
+    // Auto-resolve destination channel from Supabase
+    let channelId = '';
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user?.id) {
+      const { data: node } = await supabase
+        .from('storage_nodes')
+        .select('channel_id')
+        .eq('provider', 'telegram')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+        
+      if (node?.channel_id) {
+        channelId = node.channel_id;
+      }
+    }
 
     if (!channelId && import.meta.env.DEV) {
       channelId = "MOCK_CH_9922";

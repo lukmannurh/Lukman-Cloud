@@ -21,6 +21,16 @@ class VFSService {
       return (window as any).__MOCK_SESSION_ID__;
     }
 
+    let retries = 0;
+    while (retries < 15) {
+      const { data: session, error } = await authClient.getSession();
+      if (!error && session?.user?.id) {
+        return session.user.id;
+      }
+      await new Promise(r => setTimeout(r, 100));
+      retries++;
+    }
+
     const { data: session, error } = await authClient.getSession();
     if (error || !session || !session.user || !session.user.id) {
       throw new Error('Unauthorized: VFS access blocked due to missing session context.');

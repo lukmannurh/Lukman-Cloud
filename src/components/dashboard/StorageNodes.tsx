@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { PooledAccount, VFSNode } from '../../types';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { FileStack, ShieldCheck, RefreshCw } from 'lucide-react';
+import { FileStack, ShieldCheck, RefreshCw, Send, CheckCircle2 } from 'lucide-react';
 import aetherNodeIcon from '../../assets/aether-node.svg';
+import { supabase } from '../../lib/services/supabaseClient';
 
 export interface TransferTask {
   id: string;
@@ -24,6 +26,46 @@ export function StorageNodes({
   onAddAccount,
   activeTransfers
 }: StorageNodesProps) {
+  const [tgChannel, setTgChannel] = useState('');
+  const [tgToken, setTgToken] = useState('');
+  const [tgSaving, setTgSaving] = useState(false);
+  const [tgSaved, setTgSaved] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        supabase.from('storage_nodes')
+          .select('channel_id, bot_token')
+          .eq('provider', 'telegram')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setTgChannel(data.channel_id || '');
+              setTgToken(data.bot_token || '');
+              setTgSaved(true);
+            }
+          });
+      }
+    });
+  }, []);
+
+  const handleSaveTelegram = async () => {
+    setTgSaving(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id && tgChannel) {
+      await supabase.from('storage_nodes').upsert({
+        user_id: session.user.id,
+        provider: 'telegram',
+        channel_id: tgChannel,
+        bot_token: tgToken
+      }, { onConflict: 'user_id, provider' });
+      setTgSaved(true);
+      setTimeout(() => setTgSaved(false), 3000);
+    }
+    setTgSaving(false);
+  };
+
   
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -189,6 +231,50 @@ export function StorageNodes({
                 <p className="text-sm font-bold text-slate-700">
                   {accounts.length > 0 ? (activeTransfers.length > 0 ? 'Active Mirroring Mode Enabled' : 'Active Mirroring Mode Enabled') : 'Idle / Standby'}
                 </p>
+              </div>
+            </div>
+
+            {/* Telegram Node Form */}
+            <div className="flex flex-col gap-3 mt-4 mb-2">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="text-sm font-medium text-slate-700">Telegram Cloud Core Binding</h3>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Target Channel / Chat ID</label>
+                    <input 
+                      type="text" 
+                      value={tgChannel} 
+                      onChange={e => setTgChannel(e.target.value)}
+                      placeholder="-1001234567890"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Bot Token (Optional for Private Bots)</label>
+                    <input 
+                      type="password" 
+                      value={tgToken} 
+                      onChange={e => setTgToken(e.target.value)}
+                      placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSaveTelegram} 
+                    disabled={tgSaving || !tgChannel} 
+                    className="w-full mt-1 bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2"
+                  >
+                    {tgSaving ? (
+                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    ) : tgSaved ? (
+                      <><CheckCircle2 className="w-4 h-4" /> Node Bound Successfully</>
+                    ) : (
+                      <><Send className="w-4 h-4" /> Save Configuration</>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
 
