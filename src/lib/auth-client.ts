@@ -83,7 +83,15 @@ export const authClient = {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) return { data: null, error: { message: 'No session' } };
-      return { data: { user: session.user, session }, error: null };
+      
+      // Map Supabase user metadata to top-level properties for Better Auth compatibility
+      const mappedUser = {
+        ...session.user,
+        name: session.user.user_metadata?.name,
+        username: session.user.user_metadata?.username
+      };
+      
+      return { data: { user: mappedUser, session }, error: null };
     } catch (err: any) {
       return { data: null, error: { message: err.message } };
     }
