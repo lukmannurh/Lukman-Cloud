@@ -9,6 +9,7 @@ import { LogOut } from 'lucide-react';
 
 import { BetterAuthForm } from './components/auth/BetterAuthForm';
 import { authClient } from './lib/auth-client';
+import { supabase } from './lib/services/supabaseClient';
 import { Button } from './components/ui/Button';
 import { Breadcrumbs, BreadcrumbItem } from './components/dashboard/Breadcrumbs';
 import { FileExplorer } from './components/dashboard/FileExplorer';
@@ -19,59 +20,88 @@ import { UploadGateway } from './components/dashboard/UploadGateway';
 import { VFSNode, AppConfig, PooledAccount, isGoogleDriveRef, isTelegramRef, GoogleDriveRef, TelegramRef } from './types';
 
 export default function App() {
-  // ── Better Auth Session State ──────────
-  const { data: session, isPending: sessionLoading } = authClient.useSession();
-  
   const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean>(false);
-  const [devSessionUser, setDevSessionUser] = useState<any>(() => {
-    try {
-      if (import.meta.env.DEV) {
-        const stored = localStorage.getItem('dev_session_user');
-        return stored ? JSON.parse(stored) : null;
-      }
-    } catch {
-      return null;
-    }
-    return null;
-  });
+  const [activeUser, setActiveUser] = useState<any>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState('');
 
-  const activeUser = devSessionUser || session?.user;
-
-  // Sync session state to local bypass state
+  // Native Supabase Session Sync
   useEffect(() => {
-    // Proactively purge cross-account notification bleed on auth context switch
-    setToastMessage(null);
-    
-    if (activeUser) {
-      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-        (window as any).__MOCK_SESSION_ID__ = activeUser.id;
+    let mounted = true;
+
+    // Check dev mock bypass first
+    const checkMockBypass = () => {
+      try {
+        if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+          const stored = localStorage.getItem('dev_session_user');
+          if (stored) return JSON.parse(stored);
+        }
+      } catch {
+        return null;
       }
-      setIsUserAuthenticated(true);
-      // Check onboarding guard for Google OAuth users or Instant Guest accounts
-      if (!activeUser?.username || activeUser?.username.startsWith('guest_aether_')) {
-        setShowOnboarding(true);
+      return null;
+    };
+
+    const processSession = async (session: any) => {
+      if (!mounted) return;
+      
+      const mockUser = checkMockBypass();
+      const currentUser = mockUser || session?.user;
+
+      if (currentUser) {
+        if (mockUser) {
+          (window as any).__MOCK_SESSION_ID__ = currentUser.id;
+        } else {
+          // Map native Supabase user props for the UI
+          currentUser.name = currentUser.user_metadata?.name;
+          currentUser.username = currentUser.user_metadata?.username;
+          currentUser.image = currentUser.user_metadata?.avatar_url;
+        }
+
+        setActiveUser(currentUser);
+        setIsUserAuthenticated(true);
+        setSessionLoading(false);
+
+        // Check onboarding guard for Google OAuth users or Instant Guest accounts
+        if (!currentUser?.username || currentUser?.username.startsWith('guest_aether_')) {
+          setShowOnboarding(true);
+        } else {
+          setShowOnboarding(false);
+          const syncGoogleDriveMatrix = async () => {
+            try {
+              // Background programmatic registration concept
+            } catch (e) {
+              console.error('Auto-link failed', e);
+            }
+          };
+          syncGoogleDriveMatrix();
+        }
       } else {
-        setShowOnboarding(false);
-        // Execute background programmatic registration for Google Drive tracking matrix
-        const syncGoogleDriveMatrix = async () => {
-          try {
-            // Concept: Fetch Better Auth provider tokens, if google exists, push to accountPoolService
-            // accountPoolService.addGoogleAccount(...)
-          } catch (e) {
-            console.error('Auto-link failed', e);
-          }
-        };
-        syncGoogleDriveMatrix();
+        setActiveUser(null);
+        setIsUserAuthenticated(false);
+        setSessionLoading(false);
       }
-    } else {
-      setIsUserAuthenticated(false);
-    }
-  }, [session, devSessionUser]);
+    };
+
+    // 1. Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      processSession(session);
+    });
+
+    // 2. Listen to state changes to break the routing loop
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      processSession(session);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const appState = isUserAuthenticated ? 'unlocked' : 'auth';
 

@@ -1,5 +1,4 @@
 import { supabase } from './services/supabaseClient';
-import { useState, useEffect } from 'react';
 
 const baseURL = import.meta.env.VITE_AUTH_MODE === 'live' ? window.location.origin : 'http://localhost:5173';
 
@@ -23,21 +22,6 @@ const getHeaders = () => {
 };
 
 export const authClient = {
-  useSession: () => {
-    const [data, setData] = useState<{ user: any, session: any } | null>(null);
-    const [isPending, setIsPending] = useState(true);
-    const [error, setError] = useState<any>(null);
-
-    useEffect(() => {
-      authClient.getSession().then((res) => {
-        setData(res.data);
-        setError(res.error);
-        setIsPending(false);
-      });
-    }, []);
-
-    return { data, isPending, error };
-  },
   signUp: {
     email: async (payload: any) => {
       try {
