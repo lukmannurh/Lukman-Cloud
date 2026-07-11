@@ -65,7 +65,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           return;
         }
         
-        window.location.reload();
+        // Resilient delay to mitigate client-side clock skew parameters during token injection
+        setTimeout(() => window.location.reload(), 800);
       } else {
         const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
         const { error: signInError } = await authClient.signIn.email({
@@ -79,7 +80,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           return;
         }
         
-        window.location.reload();
+        // Resilient delay to mitigate client-side clock skew parameters during token injection
+        setTimeout(() => window.location.reload(), 800);
       }
     } catch (err: any) {
       setError(err.message || 'Authentication error');
