@@ -14,9 +14,8 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
   const [localNodes, setLocalNodes] = useState<VFSNode[]>(vfsNodes);
 
   useEffect(() => {
-    // Re-hydration scan of VFS registry immediately on mount
-    vfsService.loadRegistry().then(nodes => setLocalNodes(nodes)).catch(console.error);
-  }, []);
+    setLocalNodes(vfsNodes);
+  }, [vfsNodes]);
 
   const totalQuota = accounts.reduce((sum, acc) => sum + (acc.totalQuota || 0), 0);
   

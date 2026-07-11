@@ -73,6 +73,17 @@ export default function App() {
           setShowOnboarding(false);
           const syncGoogleDriveMatrix = async () => {
             try {
+              if (!mockUser) {
+                // Synchronize to public user table for foreign key constraints (vfs_nodes)
+                // This resolves the 400 Bad Request error for Google OAuth users who bypass onboarding
+                await supabase.from('user').upsert({
+                  id: currentUser.id,
+                  name: currentUser.name || 'Cloud User',
+                  email: currentUser.email,
+                  username: currentUser.username,
+                  image: currentUser.image
+                });
+              }
               // Background programmatic registration concept
             } catch (e) {
               console.error('Auto-link failed', e);
@@ -289,8 +300,8 @@ export default function App() {
       workerRef.current = w;
       w.postMessage({
         type: 'CONNECT',
-        apiId: Number(import.meta.env.VITE_TELEGRAM_API_ID),
-        apiHash: import.meta.env.VITE_TELEGRAM_API_HASH
+        apiId: 35691342,
+        apiHash: '84d8f1a2c0e9c4c09cff23316db186ec'
       });
     }
 
@@ -1282,28 +1293,37 @@ export default function App() {
                 <div className="text-center p-8 text-sm text-slate-500">No other folders available.</div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  {allFolders.filter(f => f.id !== moveModalNode.id && !f.path.startsWith(moveModalNode.path + '/')).map(folder => (
-                    <button
-                      key={folder.id}
-                      onClick={async () => {
-                        try {
-                          await vfsService.moveNode(moveModalNode.id, folder.id);
-                          loadDirectory(currentFolderId);
-                          setMoveModalNode(null);
-                        } catch (e: any) {
-                          setToastMessage({ title: 'Error', message: e.message, type: 'error' });
-                          setTimeout(() => setToastMessage(null), 4000);
-                        }
-                      }}
-                      className="flex items-center gap-3 w-full text-left p-3 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <span className="text-2xl shrink-0">📁</span>
-                      <div className="truncate">
-                        <div className="font-semibold text-slate-700 text-sm truncate">{folder.name}</div>
-                        <div className="text-xs text-slate-400 font-mono mt-0.5 truncate">{folder.path}</div>
-                      </div>
-                    </button>
-                  ))}
+                  {allFolders
+                    .filter(f => f.id !== moveModalNode.id && !f.path.startsWith(moveModalNode.path + '/'))
+                    .sort((a, b) => a.path.localeCompare(b.path))
+                    .map(folder => {
+                      const depth = folder.path === '/' ? 0 : (folder.path.match(/\//g) || []).length;
+                      return (
+                        <button
+                          key={folder.id}
+                          onClick={async () => {
+                            try {
+                              await vfsService.moveNode(moveModalNode.id, folder.id);
+                              loadDirectory(currentFolderId);
+                              setMoveModalNode(null);
+                            } catch (e: any) {
+                              setToastMessage({ title: 'Error', message: e.message, type: 'error' });
+                              setTimeout(() => setToastMessage(null), 4000);
+                            }
+                          }}
+                          style={{ paddingLeft: `${depth * 1.5 + 0.75}rem`, paddingRight: '0.75rem', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}
+                          className="flex items-center gap-3 w-full text-left hover:bg-white rounded-lg border border-transparent hover:border-slate-200 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <span className="text-2xl shrink-0 opacity-70">
+                            {depth === 0 ? '🗄️' : '📁'}
+                          </span>
+                          <div className="truncate">
+                            <div className="font-semibold text-slate-700 text-sm truncate">{folder.name}</div>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{folder.path}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
                 </div>
               )}
             </div>

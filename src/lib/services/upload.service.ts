@@ -20,29 +20,29 @@ const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3';
  */
 const TELEGRAM_CHANNEL_MAP: Record<string, string> = {
   // Images → Image Channel
-  jpg:  import.meta.env.VITE_TG_CHANNEL_IMAGE || '',
-  jpeg: import.meta.env.VITE_TG_CHANNEL_IMAGE || '',
-  png:  import.meta.env.VITE_TG_CHANNEL_IMAGE || '',
-  gif:  import.meta.env.VITE_TG_CHANNEL_IMAGE || '',
-  webp: import.meta.env.VITE_TG_CHANNEL_IMAGE || '',
+  jpg:  '-1004359856680',
+  jpeg: '-1004359856680',
+  png:  '-1004359856680',
+  gif:  '-1004359856680',
+  webp: '-1004359856680',
   // Videos → Video Channel
-  mp4:  import.meta.env.VITE_TG_CHANNEL_VIDEO || '',
-  mkv:  import.meta.env.VITE_TG_CHANNEL_VIDEO || '',
-  webm: import.meta.env.VITE_TG_CHANNEL_VIDEO || '',
-  avi:  import.meta.env.VITE_TG_CHANNEL_VIDEO || '',
+  mp4:  '-1004381141913',
+  mkv:  '-1004381141913',
+  webm: '-1004381141913',
+  avi:  '-1004381141913',
   // Documents → Document Channel
-  pdf:  import.meta.env.VITE_TG_CHANNEL_DOC || '',
-  docx: import.meta.env.VITE_TG_CHANNEL_DOC || '',
-  txt:  import.meta.env.VITE_TG_CHANNEL_DOC || '',
-  xlsx: import.meta.env.VITE_TG_CHANNEL_DOC || '',
+  pdf:  '-1004398954359',
+  docx: '-1004398954359',
+  txt:  '-1004398954359',
+  xlsx: '-1004398954359',
   // Archives → Archive Channel
-  zip:  import.meta.env.VITE_TG_CHANNEL_ARCHIVE || '',
-  rar:  import.meta.env.VITE_TG_CHANNEL_ARCHIVE || '',
-  '7z': import.meta.env.VITE_TG_CHANNEL_ARCHIVE || '',
+  zip:  '-1004477097252',
+  rar:  '-1004477097252',
+  '7z': '-1004477097252',
 };
 
 /** Global fallback — catches every extension not listed above */
-const TELEGRAM_FALLBACK_CHANNEL = import.meta.env.VITE_TG_CHANNEL_FALLBACK || '';
+const TELEGRAM_FALLBACK_CHANNEL = '-1004294207603';
 
 /** Resolves the target Telegram channel ID for a given filename */
 function resolveChannelId(filename: string): string {
@@ -140,26 +140,8 @@ export class UploadService {
     onProgress?: (progress: number, speedText?: string) => void
   ): Promise<TelegramRef> {
     
-    // Auto-resolve destination channel from Supabase
-    let channelId = '';
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user?.id) {
-      const { data: node } = await supabase
-        .from('storage_nodes')
-        .select('channel_id')
-        .eq('provider', 'telegram')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-        
-      if (node?.channel_id) {
-        channelId = node.channel_id;
-      }
-    }
-
-    if (!channelId && import.meta.env.DEV) {
-      channelId = "MOCK_CH_9922";
-    }
+    // Auto-resolve destination channel from Extension Matrix
+    const channelId = resolveChannelId(file.name);
 
     if (!channelId) {
       console.warn("Storage Node not initialized. Falling back to metadata-only storage natively inside Supabase.");
@@ -259,7 +241,7 @@ export class UploadService {
     // 4. Return the TelegramRef structure enforcing INV-01 and INV-02
     return {
       provider: 'telegram',
-      channelId,
+      channelId: channelId, // Return the actual routed channel
       originalFilename: file.name,
       sha256Hash: sha256Hex,
       totalParts,
