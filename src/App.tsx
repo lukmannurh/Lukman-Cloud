@@ -40,12 +40,13 @@ export default function App() {
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState('');
 
+  const activeUser = devSessionUser || session?.user;
+
   // Sync session state to local bypass state
   useEffect(() => {
     // Proactively purge cross-account notification bleed on auth context switch
     setToastMessage(null);
     
-    const activeUser = devSessionUser || session?.user;
     if (activeUser) {
       if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
         (window as any).__MOCK_SESSION_ID__ = activeUser.id;
