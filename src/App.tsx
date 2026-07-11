@@ -738,9 +738,25 @@ export default function App() {
                   return;
                 }
                 
-                // The username plugin uses updateUser to update user fields
-                const res = await authClient.updateUser({ username: newUsername } as any);
-                if (res.error) throw res.error;
+                // 1. Update native Supabase user metadata
+                const { error: metaErr } = await supabase.auth.updateUser({
+                  data: { username: newUsername }
+                });
+                if (metaErr) throw metaErr;
+
+                // 2. Synchronize to public user table for foreign key constraints (vfs_nodes)
+                const { error: dbErr } = await supabase.from('user').upsert({
+                  id: activeUser.id,
+                  name: activeUser.name || 'Guest User',
+                  email: activeUser.email || `${newUsername}@lukmancloud.local`,
+                  emailVerified: true,
+                  image: activeUser.image || '',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  username: newUsername
+                });
+                if (dbErr) throw dbErr;
+
                 window.location.reload();
               } catch (err: any) {
                 setOnboardingError(err.message || 'Failed to save username');
