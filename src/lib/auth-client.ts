@@ -88,6 +88,17 @@ export const authClient = {
       return { data: null, error: { message: err.message } };
     }
   },
+  updateUser: async (payload: any) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: payload
+      });
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message } };
+    }
+  },
   signOut: async () => {
     await supabase.auth.signOut();
     return { error: null };
