@@ -1,16 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const getEnv = (nodeKey: string, viteKey: string): string => {
-  if (typeof process !== 'undefined' && process.env) {
-    if (process.env[nodeKey]) return process.env[nodeKey] as string;
-    if (process.env[viteKey]) return process.env[viteKey] as string;
-  }
-  // @ts-ignore
-  if (typeof import.meta !== 'undefined' && import.meta.env) return import.meta.env[viteKey] as string;
-  return 'https://placeholder.supabase.co';
-};
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabaseUrl = getEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("CRITICAL ERROR: Supabase URL or Anon Key is completely missing from Vite environment! Did you forget to add VITE_SUPABASE_URL to your Vercel or local .env?");
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder'
+);
