@@ -92,6 +92,14 @@ export const authClient = {
         image: session.user.user_metadata?.avatar_url
       };
       
+      // Phase 2: Enforce Public User Schema Sync to satisfy vfs_nodes_user_id_fkey
+      // Fire-and-forget or await the upsert into the public 'user' table
+      await supabase.from('user').upsert({
+        id: mappedUser.id,
+        email: mappedUser.email,
+        name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User'
+      }, { onConflict: 'id' }).catch(err => console.error("Failed to sync public user schema:", err));
+      
       return { data: { user: mappedUser, session }, error: null };
     } catch (err: any) {
       return { data: null, error: { message: err.message } };
