@@ -71,7 +71,10 @@ export default function App() {
               name: currentUser.name || currentUser.email?.split('@')[0] || 'Unknown User',
               email: currentUser.email,
               username: currentUser.username || currentUser.email?.split('@')[0] || `user_${Date.now()}`,
-              image: currentUser.image || null
+              image: currentUser.image || null,
+              emailVerified: true,
+              createdAt: currentUser.createdAt || new Date().toISOString(),
+              updatedAt: currentUser.updatedAt || new Date().toISOString()
             });
           }
         } catch (e) {
