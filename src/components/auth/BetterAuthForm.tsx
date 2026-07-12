@@ -57,7 +57,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         
         // Block if username is taken in public.user table
         const { data: existingUser } = await supabase
-          .from('"user"')
+          .from('user')
           .select('username')
           .eq('username', normalizedUsername)
           .maybeSingle();
@@ -92,6 +92,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         });
 
         if (signInError) {
+          console.error('[Sign In Error]:', signInError);
           setError(signInError.message || 'Invalid credentials');
           setLoading(false);
           return;

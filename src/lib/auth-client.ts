@@ -78,7 +78,7 @@ export const authClient = {
       
       // Phase 2: Enforce Public User Schema Sync to satisfy vfs_nodes_user_id_fkey
       // Await the upsert into the public 'user' table before returning to prevent VFS race conditions
-      const { error: upsertError } = await supabase.from('"user"').upsert({
+      const { error: upsertError } = await supabase.from('user').upsert({
         id: mappedUser.id,
         email: mappedUser.email,
         name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User',
