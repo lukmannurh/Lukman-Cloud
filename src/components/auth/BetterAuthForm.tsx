@@ -57,7 +57,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         
         // Block if username is taken in public.user table
         const { data: existingUser } = await supabase
-          .from('user')
+          .from('"user"')
           .select('username')
           .eq('username', normalizedUsername)
           .maybeSingle();
@@ -183,15 +183,17 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       if (guestError) {
         setError(guestError.message || 'Failed to generate guest account');
         setIsGuestLoading(false);
-        setShowGuestModal(false);
+        // Do not close modal on error so they can still see credentials
         return;
       }
 
-      window.location.reload();
+      // Enforce a component state delay so it doesn't abruptly unmount
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Guest generation error');
       setIsGuestLoading(false);
-      setShowGuestModal(false);
     }
   };
 

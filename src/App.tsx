@@ -66,7 +66,7 @@ export default function App() {
           if (!mockUser) {
             // Synchronize to public user table for foreign key constraints (vfs_nodes)
             // This resolves the 400 Bad Request error for all users
-            await supabase.from('user').upsert({
+            await supabase.from('"user"').upsert({
               id: currentUser.id,
               name: currentUser.name || currentUser.email?.split('@')[0] || 'Unknown User',
               email: currentUser.email,
@@ -760,7 +760,7 @@ export default function App() {
                 if (metaErr) throw metaErr;
 
                 // 2. Synchronize to public user table for foreign key constraints (vfs_nodes)
-                const { error: dbErr } = await supabase.from('user').upsert({
+                const { error: dbErr } = await supabase.from('"user"').upsert({
                   id: activeUser.id,
                   name: activeUser.name || 'Guest User',
                   email: activeUser.email || `${newUsername}@lukmancloud.local`,
