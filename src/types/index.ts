@@ -77,7 +77,9 @@ export interface VFSNode {
   storageRef?: {
     provider: 'gdrive' | 'telegram';
     accountId?: string;
-    fileId: string;
+    fileId?: string;
+    channel_id?: string;
+    message_id?: number;
   };
   // Additional metadata for UI
   size?: number;

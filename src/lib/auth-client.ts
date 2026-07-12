@@ -77,12 +77,19 @@ export const authClient = {
       };
       
       // Phase 2: Enforce Public User Schema Sync to satisfy vfs_nodes_user_id_fkey
-      // Fire-and-forget or await the upsert into the public 'user' table
-      await supabase.from('user').upsert({
+      // Await the upsert into the public 'user' table before returning to prevent VFS race conditions
+      const { error: upsertError } = await supabase.from('user').upsert({
         id: mappedUser.id,
         email: mappedUser.email,
-        name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User'
-      }, { onConflict: 'id' }).catch(err => console.error("Failed to sync public user schema:", err));
+        name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User',
+        username: mappedUser.username || mappedUser.email?.split('@')[0] || `user_${Date.now()}`,
+        image: mappedUser.image || null
+      }, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error("Failed to sync public user schema:", upsertError);
+        // Continue but log the failure which caused the 400 Bad Request
+      }
       
       return { data: { user: mappedUser, session }, error: null };
     } catch (err: any) {

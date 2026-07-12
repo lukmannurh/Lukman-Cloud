@@ -102,16 +102,16 @@ export function DirectoryPickerModal({ isOpen, onClose, onConfirm, title }: Dire
           ) : (
             <div className="flex flex-col">
               <div 
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${selectedFolderId === null ? 'bg-blue-100 text-blue-700' : 'hover:bg-slate-100 text-slate-700'}`}
-                onClick={() => setSelectedFolderId(null)}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${selectedFolderId === 'root' || selectedFolderId === null ? 'bg-blue-100 text-blue-700' : 'hover:bg-slate-100 text-slate-700'}`}
+                onClick={() => setSelectedFolderId('root')}
               >
                 <div className="w-4 h-4 shrink-0 flex items-center justify-center cursor-pointer hover:bg-slate-200 rounded" onClick={(e) => toggleFolder('root', e)}>
                   {expandedFolders.has('root') ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                 </div>
-                <Folder className={`w-4 h-4 ${selectedFolderId === null ? 'text-blue-500 fill-blue-500/20' : 'text-slate-400 fill-slate-400/20'}`} />
+                <Folder className={`w-4 h-4 ${selectedFolderId === 'root' || selectedFolderId === null ? 'text-blue-500 fill-blue-500/20' : 'text-slate-400 fill-slate-400/20'}`} />
                 <span className="text-sm font-medium">My Drive</span>
               </div>
-              {expandedFolders.has('root') && renderTree(null, 1)}
+              {expandedFolders.has('root') && renderTree('root', 1)}
             </div>
           )}
         </div>

@@ -15,7 +15,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
   const [error, setError] = useState('');
   
   const [showGuestModal, setShowGuestModal] = useState(false);
-  const [guestCredentials, setGuestCredentials] = useState({ username: '', password: '' });
+  const [guestCredentials, setGuestCredentials] = useState({ username: '', password: '', id: '' });
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,42 +139,9 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
       const generatedUsername = `guest_aether_${randomSuffix}`;
       const generatedPassword = Math.random().toString(36).slice(-10) + "X1!";
-      const dummyEmail = `${generatedUsername}@lukman.cloud`;
 
-      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-        const LOCAL_DB_KEY = 'lukman_cloud_mock_users_db';
-        const users = JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]');
-        const newUser = {
-          id: `dev-guest-${Date.now()}`,
-          username: generatedUsername,
-          name: `Guest ${randomSuffix}`,
-          email: dummyEmail,
-          password: generatedPassword,
-          telegram_channel_id: "MOCK_CH_9922"
-        };
-        users.push(newUser);
-        localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
-        
-        setGuestCredentials({ username: generatedUsername, password: generatedPassword, id: newUser.id } as any);
-        setShowGuestModal(true);
-        setLoading(false);
-        return;
-      }
-
-      const { error: guestError } = await authClient.signUp.email({
-        email: dummyEmail,
-        password: generatedPassword,
-        name: `Guest ${randomSuffix}`,
-        username: generatedUsername,
-      });
-
-      if (guestError) {
-        setError(guestError.message || 'Failed to generate guest account');
-        setLoading(false);
-        return;
-      }
-
-      setGuestCredentials({ username: generatedUsername, password: generatedPassword } as any);
+      // Only show the modal first, DO NOT trigger signup yet
+      setGuestCredentials({ username: generatedUsername, password: generatedPassword, id: `dev-guest-${Date.now()}` });
       setShowGuestModal(true);
       setLoading(false);
     } catch (err: any) {
@@ -181,6 +149,52 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       setLoading(false);
     }
   };
+
+  const handleGuestConfirm = async () => {
+    setIsGuestLoading(true);
+    try {
+      const dummyEmail = `${guestCredentials.username}@lukman.cloud`;
+
+      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+        const LOCAL_DB_KEY = 'lukman_cloud_mock_users_db';
+        const users = JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]');
+        const newUser = {
+          id: guestCredentials.id,
+          username: guestCredentials.username,
+          name: `Guest User`,
+          email: dummyEmail,
+          password: guestCredentials.password,
+          telegram_channel_id: "MOCK_CH_9922"
+        };
+        users.push(newUser);
+        localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
+        
+        onDevBypass?.(newUser);
+        return;
+      }
+
+      const { error: guestError } = await authClient.signUp.email({
+        email: dummyEmail,
+        password: guestCredentials.password,
+        name: `Guest User`,
+        username: guestCredentials.username,
+      });
+
+      if (guestError) {
+        setError(guestError.message || 'Failed to generate guest account');
+        setIsGuestLoading(false);
+        setShowGuestModal(false);
+        return;
+      }
+
+      window.location.reload();
+    } catch (err: any) {
+      setError(err.message || 'Guest generation error');
+      setIsGuestLoading(false);
+      setShowGuestModal(false);
+    }
+  };
+
 
   const copyToClipboard = () => {
     const text = `Username: ${guestCredentials.username}\nPassword: ${guestCredentials.password}`;
@@ -225,21 +239,11 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 Copy to Clipboard
               </button>
               <button 
-                onClick={() => {
-                  if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-                    onDevBypass?.({
-                      id: (guestCredentials as any).id,
-                      name: 'Guest Tester',
-                      email: `${guestCredentials.username}@lukman.cloud`,
-                      username: guestCredentials.username
-                    });
-                  } else {
-                    window.location.reload();
-                  }
-                }} 
-                className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 py-2.5 rounded-lg flex items-center transition-all"
+                onClick={handleGuestConfirm} 
+                disabled={isGuestLoading}
+                className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 py-2.5 rounded-lg flex items-center transition-all disabled:opacity-70"
               >
-                Enter Vault
+                {isGuestLoading ? 'Activating...' : 'Enter Vault'}
               </button>
             </div>
           </div>

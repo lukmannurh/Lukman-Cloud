@@ -34,11 +34,12 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
   let tgBytes = 0;
 
   localNodes.forEach(node => {
-    if (isVFSFile(node) && node.rawRef) {
-      if (isGoogleDriveRef(node.rawRef)) {
+    if (node.type === 'file') {
+      const isGdrive = node.storageRef?.provider === 'gdrive' || (node as any).rawRef?.provider === 'gdrive' || (node as any).googleDriveFileId;
+      if (isGdrive) {
         gdriveCount++;
         gdriveBytes += node.size || 0;
-      } else if (isTelegramRef(node.rawRef)) {
+      } else {
         tgCount++;
         tgBytes += node.size || 0;
       }

@@ -68,10 +68,10 @@ export default function App() {
             // This resolves the 400 Bad Request error for all users
             await supabase.from('user').upsert({
               id: currentUser.id,
-              name: currentUser.name || 'Cloud User',
+              name: currentUser.name || currentUser.email?.split('@')[0] || 'Unknown User',
               email: currentUser.email,
-              username: currentUser.username || currentUser.email?.split('@')[0],
-              image: currentUser.image
+              username: currentUser.username || currentUser.email?.split('@')[0] || `user_${Date.now()}`,
+              image: currentUser.image || null
             });
           }
         } catch (e) {
@@ -366,7 +366,12 @@ export default function App() {
           mimeType: file.type || 'application/octet-stream',
           createdAt: new Date().toISOString(),
           modifiedAt: new Date().toISOString(),
-          storageRef: { provider: 'telegram', fileId: (tgRef as TelegramRef).channelId },
+          storageRef: { 
+            provider: 'telegram', 
+            channel_id: (tgRef as TelegramRef).channelId,
+            message_id: (tgRef as TelegramRef).chunks[0]?.messageId,
+            fileId: (tgRef as TelegramRef).channelId
+          },
           rawRef: tgRef as TelegramRef,
           telegramChannelId: (tgRef as TelegramRef).channelId
         });
