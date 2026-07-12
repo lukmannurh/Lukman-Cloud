@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { authClient } from '../../lib/auth-client';
+import { supabase } from '../../lib/services/supabaseClient';
 import logoAsset from '../../assets/logo.webp';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -51,7 +52,22 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       }
       
       if (isSignUp) {
-        const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
+        const normalizedUsername = username.toLowerCase();
+        
+        // Block if username is taken in public.user table
+        const { data: existingUser } = await supabase
+          .from('user')
+          .select('username')
+          .eq('username', normalizedUsername)
+          .maybeSingle();
+          
+        if (existingUser) {
+          setError('This username is already taken. Please choose another.');
+          setLoading(false);
+          return;
+        }
+
+        const dummyEmail = `${normalizedUsername}@lukman.cloud`;
         const { error: signUpError } = await authClient.signUp.email({
           email: dummyEmail,
           password,

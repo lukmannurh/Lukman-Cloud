@@ -167,6 +167,7 @@ export function FileExplorer({
 
 
   const renderContextMenu = (node: VFSNode) => {
+    const isRoot = node.id === 'root' || node.name === 'Root';
     return (
       <div className="relative">
         <button 
@@ -198,18 +199,22 @@ export function FileExplorer({
             >
               <Copy className="w-4 h-4" /> Make a Copy
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'move' }); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2"
-            >
-              <Folder className="w-4 h-4" /> Move to
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setRenameInput(node.name); setRenameNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2 border-t border-slate-100"
-            >
-              <Edit2 className="w-4 h-4" /> Rename
-            </button>
+            {!isRoot && (
+              <>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'move' }); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2"
+                >
+                  <Folder className="w-4 h-4" /> Move to
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setRenameInput(node.name); setRenameNode(node); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2 border-t border-slate-100"
+                >
+                  <Edit2 className="w-4 h-4" /> Rename
+                </button>
+              </>
+            )}
             <button 
               onClick={(e) => { 
                 e.stopPropagation(); 
@@ -229,12 +234,14 @@ export function FileExplorer({
             >
               <Info className="w-4 h-4" /> Detail / Info
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); onDeleteNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 transition-colors flex items-center gap-2 border-t border-rose-50"
-            >
-              <X className="w-4 h-4" /> Delete
-            </button>
+            {!isRoot && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); onDeleteNode(node); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 transition-colors flex items-center gap-2 border-t border-rose-50"
+              >
+                <X className="w-4 h-4" /> Delete
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -62,34 +62,33 @@ export default function App() {
           currentUser.image = currentUser.user_metadata?.avatar_url;
         }
 
-        setActiveUser(currentUser);
-        setIsUserAuthenticated(true);
-        setSessionLoading(false);
+        try {
+          if (!mockUser) {
+            // Synchronize to public user table for foreign key constraints (vfs_nodes)
+            // This resolves the 400 Bad Request error for all users
+            await supabase.from('user').upsert({
+              id: currentUser.id,
+              name: currentUser.name || 'Cloud User',
+              email: currentUser.email,
+              username: currentUser.username || currentUser.email?.split('@')[0],
+              image: currentUser.image
+            });
+          }
+        } catch (e) {
+          console.error('Auto-link failed', e);
+        }
 
         // Check onboarding guard for Google OAuth users or Instant Guest accounts
         if (!currentUser?.username || currentUser?.username.startsWith('guest_aether_')) {
+          setActiveUser(currentUser);
+          setIsUserAuthenticated(true);
           setShowOnboarding(true);
+          setSessionLoading(false);
         } else {
           setShowOnboarding(false);
-          const syncGoogleDriveMatrix = async () => {
-            try {
-              if (!mockUser) {
-                // Synchronize to public user table for foreign key constraints (vfs_nodes)
-                // This resolves the 400 Bad Request error for Google OAuth users who bypass onboarding
-                await supabase.from('user').upsert({
-                  id: currentUser.id,
-                  name: currentUser.name || 'Cloud User',
-                  email: currentUser.email,
-                  username: currentUser.username,
-                  image: currentUser.image
-                });
-              }
-              // Background programmatic registration concept
-            } catch (e) {
-              console.error('Auto-link failed', e);
-            }
-          };
-          syncGoogleDriveMatrix();
+          setActiveUser(currentUser);
+          setIsUserAuthenticated(true);
+          setSessionLoading(false);
         }
       } else {
         setActiveUser(null);

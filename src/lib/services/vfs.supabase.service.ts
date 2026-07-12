@@ -418,8 +418,13 @@ class VFSService {
   }
 
   async deleteNode(nodeId: string): Promise<VFSNode[]> {
+    if (nodeId === 'root') throw new Error('System root directory cannot be deleted.');
     const userId = await this.getUserId();
     
+    // Also protect by fetching the node just in case it is "Root"
+    const node = await this.getNode(nodeId);
+    if (node && node.name === 'Root') throw new Error('System root directory cannot be deleted.');
+
     // We need to return all deleted nodes to physical layer
     const nodes = await this.loadRegistry();
     const deletedNodes: VFSNode[] = [];
@@ -451,8 +456,11 @@ class VFSService {
   }
 
   async moveNode(nodeId: string, newParentId: string): Promise<VFSNode> {
+    if (nodeId === 'root') throw new Error('System root directory cannot be moved.');
     const userId = await this.getUserId();
     const node = await this.getNode(nodeId);
+    if (node && node.name === 'Root') throw new Error('System root directory cannot be moved.');
+
     const newParent = await this.getNode(newParentId);
     
     if (!node || !newParent) throw new Error('Node or parent not found');
@@ -495,8 +503,11 @@ class VFSService {
   }
 
   async renameNode(nodeId: string, newName: string): Promise<VFSNode> {
+    if (nodeId === 'root') throw new Error('System root directory cannot be renamed.');
     const userId = await this.getUserId();
     const node = await this.getNode(nodeId);
+    if (node && node.name === 'Root') throw new Error('System root directory cannot be renamed.');
+
     if (!node) throw new Error('Node not found');
     
     const oldPath = node.path;
