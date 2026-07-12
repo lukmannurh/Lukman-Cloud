@@ -83,7 +83,10 @@ export const authClient = {
         email: mappedUser.email,
         name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User',
         username: mappedUser.username || mappedUser.email?.split('@')[0] || `user_${Date.now()}`,
-        image: mappedUser.image || null
+        image: mappedUser.image || null,
+        emailVerified: true,
+        createdAt: mappedUser.createdAt || new Date().toISOString(),
+        updatedAt: mappedUser.updatedAt || new Date().toISOString()
       }, { onConflict: 'id' });
 
       if (upsertError) {

@@ -764,11 +764,11 @@ export default function App() {
                   id: activeUser.id,
                   name: activeUser.name || 'Guest User',
                   email: activeUser.email || `${newUsername}@lukmancloud.local`,
+                  username: newUsername,
+                  image: activeUser.image || null,
                   emailVerified: true,
-                  image: activeUser.image || '',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  username: newUsername
+                  createdAt: activeUser.createdAt || new Date().toISOString(),
+                  updatedAt: activeUser.updatedAt || new Date().toISOString()
                 });
                 if (dbErr) throw dbErr;
 
