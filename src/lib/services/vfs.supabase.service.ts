@@ -53,7 +53,6 @@ class VFSService {
       telegramMessageId: row.raw_ref?.telegramMessageId,
       createdAt: row.raw_ref?.createdAt || new Date().toISOString(),
       modifiedAt: row.raw_ref?.modifiedAt || new Date().toISOString(),
-      storageRef: row.storage_ref,
       rawRef: row.raw_ref,
       children: [] // Children are dynamically populated if needed, or fetched via queries
     };
@@ -402,7 +401,6 @@ class VFSService {
         is_folder: false,
         telegram_channel_id: fileNode.telegramChannelId,
         user_id: userId,
-        storage_ref: fileNode.storageRef,
         raw_ref: fileNode.rawRef || { 
           googleDriveFileId: fileNode.googleDriveFileId,
           telegramMessageId: fileNode.telegramMessageId,
