@@ -301,14 +301,17 @@ class VFSService {
     }
     
     // Boundary check to prevent 409 Conflict
-    const { data: existing, error: fetchErr } = await supabase
+    let fetchQuery = supabase
       .from('vfs_nodes')
       .select('*')
       .eq('user_id', userId)
       .eq('name', name)
-      .eq('parent_id', parentId === 'root' ? null : parentId)
-      .eq('is_folder', true)
-      .maybeSingle();
+      .eq('is_folder', true);
+      
+    if (parentId === 'root') fetchQuery = fetchQuery.is('parent_id', null);
+    else fetchQuery = fetchQuery.eq('parent_id', parentId);
+    
+    const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
 
     if (existing) {
       return this.mapRowToNode(existing);
@@ -329,15 +332,18 @@ class VFSService {
       
     if (error) {
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
-        const { data: raceExisting } = await supabase
+        let insertQuery = supabase
           .from('vfs_nodes')
           .select('*')
           .eq('user_id', userId)
           .eq('name', name)
-          .eq('parent_id', parentId === 'root' ? null : parentId)
-          .eq('is_folder', true)
-          .single();
-        if (raceExisting) return this.mapRowToNode(raceExisting);
+          .eq('is_folder', true);
+          
+        if (parentId === 'root') insertQuery = insertQuery.is('parent_id', null);
+        else insertQuery = insertQuery.eq('parent_id', parentId);
+        
+        const { data: fetchAfterInsert, error: fetchAfterErr } = await insertQuery.single();
+        if (fetchAfterInsert) return this.mapRowToNode(fetchAfterInsert);
       }
       throw error;
     }
@@ -352,14 +358,18 @@ class VFSService {
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
     
     // Boundary check to prevent 409 Conflict
-    const { data: existing, error: fetchErr } = await supabase
+    let fetchQuery = supabase
       .from('vfs_nodes')
       .select('*')
       .eq('user_id', userId)
       .eq('name', fileNode.name)
-      .eq('parent_id', (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId)
-      .eq('is_folder', false)
-      .maybeSingle();
+      .eq('is_folder', false);
+      
+    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+    if (pid === null) fetchQuery = fetchQuery.is('parent_id', null);
+    else fetchQuery = fetchQuery.eq('parent_id', pid);
+    
+    const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
 
     if (existing) {
       // Upsert pattern: Update the existing file entry
@@ -405,15 +415,19 @@ class VFSService {
       
     if (error) {
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
-        const { data: raceExisting } = await supabase
+        let fetchAfterQuery = supabase
           .from('vfs_nodes')
           .select('*')
           .eq('user_id', userId)
           .eq('name', fileNode.name)
-          .eq('parent_id', (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId)
-          .eq('is_folder', false)
-          .single();
-        if (raceExisting) return this.mapRowToNode(raceExisting);
+          .eq('is_folder', false);
+          
+        const afterPid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+        if (afterPid === null) fetchAfterQuery = fetchAfterQuery.is('parent_id', null);
+        else fetchAfterQuery = fetchAfterQuery.eq('parent_id', afterPid);
+        
+        const { data: fallbackFetch, error: fallbackErr } = await fetchAfterQuery.single();
+        if (fallbackFetch) return this.mapRowToNode(fallbackFetch);
       }
       throw error;
     }
