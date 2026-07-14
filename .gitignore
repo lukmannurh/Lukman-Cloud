@@ -45,3 +45,20 @@ out/
 .nuxt/
 .vuepress/
 .serverless/
+
+# Development and Scratch Artifacts
+alpha_fail*.png
+upload_fail*.png
+*.html
+!index.html
+check_db*.cjs
+create_*.cjs
+create_*.js
+e2e_test_file.txt
+find_user.mjs
+fix_quotes.cjs
+generate-totp.ts
+get_channels.mjs
+test_import.ts
+test_prod.mjs
+.tempmediaStorage/

@@ -76,6 +76,23 @@ export default function App() {
               createdAt: currentUser.createdAt || new Date().toISOString(),
               updatedAt: currentUser.updatedAt || new Date().toISOString()
             });
+
+            // Phase 2: Create root directory for user if missing
+            const { data: rootNode } = await supabase
+              .from('vfs_nodes')
+              .select('id')
+              .eq('user_id', currentUser.id)
+              .is('parent_id', null)
+              .maybeSingle();
+
+            if (!rootNode) {
+              await supabase.from('vfs_nodes').insert({
+                name: 'Root',
+                path: '/',
+                is_folder: true,
+                user_id: currentUser.id
+              });
+            }
           }
         } catch (e) {
           console.error('Auto-link failed', e);

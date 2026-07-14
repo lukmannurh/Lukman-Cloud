@@ -13,6 +13,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestCredentials, setGuestCredentials] = useState({ username: '', password: '', id: '' });
@@ -22,6 +23,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     
     try {
       if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
@@ -82,8 +84,11 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           return;
         }
         
-        // Resilient delay to mitigate client-side clock skew parameters during token injection
-        setTimeout(() => window.location.reload(), 800);
+        setSuccess('Account created successfully! Please sign in.');
+        setIsSignUp(false);
+        setPassword('');
+        setLoading(false);
+        return;
       } else {
         const dummyEmail = `${username.toLowerCase()}@lukman.cloud`;
         const { error: signInError } = await authClient.signIn.email({
@@ -136,6 +141,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
   const handleGuestAccess = async () => {
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
       const generatedUsername = `guest_aether_${randomSuffix}`;
@@ -153,7 +159,24 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
 
   const handleGuestConfirm = async () => {
     setIsGuestLoading(true);
+    setError('');
+    setSuccess('');
     try {
+      const normalizedUsername = guestCredentials.username.toLowerCase();
+      
+      // Block if guest username is already taken in public.user table
+      const { data: existingUser } = await supabase
+        .from('user')
+        .select('username')
+        .eq('username', normalizedUsername)
+        .maybeSingle();
+        
+      if (existingUser) {
+        setError('This guest username is already taken. Please close and try generating again.');
+        setIsGuestLoading(false);
+        return;
+      }
+
       const dummyEmail = `${guestCredentials.username}@lukman.cloud`;
 
       if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
@@ -271,7 +294,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         <p className="mt-2 text-center text-sm text-slate-300">
           {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
           <button 
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+            onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
             className="font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none"
           >
             {isSignUp ? 'Sign in instead' : 'Create an account'}
@@ -293,6 +316,20 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-rose-200 font-medium">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {success && (
+              <div className="bg-emerald-500/10 border-l-4 border-emerald-500 p-4 rounded-r-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-emerald-200 font-medium">{success}</p>
                   </div>
                 </div>
               </div>

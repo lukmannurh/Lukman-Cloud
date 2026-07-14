@@ -76,13 +76,26 @@ export const authClient = {
         image: session.user.user_metadata?.avatar_url
       };
       
+      let desiredUsername = mappedUser.username || mappedUser.email?.split('@')[0] || `user_${Date.now()}`;
+      
+      const { data: conflictUser } = await supabase
+        .from('user')
+        .select('id')
+        .eq('username', desiredUsername)
+        .neq('id', mappedUser.id)
+        .maybeSingle();
+        
+      if (conflictUser) {
+        desiredUsername = `${desiredUsername}_${Math.random().toString(36).slice(-6)}`;
+      }
+
       // Phase 2: Enforce Public User Schema Sync to satisfy vfs_nodes_user_id_fkey
       // Await the upsert into the public 'user' table before returning to prevent VFS race conditions
       const { error: upsertError } = await supabase.from('user').upsert({
         id: mappedUser.id,
         email: mappedUser.email,
         name: mappedUser.name || mappedUser.email?.split('@')[0] || 'Unknown User',
-        username: mappedUser.username || mappedUser.email?.split('@')[0] || `user_${Date.now()}`,
+        username: desiredUsername,
         image: mappedUser.image || null,
         emailVerified: true,
         createdAt: mappedUser.createdAt || new Date().toISOString(),
