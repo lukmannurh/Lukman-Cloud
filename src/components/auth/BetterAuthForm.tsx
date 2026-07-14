@@ -71,6 +71,10 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         }
 
         const dummyEmail = `${normalizedUsername}@lukman.cloud`;
+        
+        // Prevent App.tsx from auto-mounting dashboard when Supabase auto-logs in
+        localStorage.setItem('block_auto_login', 'true');
+        
         const { error: signUpError } = await authClient.signUp.email({
           email: dummyEmail,
           password,
@@ -79,10 +83,15 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         });
         
         if (signUpError) {
+          localStorage.removeItem('block_auto_login');
           setError(signUpError.message || 'Failed to create account');
           setLoading(false);
           return;
         }
+        
+        // At this point Supabase auto-logged in. We force sign out.
+        await supabase.auth.signOut();
+        localStorage.removeItem('block_auto_login');
         
         setSuccess('Account created successfully! Please sign in.');
         setIsSignUp(false);

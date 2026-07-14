@@ -123,7 +123,11 @@ export default function App() {
     });
 
     // 2. Listen to state changes to break the routing loop
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session && localStorage.getItem('block_auto_login') === 'true') {
+        // Prevent processing session during registration flow
+        return;
+      }
       processSession(session);
     });
 
