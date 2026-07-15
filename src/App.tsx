@@ -382,21 +382,7 @@ export default function App() {
   const [moveModalNode, setMoveModalNode] = useState<VFSNode | null>(null);
   const [allFolders, setAllFolders] = useState<VFSNode[]>([]);
 
-  useEffect(() => {
-    if (sharedNodeId && allFlattenedNodes.length > 0) {
-      const node = allFlattenedNodes.find(n => n.id === sharedNodeId);
-      if (node) {
-        if (node.type === 'folder') {
-          handleNavigateFolder(node.id);
-        } else if (node.type === 'file') {
-          handleNavigateFolder(node.parentId);
-          // Auto preview will be triggered by FileExplorer prop
-        }
-        setSharedNodeId(null);
-      }
-    }
-  }, [sharedNodeId, allFlattenedNodes]);
-  
+
   // Search and Sort States
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<VFSNode[]>([]);
@@ -446,6 +432,21 @@ export default function App() {
   }, [activeUser]);
 
   const [allFlattenedNodes, setAllFlattenedNodes] = useState<VFSNode[]>([]);
+
+  useEffect(() => {
+    if (sharedNodeId && allFlattenedNodes.length > 0) {
+      const node = allFlattenedNodes.find(n => n.id === sharedNodeId);
+      if (node) {
+        if (node.type === 'folder') {
+          handleNavigateFolder(node.id);
+        } else if (node.type === 'file') {
+          handleNavigateFolder(node.parentId);
+          // Auto preview will be triggered by FileExplorer prop
+        }
+        setSharedNodeId(null);
+      }
+    }
+  }, [sharedNodeId, allFlattenedNodes]);
 
   // Load VFS Directory
   const loadDirectory = async (folderId: string) => {
