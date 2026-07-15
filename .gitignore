@@ -62,3 +62,8 @@ get_channels.mjs
 test_import.ts
 test_prod.mjs
 .tempmediaStorage/
+
+e2e-failure.png
+login_fail.png
+new_menu_fail.png
+signup_timeout.png

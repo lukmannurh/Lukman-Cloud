@@ -1,4 +1,4 @@
-# Lukman Cloud
+# Lukman Cloud Storage
 
 A high-performance, decentralized virtual file system utilizing modern end-to-end client-side cryptographic key derivation for secure, unlimited cloud storage.
 

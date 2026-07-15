@@ -38,6 +38,7 @@ interface FileExplorerProps {
   onFetchPreviewUrl: (node: VFSNode) => Promise<string>;
   isGridView?: boolean;
   highlightedNodeId?: string | null;
+  initialPreviewNodeId?: string | null;
 }
 
 export function FileExplorer({
@@ -52,7 +53,8 @@ export function FileExplorer({
   onMoveToFolder,
   onFetchPreviewUrl,
   isGridView = true,
-  highlightedNodeId = null
+  highlightedNodeId = null,
+  initialPreviewNodeId = null
 }: FileExplorerProps) {
   
   const [menuAlignment, setMenuAlignment] = useState<'top' | 'bottom'>('bottom');
@@ -69,6 +71,13 @@ export function FileExplorer({
   const [isFetchingPreview, setIsFetchingPreview] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [archiveFiles, setArchiveFiles] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialPreviewNodeId) {
+      const target = nodes.find(n => n.id === initialPreviewNodeId);
+      if (target) setPreviewNode(target);
+    }
+  }, [initialPreviewNodeId, nodes]);
 
   useEffect(() => {
     const handleClickOutside = () => setActiveMenuId(null);
@@ -445,7 +454,7 @@ export function FileExplorer({
                   if (isImage) {
                     return (
                       <div className="w-full h-full p-4 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden">
-                        <img src={previewUrl} alt={previewNode.name} className="max-h-[65vh] w-auto object-contain mx-auto rounded-lg shadow-sm" />
+                        <img src={previewUrl} alt={previewNode.name} className="max-h-[65vh] w-auto object-contain mx-auto rounded-lg shadow-sm" onError={() => setPreviewError(true)} />
                       </div>
                     );
                   }
@@ -453,7 +462,7 @@ export function FileExplorer({
                   if (isVideo) {
                     return (
                       <div className="w-full h-full p-4 flex items-center justify-center bg-black rounded-xl overflow-hidden">
-                        <video src={previewUrl} controls className="w-full max-h-[65vh] rounded-lg shadow-sm" />
+                        <video src={previewUrl} controls className="w-full max-h-[65vh] rounded-lg shadow-sm" onError={() => setPreviewError(true)} />
                       </div>
                     );
                   }

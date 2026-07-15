@@ -19,6 +19,178 @@ import { UploadGateway } from './components/dashboard/UploadGateway';
 
 import { VFSNode, AppConfig, PooledAccount, isGoogleDriveRef, isTelegramRef, GoogleDriveRef, TelegramRef } from './types';
 
+const Sidebar = ({
+  activeUser,
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+  isSidebarCollapsed,
+  setIsSidebarCollapsed,
+  currentView,
+  setCurrentView,
+  setToastMessage,
+  setDevSessionUser,
+  setIsUserAuthenticated,
+  setAccounts
+}: any) => (
+
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      <div 
+        className={`bg-slate-900 border-r border-slate-800 flex flex-col h-screen text-slate-300 fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+        ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'} w-64`}
+      >
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between h-20">
+          <div className="flex items-center gap-2 overflow-hidden">
+            {activeUser?.image ? (
+              <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
+                <img 
+                  src={activeUser.image} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      const fallback = e.currentTarget.parentElement.querySelector('.fallback-initial');
+                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                    }
+                  }}
+                />
+                <span className="fallback-initial hidden text-white font-bold text-sm">
+                  {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            ) : (
+              <div className="w-8 h-8 shrink-0 rounded-md bg-indigo-500 border border-indigo-400/30 text-white flex items-center justify-center font-bold text-sm">
+                {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
+              <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
+              <div className="flex gap-2 mt-1 items-center overflow-hidden">
+                <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
+                  VAULT UNLOCKED
+                </span>
+                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
+                  @{activeUser?.username || 'guest'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="hidden md:flex p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white"
+          >
+            {isSidebarCollapsed ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
+        </div>
+        
+        <nav className="flex-1 flex flex-col gap-2 p-3 relative">
+          {/* Active Indicator Pill */}
+          <div 
+            className="absolute left-3 right-3 h-[44px] bg-blue-500/10 border border-blue-500/20 rounded-lg transition-transform duration-300 ease-in-out pointer-events-none"
+            style={{ 
+              top: '12px',
+              transform: currentView === 'dashboard' ? 'translateY(0px)' : 
+                         currentView === 'vfs' ? 'translateY(52px)' : 
+                         'translateY(104px)' 
+            }}
+          />
+          
+          <button 
+            onClick={() => { setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'dashboard' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+            title="Dashboard"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Dashboard</span>
+          </button>
+          
+          <button 
+            onClick={() => { setCurrentView('vfs'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'vfs' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+            title="Virtual Storage"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Virtual Storage</span>
+          </button>
+          
+          <button 
+            onClick={() => { setCurrentView('nodes'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'nodes' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+            title="Storage Nodes"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
+          </button>
+        </nav>
+        
+        <div className="p-3 border-t border-slate-800">
+          <button 
+            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 overflow-hidden group"
+            onClick={async () => {
+              try {
+                if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                  localStorage.removeItem('dev_session_user');
+                  setDevSessionUser(null);
+                  setToastMessage(null);
+                  setIsUserAuthenticated(false);
+                  setAccounts([]);
+                  setCurrentView('auth');
+                  window.location.reload();
+                  return;
+                }
+                setToastMessage(null); // Purge global toasts on sign out
+                try {
+                  await authClient.signOut();
+                } catch (e) {
+                  console.warn('[SignOut] Network failed but proceeding locally:', e);
+                }
+              } catch (e) {
+                console.warn('[SignOut] Backend unreachable or sign out failed:', e);
+              } finally {
+                setIsUserAuthenticated(false);
+                setAccounts([]);
+                setCurrentView('auth');
+                if (import.meta.env.DEV) {
+                  window.location.reload();
+                }
+              }
+            }}
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5 shrink-0 text-rose-400 group-hover:text-rose-300 transition-colors" />
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
 export default function App() {
   const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean>(false);
   const [activeUser, setActiveUser] = useState<any>(null);
@@ -28,6 +200,23 @@ export default function App() {
   const [newUsername, setNewUsername] = useState('');
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState('');
+  const [devSessionUser, setDevSessionUser] = useState<any>(null);
+  const rootInitLock = useRef<Set<string>>(new Set());
+  const [sharedNodeId, setSharedNodeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/share/')) {
+      try {
+        const encodedId = path.replace('/share/', '');
+        const decodedId = atob(encodedId);
+        setCurrentView('vfs');
+        setSharedNodeId(decodedId);
+      } catch (e) {
+        console.error('Invalid share link', e);
+      }
+    }
+  }, []);
 
   // Native Supabase Session Sync
   useEffect(() => {
@@ -78,28 +267,35 @@ export default function App() {
             });
 
             // Phase 2: Create root directory for user if missing
-            const { data: rootNode } = await supabase
-              .from('vfs_nodes')
-              .select('id')
-              .eq('user_id', currentUser.id)
-              .is('parent_id', null)
-              .maybeSingle();
+            if (!rootInitLock.current.has(currentUser.id)) {
+              rootInitLock.current.add(currentUser.id);
+              try {
+                const { data: rootNode } = await supabase
+                  .from('vfs_nodes')
+                  .select('id')
+                  .eq('user_id', currentUser.id)
+                  .is('parent_id', null)
+                  .maybeSingle();
 
-            if (!rootNode) {
-              await supabase.from('vfs_nodes').insert({
-                name: 'Root',
-                path: '/',
-                is_folder: true,
-                user_id: currentUser.id
-              });
+                if (!rootNode) {
+                  await supabase.from('vfs_nodes').insert({
+                    name: 'Root',
+                    path: '/',
+                    is_folder: true,
+                    user_id: currentUser.id
+                  });
+                }
+              } finally {
+                rootInitLock.current.delete(currentUser.id);
+              }
             }
           }
         } catch (e) {
           console.error('Auto-link failed', e);
         }
 
-        // Check onboarding guard for Google OAuth users or Instant Guest accounts
-        if (!currentUser?.username || currentUser?.username.startsWith('guest_aether_')) {
+        // Check onboarding guard for Google OAuth users ONLY (guests now auto-generate full names)
+        if (!currentUser?.username) {
           setActiveUser(currentUser);
           setIsUserAuthenticated(true);
           setShowOnboarding(true);
@@ -144,7 +340,7 @@ export default function App() {
   const workerRef = useRef<Worker | null>(null);
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>('vfs');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -186,6 +382,21 @@ export default function App() {
   const [moveModalNode, setMoveModalNode] = useState<VFSNode | null>(null);
   const [allFolders, setAllFolders] = useState<VFSNode[]>([]);
 
+  useEffect(() => {
+    if (sharedNodeId && allFlattenedNodes.length > 0) {
+      const node = allFlattenedNodes.find(n => n.id === sharedNodeId);
+      if (node) {
+        if (node.type === 'folder') {
+          handleNavigateFolder(node.id);
+        } else if (node.type === 'file') {
+          handleNavigateFolder(node.parentId);
+          // Auto preview will be triggered by FileExplorer prop
+        }
+        setSharedNodeId(null);
+      }
+    }
+  }, [sharedNodeId, allFlattenedNodes]);
+  
   // Search and Sort States
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<VFSNode[]>([]);
@@ -567,164 +778,7 @@ export default function App() {
     }
   };
 
-  const Sidebar = () => (
-    <>
-      {/* Mobile Backdrop */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-      <div 
-        className={`bg-slate-900 border-r border-slate-800 flex flex-col h-screen text-slate-300 fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'} w-64`}
-      >
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between h-20">
-          <div className="flex items-center gap-2 overflow-hidden">
-            {activeUser?.image ? (
-              <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
-                <img 
-                  src={activeUser.image} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    if (e.currentTarget.parentElement) {
-                      const fallback = e.currentTarget.parentElement.querySelector('.fallback-initial');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }
-                  }}
-                />
-                <span className="fallback-initial hidden text-white font-bold text-sm">
-                  {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
-                </span>
-              </div>
-            ) : (
-              <div className="w-8 h-8 shrink-0 rounded-md bg-indigo-500 border border-indigo-400/30 text-white flex items-center justify-center font-bold text-sm">
-                {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
-              </div>
-            )}
 
-            <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
-              <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
-              <div className="flex gap-2 mt-1 items-center overflow-hidden">
-                <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
-                  VAULT UNLOCKED
-                </span>
-                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
-                  @{activeUser?.username || 'guest'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <button 
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="hidden md:flex p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white"
-          >
-            {isSidebarCollapsed ? (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            )}
-          </button>
-        </div>
-        
-        <nav className="flex-1 flex flex-col gap-2 p-3 relative">
-          {/* Active Indicator Pill */}
-          <div 
-            className="absolute left-3 right-3 h-[44px] bg-blue-500/10 border border-blue-500/20 rounded-lg transition-transform duration-300 ease-in-out pointer-events-none"
-            style={{ 
-              top: '12px',
-              transform: currentView === 'dashboard' ? 'translateY(0px)' : 
-                         currentView === 'vfs' ? 'translateY(52px)' : 
-                         'translateY(104px)' 
-            }}
-          />
-          
-          <button 
-            onClick={() => { setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'dashboard' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-            title="Dashboard"
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Dashboard</span>
-          </button>
-          
-          <button 
-            onClick={() => { setCurrentView('vfs'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'vfs' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-            title="Virtual Storage"
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Virtual Storage</span>
-          </button>
-          
-          <button 
-            onClick={() => { setCurrentView('nodes'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'nodes' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-            title="Storage Nodes"
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
-          </button>
-        </nav>
-        
-        <div className="p-3 border-t border-slate-800">
-          <button 
-            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 overflow-hidden group"
-            onClick={async () => {
-              try {
-                if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-                  localStorage.removeItem('dev_session_user');
-                  setDevSessionUser(null);
-                  setToastMessage(null);
-                  setIsUserAuthenticated(false);
-                  setAccounts([]);
-                  setCurrentView('auth');
-                  window.location.reload();
-                  return;
-                }
-                setToastMessage(null); // Purge global toasts on sign out
-                try {
-                  await authClient.signOut();
-                } catch (e) {
-                  console.warn('[SignOut] Network failed but proceeding locally:', e);
-                }
-              } catch (e) {
-                console.warn('[SignOut] Backend unreachable or sign out failed:', e);
-              } finally {
-                setIsUserAuthenticated(false);
-                setAccounts([]);
-                setCurrentView('auth');
-                if (import.meta.env.DEV) {
-                  window.location.reload();
-                }
-              }
-            }}
-            title="Sign Out"
-          >
-            <LogOut className="w-5 h-5 shrink-0 text-rose-400 group-hover:text-rose-300 transition-colors" />
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
-          </button>
-        </div>
-      </div>
-    </>
-  );
 
   if (sessionLoading) {
     return (
@@ -847,7 +901,19 @@ export default function App() {
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar />
+        <Sidebar
+          activeUser={activeUser}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={setIsSidebarCollapsed}
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          setToastMessage={setToastMessage}
+          setDevSessionUser={setDevSessionUser}
+          setIsUserAuthenticated={setIsUserAuthenticated}
+          setAccounts={setAccounts}
+        />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-white flex flex-col`}>
           <div className="w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8 py-4 md:py-6">
           {currentView === 'dashboard' && (

@@ -239,7 +239,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
                   <span className="text-2xl">☁️</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800">Aether Operational Node</h4>
+                  <h4 className="text-sm font-bold text-slate-800">Lukman Cloud Storage</h4>
                   <p className="text-xs font-medium text-slate-500 mt-0.5">{tgFiles} File Tracking — {tgSize} Total</p>
                 </div>
               </div>

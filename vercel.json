@@ -37,6 +37,10 @@
       "destination": "/api/auth"
     },
     {
+      "source": "/share/:path*",
+      "destination": "/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
