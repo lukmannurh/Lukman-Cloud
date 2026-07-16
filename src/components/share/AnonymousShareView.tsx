@@ -49,17 +49,45 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
         // Pre-fetch preview if supported
         if (!vfsNode.name.endsWith('.enc')) {
           try {
-             let { url } = await downloadService.downloadFile(vfsNode);
-             const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
-             if (ext === 'pdf') {
-               const res = await fetch(url);
-               const buffer = await res.arrayBuffer();
-               const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
-               const newUrl = URL.createObjectURL(pdfBlob);
-               URL.revokeObjectURL(url);
-               url = newUrl;
+             let url: string | null = null;
+             
+             // Setup temporary worker for anonymous guest download
+             if (vfsNode.rawRef?.provider === 'telegram' || vfsNode.telegramChannelId) {
+                const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+                w.postMessage({ 
+                  type: 'CONNECT', 
+                  apiId: Number(import.meta.env.VITE_TELEGRAM_API_ID) || 1234567, 
+                  apiHash: import.meta.env.VITE_TELEGRAM_API_HASH || 'dummy'
+                });
+                
+                // Allow MTProto session to initialize
+                await new Promise(r => setTimeout(r, 500));
+                
+                let ref = vfsNode.rawRef;
+                if (!ref || !ref.chunks) {
+                   ref = {
+                     provider: 'telegram',
+                     channel_id: vfsNode.telegramChannelId || vfsNode.rawRef?.channelId || '',
+                     message_id: vfsNode.rawRef?.chunks?.[0]?.messageId || 0,
+                     chunks: vfsNode.rawRef?.chunks || []
+                   } as any;
+                }
+                
+                url = await downloadService.downloadFromTelegram(ref as any, w, undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
              }
-             setPreviewUrl(url);
+
+             if (url) {
+               const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
+               if (ext === 'pdf') {
+                 const res = await fetch(url);
+                 const buffer = await res.arrayBuffer();
+                 const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+                 const newUrl = URL.createObjectURL(pdfBlob);
+                 URL.revokeObjectURL(url);
+                 url = newUrl;
+               }
+               setPreviewUrl(url);
+             }
           } catch(e) {
              console.error("Preview fetch failed:", e);
           }
