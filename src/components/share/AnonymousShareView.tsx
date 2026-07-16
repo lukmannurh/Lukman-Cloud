@@ -51,13 +51,23 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
           try {
              let url: string | null = null;
              
-             // Setup temporary worker for anonymous guest download
              if (vfsNode.rawRef?.provider === 'telegram' || vfsNode.telegramChannelId) {
+                const BOT_POOL = [
+                  "778532517:AAGfLWpYw9-IIEhxs9b-7EL5Of7d3mXfKVk",
+                  "8530091740:AAG_Cf0eAgBbzbceliZkvGlk6N2IO0NCwE0",
+                  "7117929172:AAGcOgiLL6eBJknUxxmJev5hSJskt6is5kI",
+                  "8899849951:AAF4p2xWnV0WNKS_1p6NMO8rch7dDMOMMWs",
+                  "8914928600:AAGsgIh3ku7rMZeqCPsNAkrYiE4HGmXFIqY",
+                  "8906497409:AAFVaz-MJ6gk48Mjulua6SWBDSL2p6GWw94"
+                ];
+                const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
+                
                 const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
                 w.postMessage({ 
                   type: 'CONNECT', 
-                  apiId: Number(import.meta.env.VITE_TELEGRAM_API_ID) || 1234567, 
-                  apiHash: import.meta.env.VITE_TELEGRAM_API_HASH || 'dummy'
+                  apiId: 35691342, 
+                  apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                  botToken: randomToken
                 });
                 
                 // Allow MTProto session to initialize
@@ -73,7 +83,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                    } as any;
                 }
                 
-                url = await downloadService.downloadFromTelegram(ref as any, w, undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
+                url = await downloadService.downloadFromTelegram(ref as any, [w], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
              }
 
              if (url) {
@@ -136,7 +146,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   </div>
                   <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
                   <p className="text-slate-400 text-sm max-w-sm">
-                    PDF Preview is disabled for maximum security. Please click download below to view this document.
+                    PDF Preview is deactivated for maximum system performance. Please use the direct download option below to read this document.
                   </p>
                 </div>
               )}
@@ -168,15 +178,64 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
           <div className="mt-auto space-y-4">
             <button
               onClick={async () => {
-                if (!previewUrl) return;
-                const a = document.createElement('a');
-                a.href = previewUrl;
-                a.download = node.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                try {
+                  if (previewUrl) {
+                    const a = document.createElement('a');
+                    a.href = previewUrl;
+                    a.download = node.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    return;
+                  }
+                  
+                  if (node.rawRef?.provider === 'telegram' || node.telegramChannelId) {
+                    const BOT_POOL = [
+                      "778532517:AAGfLWpYw9-IIEhxs9b-7EL5Of7d3mXfKVk",
+                      "8530091740:AAG_Cf0eAgBbzbceliZkvGlk6N2IO0NCwE0",
+                      "7117929172:AAGcOgiLL6eBJknUxxmJev5hSJskt6is5kI",
+                      "8899849951:AAF4p2xWnV0WNKS_1p6NMO8rch7dDMOMMWs",
+                      "8914928600:AAGsgIh3ku7rMZeqCPsNAkrYiE4HGmXFIqY",
+                      "8906497409:AAFVaz-MJ6gk48Mjulua6SWBDSL2p6GWw94"
+                    ];
+                    const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
+                    
+                    const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+                    w.postMessage({ 
+                      type: 'CONNECT', 
+                      apiId: 35691342, 
+                      apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                      botToken: randomToken
+                    });
+                    
+                    await new Promise(r => setTimeout(r, 500));
+                    
+                    let ref = node.rawRef;
+                    if (!ref || !ref.chunks) {
+                       ref = {
+                         provider: 'telegram',
+                         channel_id: node.telegramChannelId || node.rawRef?.channelId || '',
+                         message_id: node.rawRef?.chunks?.[0]?.messageId || 0,
+                         chunks: node.rawRef?.chunks || []
+                       } as any;
+                    }
+                    
+                    const url = await downloadService.downloadFromTelegram(ref as any, [w], undefined, node.mimeType, node.telegramChannelId);
+                    if (url) {
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = node.name;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                  }
+                } catch (err) {
+                  console.error('Direct download failed:', err);
+                  alert('Download failed. Please try again.');
+                }
               }}
-              disabled={!previewUrl}
+              disabled={false}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-medium transition-colors"
             >
               <Download className="w-5 h-5" />
