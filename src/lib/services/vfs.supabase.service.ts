@@ -404,7 +404,7 @@ class VFSService {
       .update({
         parent_id: newParentId,
         path: newPath,
-        raw_ref: { ...node, modifiedAt: new Date().toISOString() }
+        raw_ref: { ...(node.rawRef || {}), modifiedAt: new Date().toISOString() }
       })
       .eq('user_id', userId)
       .eq('id', nodeId)
@@ -451,7 +451,7 @@ class VFSService {
       .update({
         name: newName,
         path: newPath,
-        raw_ref: { ...node, modifiedAt: new Date().toISOString() }
+        raw_ref: { ...(node.rawRef || {}), modifiedAt: new Date().toISOString() }
       })
       .eq('user_id', userId)
       .eq('id', nodeId)

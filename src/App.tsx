@@ -1122,10 +1122,9 @@ export default function App() {
                                   const result = searchResults[activeSuggestionIndex];
                                   flushSync(() => {
                                     setSearchQuery('');
-                                    setCurrentView('vfs');
                                     const targetFolder = result.type === 'folder' ? result.id : (result.parentId || 'root');
-                                    handleNavigateFolder(targetFolder);
                                     setCurrentFolderId(targetFolder);
+                                    setCurrentView('vfs');
                                     if (result.type !== 'folder') {
                                       setHighlightedNodeId(result.id);
                                     }
@@ -1157,10 +1156,9 @@ export default function App() {
                                       onClick={() => {
                                         flushSync(() => {
                                           setSearchQuery('');
-                                          setCurrentView('vfs');
                                           const targetFolder = result.type === 'folder' ? result.id : (result.parentId || 'root');
-                                          handleNavigateFolder(targetFolder);
                                           setCurrentFolderId(targetFolder);
+                                          setCurrentView('vfs');
                                           if (result.type !== 'folder') {
                                             setHighlightedNodeId(result.id);
                                           }
