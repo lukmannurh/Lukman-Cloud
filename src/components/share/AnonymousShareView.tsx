@@ -11,6 +11,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
   const [error, setError] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloading' | 'error'>('idle');
 
   useEffect(() => {
     async function loadSharedNode() {
@@ -53,13 +54,13 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
              
              if (vfsNode.rawRef?.provider === 'telegram' || vfsNode.telegramChannelId) {
                 const BOT_POOL = [
-                  "778532517:AAGfLWpYw9-IIEhxs9b-7EL5Of7d3mXfKVk",
-                  "8530091740:AAG_Cf0eAgBbzbceliZkvGlk6N2IO0NCwE0",
-                  "7117929172:AAGcOgiLL6eBJknUxxmJev5hSJskt6is5kI",
-                  "8899849951:AAF4p2xWnV0WNKS_1p6NMO8rch7dDMOMMWs",
-                  "8914928600:AAGsgIh3ku7rMZeqCPsNAkrYiE4HGmXFIqY",
-                  "8906497409:AAFVaz-MJ6gk48Mjulua6SWBDSL2p6GWw94"
-                ];
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_P,
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W1,
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W2,
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
+                  import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
+                ].filter(Boolean);
                 const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
                 
                 const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
@@ -179,25 +180,30 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             <button
               onClick={async () => {
                 try {
+                  setDownloadStatus('downloading');
                   if (previewUrl) {
-                    const a = document.createElement('a');
-                    a.href = previewUrl;
-                    a.download = node.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    const response = await fetch(previewUrl);
+                    const finalBuffer = await response.arrayBuffer();
+                    const downloadedBlob = new Blob([finalBuffer], { type: node.mimeType || 'application/octet-stream' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(downloadedBlob);
+                    link.download = node.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setDownloadStatus('idle');
                     return;
                   }
                   
                   if (node.rawRef?.provider === 'telegram' || node.telegramChannelId) {
                     const BOT_POOL = [
-                      "778532517:AAGfLWpYw9-IIEhxs9b-7EL5Of7d3mXfKVk",
-                      "8530091740:AAG_Cf0eAgBbzbceliZkvGlk6N2IO0NCwE0",
-                      "7117929172:AAGcOgiLL6eBJknUxxmJev5hSJskt6is5kI",
-                      "8899849951:AAF4p2xWnV0WNKS_1p6NMO8rch7dDMOMMWs",
-                      "8914928600:AAGsgIh3ku7rMZeqCPsNAkrYiE4HGmXFIqY",
-                      "8906497409:AAFVaz-MJ6gk48Mjulua6SWBDSL2p6GWw94"
-                    ];
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_P,
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W1,
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W2,
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
+                      import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
+                    ].filter(Boolean);
                     const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
                     
                     const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
@@ -222,24 +228,30 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     
                     const url = await downloadService.downloadFromTelegram(ref as any, [w], undefined, node.mimeType, node.telegramChannelId);
                     if (url) {
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = node.name;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
+                      const response = await fetch(url);
+                      const finalBuffer = await response.arrayBuffer();
+                      const downloadedBlob = new Blob([finalBuffer], { type: node.mimeType || 'application/octet-stream' });
+                      const link = document.createElement('a');
+                      link.href = URL.createObjectURL(downloadedBlob);
+                      link.download = node.name;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      setDownloadStatus('idle');
+                    } else {
+                      setDownloadStatus('error');
                     }
                   }
                 } catch (err) {
                   console.error('Direct download failed:', err);
-                  alert('Download failed. Please try again.');
+                  setDownloadStatus('error');
                 }
               }}
               disabled={false}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-medium transition-colors"
             >
               <Download className="w-5 h-5" />
-              Download File
+              {downloadStatus === 'downloading' ? 'Downloading chunks...' : downloadStatus === 'error' ? 'Download Failed - Retry' : 'Download File'}
             </button>
             <div className="text-center">
               <p className="text-xs text-slate-500">Shared securely via Lukman Cloud</p>

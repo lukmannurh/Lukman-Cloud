@@ -354,7 +354,7 @@ export default function App() {
 
   // Core Services State
   const [accounts, setAccounts] = useState<PooledAccount[]>([]);
-  const workerRef = useRef<Worker | null>(null);
+  const workerPoolRef = useRef<Worker[]>([]);
 
   // Navigation State
   const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>('vfs');
@@ -435,10 +435,11 @@ export default function App() {
 
   useEffect(() => {
     return () => {
-      if (workerRef.current) {
-        workerRef.current.postMessage({ type: 'DISCONNECT' });
-        workerRef.current.terminate();
-      }
+      workerPoolRef.current.forEach(w => {
+        w.postMessage({ type: 'DISCONNECT' });
+        w.terminate();
+      });
+      workerPoolRef.current = [];
     };
   }, []);
 
@@ -543,18 +544,30 @@ export default function App() {
   const handleUploadFiles = async (files: File[]) => {
 
     // Ensure the Telegram worker is warm
-    if (!workerRef.current) {
-      const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
-      w.onerror = (e) => {
-        e.preventDefault();
-        console.error('[Worker] Fatal error:', e.message);
-      };
-      workerRef.current = w;
-      w.postMessage({
-        type: 'CONNECT',
-        apiId: 35691342,
-        apiHash: '84d8f1a2c0e9c4c09cff23316db186ec'
+    if (workerPoolRef.current.length === 0) {
+      const BOT_POOL = [
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_P,
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W1,
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W2,
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
+        import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
+      ].filter(Boolean);
+      const workers = BOT_POOL.map(token => {
+        const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+        w.onerror = (e) => {
+          e.preventDefault();
+          console.error('[Worker] Fatal error:', e.message);
+        };
+        w.postMessage({
+          type: 'CONNECT',
+          apiId: 35691342,
+          apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+          botToken: token
+        });
+        return w;
       });
+      workerPoolRef.current = workers;
     }
 
     const ensurePathExists = async (pathStr: string, rootFolderId: string): Promise<string> => {
@@ -593,7 +606,7 @@ export default function App() {
         const tgRef = await uploadService.uploadToTelegram(
           file,
           '', // overridden internally by routing matrix
-          workerRef.current,
+          workerPoolRef.current,
           (progress, speedText) => {
             const pct = Math.min(100, Math.max(0, progress * 100));
             const displayStatus = speedText ? `Cloud Core — ${pct.toFixed(0)}% • ${speedText}` : `Cloud Core — ${pct.toFixed(0)}%`;
@@ -757,26 +770,37 @@ export default function App() {
             }
           }
         } else if (isTelegramRef(ref as any)) {
-          if (!workerRef.current) {
-            console.warn('[App] Telegram worker not connected. Lazy-warming up MTProto pipeline...');
-            const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
-            w.onerror = (e) => {
-              e.preventDefault();
-              setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: `Error: Worker crashed` } : t));
-            };
-            workerRef.current = w;
-            
-            w.postMessage({ 
-              type: 'CONNECT', 
-              apiId: Number(import.meta.env.VITE_TELEGRAM_API_ID) || 1234567, 
-              apiHash: import.meta.env.VITE_TELEGRAM_API_HASH || 'dummy'
+          if (workerPoolRef.current.length === 0) {
+            console.warn('[App] Telegram worker pool not connected. Lazy-warming up MTProto pipeline...');
+            const BOT_POOL = [
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_P,
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W1,
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W2,
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
+              import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
+            ].filter(Boolean);
+            const workers = BOT_POOL.map(token => {
+              const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+              w.onerror = (e) => {
+                e.preventDefault();
+                setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: `Error: Worker crashed` } : t));
+              };
+              w.postMessage({ 
+                type: 'CONNECT', 
+                apiId: 35691342, 
+                apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                botToken: token
+              });
+              return w;
             });
+            workerPoolRef.current = workers;
             
             // Allow 500ms for immediate synchronous readiness (MTProto usually caches session internally)
             await new Promise(r => setTimeout(r, 500));
           }
           
-          blobUrl = await downloadService.downloadFromTelegram(ref, workerRef.current, (progress, speedText) => {
+          blobUrl = await downloadService.downloadFromTelegram(ref, workerPoolRef.current, (progress, speedText) => {
             const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
             setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: progress * 100 } : t));
             setDownloadProgress(prev => ({ ...prev, progress: progress * 100 }));
