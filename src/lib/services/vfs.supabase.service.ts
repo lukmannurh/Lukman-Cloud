@@ -85,8 +85,7 @@ class VFSService {
        if (existingStr) {
          return JSON.parse(existingStr);
        } else {
-         const rootNode = await this.createRootFolder(userId);
-         return [rootNode];
+         return [];
        }
     }
     
@@ -98,10 +97,9 @@ class VFSService {
       
     if (error) throw error;
     
-    // If empty, create the root folder
+    // If empty, return empty
     if (!data || data.length === 0) {
-      const rootNode = await this.createRootFolder(userId);
-      return [rootNode];
+      return [];
     }
     
     const nodes = data.map(this.mapRowToNode);
@@ -118,88 +116,7 @@ class VFSService {
     return nodes;
   }
 
-  private _initRootPromise: Promise<VFSNode> | null = null;
-  private async createRootFolder(userId: string): Promise<VFSNode> {
-    if (this._initRootPromise) {
-      return this._initRootPromise;
-    }
-    this._initRootPromise = this._createRootFolderImpl(userId);
-    try {
-      const result = await this._initRootPromise;
-      return result;
-    } finally {
-      this._initRootPromise = null;
-    }
-  }
 
-  private async _createRootFolderImpl(userId: string): Promise<VFSNode> {
-    // Upsert-Check: Check if root exists for this specific user first
-    const { data: existing, error: fetchErr } = await supabase
-      .from('vfs_nodes')
-      .select('*')
-      .eq('user_id', userId)
-      .is('parent_id', null)
-      .eq('path', '/')
-      .maybeSingle();
-
-    if (fetchErr) throw fetchErr;
-    if (existing) return this.mapRowToNode(existing);
-
-    // MOCK DEV BYPASS: Do not attempt to insert a real row for a mock user, which causes foreign key 23503 errors.
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && userId.startsWith('dev-')) {
-       // Bypassing Supabase INSERT for folder creation
-       const newNode: VFSNode = {
-         id: `mock-root-${userId}`,
-         name: 'Root',
-         type: 'folder',
-         size: 0,
-         path: '/',
-         createdAt: new Date().toISOString(),
-         modifiedAt: new Date().toISOString(),
-         parentId: null,
-         children: []
-       };
-       const existingStr = localStorage.getItem(`mock_vfs_${userId}`) || '[]';
-       const existingNodes = JSON.parse(existingStr);
-       existingNodes.push(newNode);
-       localStorage.setItem(`mock_vfs_${userId}`, JSON.stringify(existingNodes));
-       return newNode;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('vfs_nodes')
-        .insert({
-          // Omitting hardcoded 'id' to prevent 409 collisions across users
-          name: 'Root',
-          path: '/',
-          parent_id: null,
-          is_folder: true,
-          user_id: userId,
-          raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
-        })
-        .select()
-        .single();
-        
-      if (error) throw error; 
-      
-      return this.mapRowToNode(data);
-    } catch (err: any) {
-      if (err.code === '23505' || err.status === 409 || err.message?.includes('409') || err.message?.includes('duplicate key')) {
-        // Safe Catch: Smoothly retrieve existing record instead of throwing HTTP 409
-        const { data: raceExisting, error: raceErr } = await supabase
-          .from('vfs_nodes')
-          .select('*')
-          .eq('user_id', userId)
-          .is('parent_id', null)
-          .eq('path', '/')
-          .single();
-        if (raceErr) throw raceErr;
-        return this.mapRowToNode(raceExisting);
-      }
-      throw err;
-    }
-  }
 
   async getDirectoryContents(parentId: string): Promise<VFSNode[]> {
     const userId = await this.getUserId();

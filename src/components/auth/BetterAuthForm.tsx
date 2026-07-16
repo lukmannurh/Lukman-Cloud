@@ -152,8 +152,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
     setError('');
     setSuccess('');
     try {
-      const randomSuffix = crypto.randomUUID().slice(0, 8);
-      const generatedUsername = `guest_lukman_${randomSuffix}`;
+      const generatedUsername = `guest_lukman_${crypto.randomUUID()}`;
       const generatedPassword = Math.random().toString(36).slice(-10) + "X1!";
 
       // Only show the modal first, DO NOT trigger signup yet

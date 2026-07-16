@@ -478,7 +478,7 @@ export function FileExplorer({
                           </div>
                           <h4 className="font-bold text-slate-800 text-xl mb-1 truncate w-full">{previewNode.name}</h4>
                           <p className="text-sm text-slate-500 mb-8 tracking-wide">Audio Stream Ready</p>
-                          <audio src={previewUrl} controls className="w-full" />
+                          <audio src={previewUrl} controls className="w-full" onError={() => setPreviewError(true)} />
                         </div>
                       </div>
                     );
@@ -487,7 +487,7 @@ export function FileExplorer({
                   if (isPdf) {
                     return (
                       <div className="w-full h-[65vh] bg-slate-200 rounded-xl overflow-hidden relative">
-                         <iframe src={previewUrl} className="w-full h-full border-0 absolute inset-0" title="PDF Preview" />
+                         <iframe src={previewUrl} type="application/pdf" className="w-full h-full border-0 absolute inset-0" title="PDF Preview" />
                       </div>
                     );
                   }

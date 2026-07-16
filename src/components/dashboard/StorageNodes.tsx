@@ -152,7 +152,7 @@ export function StorageNodes({
             <div className="relative group bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:border-blue-300 transition-all duration-300 hover:shadow-md overflow-hidden flex items-start justify-between">
               <div className="flex gap-4 items-start">
                 <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shrink-0">
-                  <img src={aetherNodeIcon} alt="Aether Node" className="w-7 h-7 object-contain opacity-80" />
+                  <img src={aetherNodeIcon} alt="Storage Node" className="w-7 h-7 object-contain opacity-80" />
                 </div>
                 <div>
                   <h3 className="text-base font-medium text-slate-800 tracking-tight">Lukman Cloud High-Speed Core Vault</h3>
