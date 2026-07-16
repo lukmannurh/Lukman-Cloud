@@ -136,12 +136,16 @@ export class UploadService {
   public async uploadToTelegram(
     file: File, 
     _channelId: string, 
-    worker: Worker,
+    workers: Worker[],
     onProgress?: (progress: number, speedText?: string) => void
   ): Promise<TelegramRef> {
     
     // Auto-resolve destination channel from Extension Matrix
     const channelId = resolveChannelId(file.name);
+
+    if (!workers || workers.length === 0) {
+      throw new Error("No Telegram workers available. Ensure VITE_TELEGRAM_BOT_TOKEN_P is configured.");
+    }
 
     if (!channelId) {
       console.warn("Storage Node not initialized. Falling back to metadata-only storage natively inside Supabase.");
@@ -181,7 +185,11 @@ export class UploadService {
     let lastLoaded = 0;
 
     // 3. Upload Chunks Sequentially
+    let currentWorkerIndex = 0;
     for (let i = 0; i < totalParts; i++) {
+      const activeWorker = workers[currentWorkerIndex];
+      currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
+      
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, file.size);
       const chunkBlob = file.slice(start, end, file.type);
@@ -211,17 +219,17 @@ export class UploadService {
 
             if (onProgress) onProgress(overallProgress, speedText);
           } else if (msg.type === 'UPLOAD_COMPLETE') {
-            worker.removeEventListener('message', handler);
+            activeWorker.removeEventListener('message', handler);
             loadedBytes += chunkBlob.size;
             resolve(msg.messageId);
           } else if (msg.type === 'UPLOAD_ERROR') {
-            worker.removeEventListener('message', handler);
+            activeWorker.removeEventListener('message', handler);
             reject(new Error(msg.error));
           }
         };
 
-        worker.addEventListener('message', handler);
-        worker.postMessage({
+        activeWorker.addEventListener('message', handler);
+        activeWorker.postMessage({
           type: 'UPLOAD_FILE',
           file: chunkFile,
           channelId,

@@ -552,7 +552,12 @@ export default function App() {
         import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
         import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
         import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
-      ].filter(Boolean);
+      ].filter(Boolean) as string[];
+      
+      if (BOT_POOL.length === 0) {
+        console.error('[App] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
+        throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
+      }
       const workers = BOT_POOL.map(token => {
         const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
         w.onerror = (e) => {
@@ -779,7 +784,12 @@ export default function App() {
               import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
               import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
               import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
-            ].filter(Boolean);
+            ].filter(Boolean) as string[];
+            
+            if (BOT_POOL.length === 0) {
+              console.error('[App] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
+              throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
+            }
             const workers = BOT_POOL.map(token => {
               const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
               w.onerror = (e) => {

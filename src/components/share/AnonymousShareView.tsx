@@ -60,7 +60,12 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
                   import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
                   import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
-                ].filter(Boolean);
+                ].filter(Boolean) as string[];
+                
+                if (BOT_POOL.length === 0) {
+                  console.error('[Share] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
+                  throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
+                }
                 const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
                 
                 const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
@@ -203,7 +208,11 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W3,
                       import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W4,
                       import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W5
-                    ].filter(Boolean);
+                    ].filter(Boolean) as string[];
+                    
+                    if (BOT_POOL.length === 0) {
+                      throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
+                    }
                     const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
                     
                     const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
