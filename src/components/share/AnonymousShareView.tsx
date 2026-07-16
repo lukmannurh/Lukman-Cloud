@@ -28,9 +28,10 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
           .from('vfs_nodes')
           .select('*')
           .eq('id', rawId)
-          .single();
+          .maybeSingle();
 
         if (fetchErr) throw fetchErr;
+        if (!data) throw new Error('Shared file not found or you do not have permission.');
 
         const vfsNode: VFSNode = {
           id: data.id,
@@ -48,7 +49,16 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
         // Pre-fetch preview if supported
         if (!vfsNode.name.endsWith('.enc')) {
           try {
-             const { url } = await downloadService.downloadFile(vfsNode);
+             let { url } = await downloadService.downloadFile(vfsNode);
+             const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
+             if (ext === 'pdf') {
+               const res = await fetch(url);
+               const buffer = await res.arrayBuffer();
+               const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+               const newUrl = URL.createObjectURL(pdfBlob);
+               URL.revokeObjectURL(url);
+               url = newUrl;
+             }
              setPreviewUrl(url);
           } catch(e) {
              console.error("Preview fetch failed:", e);

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { allocationService } from './lib/services/allocation.service';
 import { uploadService } from './lib/services/upload.service';
 import { downloadService } from './lib/services/download.service';
@@ -31,9 +32,20 @@ const Sidebar = ({
   setToastMessage,
   setDevSessionUser,
   setIsUserAuthenticated,
-  setAccounts
-}: any) => (
+  setAccounts,
+  allFlattenedNodes = []
+}: any) => {
 
+  const totalBytes = allFlattenedNodes.reduce((sum: number, n: any) => sum + (n.size || 0), 0);
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0.00 GB';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  return (
     <>
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
@@ -151,19 +163,30 @@ const Sidebar = ({
             <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
           </button>
           
-          <button 
-            onClick={() => { setCurrentView('management'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'management' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-            title="Storage Management"
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Management</span>
-          </button>
         </nav>
+        
+        {/* Unlimited Storage Widget (Google Drive Style) */}
+        {!isSidebarCollapsed && (
+          <div className="px-4 py-4 mt-auto border-t border-slate-800">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-300">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  </svg>
+                  <span>Storage</span>
+                </div>
+              </div>
+              {/* Minimalist horizontal progress bar */}
+              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-blue-500 rounded-full w-[2%] min-w-[4px]"></div>
+              </div>
+              <div className="text-[11px] text-slate-400 mt-0.5">
+                {formatSize(totalBytes)} of Unlimited used
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="p-3 border-t border-slate-800">
           <button 
@@ -206,6 +229,7 @@ const Sidebar = ({
       </div>
     </>
   );
+};
 
 export default function App() {
   const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean>(false);
@@ -910,6 +934,7 @@ export default function App() {
           setDevSessionUser={setDevSessionUser}
           setIsUserAuthenticated={setIsUserAuthenticated}
           setAccounts={setAccounts}
+          allFlattenedNodes={allFlattenedNodes}
         />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-white flex flex-col`}>
           <div className="w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8 py-4 md:py-6">
@@ -1076,18 +1101,22 @@ export default function App() {
                                 e.preventDefault();
                                 if (activeSuggestionIndex >= 0 && activeSuggestionIndex < searchResults.length) {
                                   const result = searchResults[activeSuggestionIndex];
-                                  if (result.type === 'folder') {
-                                    setCurrentView('vfs');
-                                    handleNavigateFolder(result.id);
-                                  } else {
-                                    setCurrentView('vfs');
-                                    handleNavigateFolder(result.parentId || 'root');
-                                    setHighlightedNodeId(result.id);
+                                  flushSync(() => {
+                                    if (result.type === 'folder') {
+                                      setCurrentView('vfs');
+                                      handleNavigateFolder(result.id);
+                                    } else {
+                                      setCurrentView('vfs');
+                                      handleNavigateFolder(result.parentId || 'root');
+                                      setHighlightedNodeId(result.id);
+                                    }
+                                    setSearchQuery('');
+                                    setIsSearchFocused(false);
+                                    setActiveSuggestionIndex(-1);
+                                  });
+                                  if (result.type !== 'folder') {
                                     setTimeout(() => setHighlightedNodeId(null), 3000);
                                   }
-                                  setSearchQuery('');
-                                  setIsSearchFocused(false);
-                                  setActiveSuggestionIndex(-1);
                                 }
                               }
                             }}
@@ -1108,18 +1137,22 @@ export default function App() {
                                       key={result.id} 
                                       className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${activeSuggestionIndex === index ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                                       onClick={() => {
-                                        if (result.type === 'folder') {
-                                          setCurrentView('vfs');
-                                          handleNavigateFolder(result.id);
-                                        } else {
-                                          setCurrentView('vfs');
-                                          handleNavigateFolder(result.parentId || 'root');
-                                          setHighlightedNodeId(result.id);
+                                        flushSync(() => {
+                                          if (result.type === 'folder') {
+                                            setCurrentView('vfs');
+                                            handleNavigateFolder(result.id);
+                                          } else {
+                                            setCurrentView('vfs');
+                                            handleNavigateFolder(result.parentId || 'root');
+                                            setHighlightedNodeId(result.id);
+                                          }
+                                          setSearchQuery('');
+                                          setIsSearchFocused(false);
+                                          setActiveSuggestionIndex(-1);
+                                        });
+                                        if (result.type !== 'folder') {
                                           setTimeout(() => setHighlightedNodeId(null), 3000);
                                         }
-                                        setSearchQuery('');
-                                        setIsSearchFocused(false);
-                                        setActiveSuggestionIndex(-1);
                                       }}
                                     >
                                       <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center shrink-0">

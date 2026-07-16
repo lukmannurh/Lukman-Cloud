@@ -102,15 +102,30 @@ export function FileExplorer({
 
     onFetchPreviewUrl(previewNode)
       .then(async (url) => {
+        const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
+        let finalUrl = url;
+        
+        if (ext === 'pdf') {
+          try {
+            const res = await fetch(url);
+            const buffer = await res.arrayBuffer();
+            const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+            finalUrl = URL.createObjectURL(pdfBlob);
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            console.error('Failed to convert PDF blob', e);
+          }
+        }
+
         if (!isMounted) {
-          URL.revokeObjectURL(url);
+          URL.revokeObjectURL(finalUrl);
           return;
         }
-        setPreviewUrl(url);
+
+        setPreviewUrl(finalUrl);
         setIsFetchingPreview(false);
 
         // Check for archive
-        const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
         const isArchive = ['zip', 'rar', 'tar', 'gz'].includes(ext);
         
         if (isArchive && ext === 'zip') {
