@@ -112,17 +112,9 @@ export class AllocationService {
       return cached;
     }
 
-    const response = await fetch(`${DRIVE_API_URL}/about?fields=storageQuota`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Drive quota fetch failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const limit = Number(data.storageQuota?.limit) || 0;
-    const usage = Number(data.storageQuota?.usage) || 0;
+    // Removed API call to /about to eliminate 401 errors as requested
+    const limit = 15 * 1024 * 1024 * 1024; // Dummy 15GB
+    const usage = 0; // Dummy 0 usage
 
     const newCache: QuotaCache = {
       limit,

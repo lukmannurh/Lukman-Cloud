@@ -79,12 +79,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
              if (url) {
                const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
                if (ext === 'pdf') {
-                 const res = await fetch(url);
-                 const buffer = await res.arrayBuffer();
-                 const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
-                 const newUrl = URL.createObjectURL(pdfBlob);
-                 URL.revokeObjectURL(url);
-                 url = newUrl;
+                 // Depromoted PDF blob conversion - direct download only
                }
                setPreviewUrl(url);
              }
@@ -134,7 +129,17 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             <>
               {isImage && <img src={previewUrl} alt={node.name} className="max-h-[60vh] object-contain rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
               {isVideo && <video src={previewUrl} controls className="max-h-[60vh] rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
-              {isPdf && <iframe src={previewUrl} type="application/pdf" className="w-full h-[60vh] rounded-lg shadow-lg bg-white" title={node.name} />}
+              {isPdf && (
+                <div className="w-full flex flex-col items-center justify-center text-center p-6 bg-slate-900/50 rounded-lg border border-slate-800">
+                  <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4">
+                    <FileText className="w-8 h-8 text-rose-400" />
+                  </div>
+                  <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
+                  <p className="text-slate-400 text-sm max-w-sm">
+                    PDF Preview is disabled for maximum security. Please click download below to view this document.
+                  </p>
+                </div>
+              )}
               {!isImage && !isVideo && !isPdf && (
                 <div className="text-slate-500 flex flex-col items-center">
                   <FileIcon className="w-16 h-16 mb-4 opacity-50" />

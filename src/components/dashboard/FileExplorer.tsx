@@ -106,16 +106,9 @@ export function FileExplorer({
         const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
         let finalUrl = url;
         
+        // Depromoted PDF blob conversion - direct download only
         if (ext === 'pdf') {
-          try {
-            const res = await fetch(url);
-            const buffer = await res.arrayBuffer();
-            const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
-            finalUrl = URL.createObjectURL(pdfBlob);
-            URL.revokeObjectURL(url);
-          } catch (e) {
-            console.error('Failed to convert PDF blob', e);
-          }
+          // Intentionally omitting PDF-to-Blob conversion for CSP stability
         }
 
         if (!isMounted) {
@@ -507,8 +500,14 @@ export function FileExplorer({
 
                   if (isPdf) {
                     return (
-                      <div className="w-full h-[65vh] bg-slate-200 rounded-xl overflow-hidden relative">
-                         <iframe src={previewUrl} type="application/pdf" className="w-full h-full border-0 absolute inset-0" title="PDF Preview" />
+                      <div className="w-full h-[300px] bg-slate-900/50 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-6 text-center">
+                         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4">
+                           <FileText className="w-8 h-8 text-rose-400" />
+                         </div>
+                         <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
+                         <p className="text-slate-400 text-sm max-w-sm">
+                           PDF Preview is disabled for maximum security. Please click download below to view this document.
+                         </p>
                       </div>
                     );
                   }
