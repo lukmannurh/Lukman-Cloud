@@ -4,6 +4,7 @@ import { Card } from '../ui/Card';
 import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X } from 'lucide-react';
 import JSZip from 'jszip';
 import { DirectoryPickerModal } from './DirectoryPickerModal';
+import { supabase } from '../../lib/services/supabaseClient';
 
 const getFileIconInfo = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -240,9 +241,14 @@ export function FileExplorer({
               </>
             )}
             <button 
-              onClick={(e) => { 
+              onClick={async (e) => { 
                 e.stopPropagation(); 
                 setActiveMenuId(null); 
+                try {
+                  await supabase.from('vfs_nodes').update({ is_shared: true }).eq('id', node.id);
+                } catch(err) {
+                  console.error('Failed to update share status', err);
+                }
                 const link = window.location.origin + '/share/' + btoa(node.id);
                 navigator.clipboard.writeText(link);
                 setToastMessage('Secure Share Link Copied to Clipboard');
