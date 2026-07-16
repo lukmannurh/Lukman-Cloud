@@ -687,8 +687,27 @@ export default function App() {
 
     try {
       let blobUrl: string;
-      const ref = fileNode.rawRef;
-      if (!ref) throw new Error('Missing physical reference');
+      let ref = fileNode.rawRef;
+      
+      // Fallback: gracefully handle missing rawRef or provider
+      if (!ref || (!isGoogleDriveRef(ref as any) && !isTelegramRef(ref as any))) {
+        if (fileNode.storageRef?.provider === 'gdrive' || fileNode.storageRef?.fileId) {
+          ref = {
+            provider: 'google_drive',
+            accountId: fileNode.storageRef?.accountId || accounts[0]?.id,
+            fileId: fileNode.storageRef?.fileId || '',
+            mimeType: fileNode.mimeType || ''
+          } as any;
+        } else if (fileNode.storageRef?.provider === 'telegram' || fileNode.storageRef?.message_id) {
+          ref = {
+            provider: 'telegram',
+            channel_id: fileNode.storageRef?.channel_id || fileNode.telegramChannelId || '',
+            message_id: fileNode.storageRef?.message_id || 0
+          } as any;
+        } else {
+          throw new Error('Unknown storage provider reference');
+        }
+      }
 
         if (isGoogleDriveRef(ref as any)) {
           const accountId = ref.accountId;
@@ -763,8 +782,8 @@ export default function App() {
             setDownloadProgress(prev => ({ ...prev, progress: progress * 100 }));
           }, fileNode.mimeType, fileNode.telegramChannelId);
         } else {
-        throw new Error('Unknown storage provider reference');
-      }
+          throw new Error('Unknown storage provider reference (post-fallback)');
+        }
 
       setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: 'Complete', progress: 100 } : t));
       setDownloadProgress(prev => ({ ...prev, status: 'success', progress: 100 }));
@@ -1102,15 +1121,14 @@ export default function App() {
                                 if (activeSuggestionIndex >= 0 && activeSuggestionIndex < searchResults.length) {
                                   const result = searchResults[activeSuggestionIndex];
                                   flushSync(() => {
-                                    if (result.type === 'folder') {
-                                      setCurrentView('vfs');
-                                      handleNavigateFolder(result.id);
-                                    } else {
-                                      setCurrentView('vfs');
-                                      handleNavigateFolder(result.parentId || 'root');
+                                    setSearchQuery('');
+                                    setCurrentView('vfs');
+                                    const targetFolder = result.type === 'folder' ? result.id : (result.parentId || 'root');
+                                    handleNavigateFolder(targetFolder);
+                                    setCurrentFolderId(targetFolder);
+                                    if (result.type !== 'folder') {
                                       setHighlightedNodeId(result.id);
                                     }
-                                    setSearchQuery('');
                                     setIsSearchFocused(false);
                                     setActiveSuggestionIndex(-1);
                                   });
@@ -1138,15 +1156,14 @@ export default function App() {
                                       className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${activeSuggestionIndex === index ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                                       onClick={() => {
                                         flushSync(() => {
-                                          if (result.type === 'folder') {
-                                            setCurrentView('vfs');
-                                            handleNavigateFolder(result.id);
-                                          } else {
-                                            setCurrentView('vfs');
-                                            handleNavigateFolder(result.parentId || 'root');
+                                          setSearchQuery('');
+                                          setCurrentView('vfs');
+                                          const targetFolder = result.type === 'folder' ? result.id : (result.parentId || 'root');
+                                          handleNavigateFolder(targetFolder);
+                                          setCurrentFolderId(targetFolder);
+                                          if (result.type !== 'folder') {
                                             setHighlightedNodeId(result.id);
                                           }
-                                          setSearchQuery('');
                                           setIsSearchFocused(false);
                                           setActiveSuggestionIndex(-1);
                                         });
