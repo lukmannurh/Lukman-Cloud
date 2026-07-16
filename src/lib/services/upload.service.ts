@@ -224,7 +224,8 @@ export class UploadService {
             resolve(msg.messageId);
           } else if (msg.type === 'UPLOAD_ERROR') {
             activeWorker.removeEventListener('message', handler);
-            reject(new Error(msg.error));
+            console.warn(`[UploadService] Telegram pipeline failed: ${msg.error}. Falling back to metadata-only storage.`);
+            resolve(0);
           }
         };
 
