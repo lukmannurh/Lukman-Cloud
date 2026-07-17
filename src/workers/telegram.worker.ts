@@ -166,6 +166,7 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
       if (isAuth) {
         updateState('AUTHENTICATED');
         sendEvent({ type: 'AUTHENTICATED', sessionString: client.session.save() as unknown as string });
+        sendEvent({ type: 'WORKER_READY' });
       } else {
         updateState('DISCONNECTED');
       }

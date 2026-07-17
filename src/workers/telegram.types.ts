@@ -44,4 +44,5 @@ export type WorkerEvent =
   | { type: 'UPLOAD_ERROR'; requestId: string; error: string }
   | { type: 'DOWNLOAD_PROGRESS'; requestId: string; progress: number }
   | { type: 'DOWNLOAD_COMPLETE'; requestId: string; data: ArrayBuffer; verified: boolean }
-  | { type: 'DOWNLOAD_ERROR'; requestId: string; error: string };
+  | { type: 'DOWNLOAD_ERROR'; requestId: string; error: string }
+  | { type: 'WORKER_READY' };

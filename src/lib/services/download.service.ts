@@ -97,52 +97,63 @@ export class DownloadService {
         let currentWorkerIndex = 0;
         for (let i = 0; i < ref.chunks.length; i++) {
           const chunk = ref.chunks[i];
-          const activeWorker = workers[currentWorkerIndex];
-          currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
+          
+          // Skip round-robin if there is only 1 temporary worker (anonymous single-session download)
+          const activeWorker = workers.length === 1 ? workers[0] : workers[currentWorkerIndex];
+          if (workers.length > 1) {
+            currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
+          }
+          
           const requestId = crypto.randomUUID();
 
-          const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
-            const handler = (event: MessageEvent) => {
-              const msg = event.data;
-              if (msg.requestId !== requestId) return;
+          try {
+            const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
+              const handler = (event: MessageEvent) => {
+                const msg = event.data;
+                if (msg.requestId !== requestId) return;
 
-              if (msg.type === 'DOWNLOAD_PROGRESS') {
-                const currentLoaded = loadedBytes + (msg.progress * chunk.chunkSize);
-                const overallProgress = currentLoaded / totalSize;
-                
-                // Calculate Speed
-                const now = Date.now();
-                const deltaT = (now - lastTime) / 1000;
-                let speedText = '';
-                if (deltaT >= 0.5) {
-                  const speed = (currentLoaded - lastLoaded) / deltaT / (1024 * 1024);
-                  speedText = `${speed.toFixed(1)} MB/s`;
-                  lastTime = now;
-                  lastLoaded = currentLoaded;
+                if (msg.type === 'DOWNLOAD_PROGRESS') {
+                  const currentLoaded = loadedBytes + (msg.progress * chunk.chunkSize);
+                  const overallProgress = currentLoaded / totalSize;
+                  
+                  // Calculate Speed
+                  const now = Date.now();
+                  const deltaT = (now - lastTime) / 1000;
+                  let speedText = '';
+                  if (deltaT >= 0.5) {
+                    const speed = (currentLoaded - lastLoaded) / deltaT / (1024 * 1024);
+                    speedText = `${speed.toFixed(1)} MB/s`;
+                    lastTime = now;
+                    lastLoaded = currentLoaded;
+                  }
+
+                  if (onProgress) onProgress(Math.min(1.0, Math.max(0, overallProgress)), speedText);
+                } else if (msg.type === 'DOWNLOAD_COMPLETE') {
+                  activeWorker.removeEventListener('message', handler);
+                  resolve(msg.data);
+                } else if (msg.type === 'DOWNLOAD_ERROR') {
+                  activeWorker.removeEventListener('message', handler);
+                  reject(new Error(msg.error));
                 }
+              };
 
-                if (onProgress) onProgress(Math.min(1.0, Math.max(0, overallProgress)), speedText);
-              } else if (msg.type === 'DOWNLOAD_COMPLETE') {
-                activeWorker.removeEventListener('message', handler);
-                resolve(msg.data);
-              } else if (msg.type === 'DOWNLOAD_ERROR') {
-                activeWorker.removeEventListener('message', handler);
-                reject(new Error(msg.error));
-              }
-            };
-
-            activeWorker.addEventListener('message', handler);
-            activeWorker.postMessage({
-              type: 'DOWNLOAD_FILE',
-              messageId: chunk.messageId,
-              channelId: activeChannelId,
-              expectedHash: '',
-              requestId
+              activeWorker.addEventListener('message', handler);
+              activeWorker.postMessage({
+                type: 'DOWNLOAD_FILE',
+                messageId: chunk.messageId,
+                channelId: activeChannelId,
+                expectedHash: '',
+                requestId
+              });
             });
-          });
 
-          loadedBytes += chunkData.byteLength;
-          controller.enqueue(new Uint8Array(chunkData));
+            loadedBytes += chunkData.byteLength;
+            controller.enqueue(new Uint8Array(chunkData));
+          } catch (err: any) {
+            console.error('[DownloadService] Decryption or network error on chunk:', err);
+            controller.error(err);
+            throw err;
+          }
         }
         controller.close();
       }

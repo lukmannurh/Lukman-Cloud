@@ -76,7 +76,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   
                   const connectPromise = new Promise<boolean>((resolve) => {
                     const handler = (msg: MessageEvent) => {
-                      if (msg.data.type === 'AUTHENTICATED') {
+                      if (msg.data.type === 'WORKER_READY') {
                         activeWorker?.removeEventListener('message', handler);
                         resolve(true);
                       } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
@@ -252,7 +252,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       
                       const connectPromise = new Promise<boolean>((resolve) => {
                         const handler = (msg: MessageEvent) => {
-                          if (msg.data.type === 'AUTHENTICATED') {
+                          if (msg.data.type === 'WORKER_READY') {
                             activeWorker?.removeEventListener('message', handler);
                             resolve(true);
                           } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
