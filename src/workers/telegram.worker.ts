@@ -390,11 +390,14 @@ async function handleDownloadFile(messageId: number, channelId: string, expected
     }
 
     // 2. Get message
+    console.log(`[TelegramWorker] Fetching message ID ${messageId} from channel ${targetChannel}...`);
     const messages = await client!.getMessages(targetChannel, { ids: [messageId] });
     if (!messages.length || !messages[0]) {
+      console.error(`[TelegramWorker] Message ${messageId} not found in channel ${targetChannel}`);
       throw new Error('Message not found');
     }
     const message = messages[0];
+    console.log(`[TelegramWorker] Message ${messageId} found. Initiating media download...`);
 
     // 2. Download Media (with retry for leader/connection race conditions)
     let buffer;
@@ -426,13 +429,18 @@ async function handleDownloadFile(messageId: number, channelId: string, expected
     }
 
     // 3. Verify Integrity
+    console.log(`[TelegramWorker] Downloaded buffer for message ${messageId}, calculating SHA256...`);
     const sha256 = await calculateSHA256(buffer.buffer);
     const verified = sha256 === expectedHash;
+    console.log(`[TelegramWorker] Buffer verified: ${verified}, sending DOWNLOAD_COMPLETE...`);
 
     // 4. Return Data
-    sendEvent({ type: 'DOWNLOAD_COMPLETE', requestId, data: buffer.buffer, verified });
+    // Buffer might be a Node.js Buffer which pools memory. Slice to the exact byte offset/length.
+    const arr = new Uint8Array(buffer);
+    const safeData = arr.buffer.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
+    sendEvent({ type: 'DOWNLOAD_COMPLETE', requestId, data: safeData, verified });
   } catch (error: any) {
-    console.error('[TelegramWorker] Download error:', error);
+    console.error(`[TelegramWorker] Download error on messageId ${messageId}:`, error);
     sendEvent({ type: 'DOWNLOAD_ERROR', requestId, error: error.message || 'Failed to download file' });
   }
 }

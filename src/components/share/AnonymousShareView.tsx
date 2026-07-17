@@ -287,16 +287,28 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     if (!ref || !ref.chunks) {
                        ref = {
                          provider: 'telegram',
-                         channel_id: node.telegramChannelId || node.rawRef?.channelId || '',
-                         message_id: node.rawRef?.chunks?.[0]?.messageId || 0,
-                         chunks: node.rawRef?.chunks || []
+                         channelId: node.telegramChannelId || node.rawRef?.channelId || node.rawRef?.channel_id || '',
+                         chunks: node.rawRef?.chunks || (node.rawRef?.messageId || node.rawRef?.message_id ? [{ messageId: node.rawRef?.messageId || node.rawRef?.message_id, chunkSize: node.size }] : [])
                        } as any;
                     }
                     
-                    const url = await downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, node.mimeType, node.telegramChannelId);
+                    console.log('[Share] Invoking downloadService.downloadFromTelegram with 1 worker:', activeWorker);
+                    const url = await downloadService.downloadFromTelegram(
+                      ref as any, 
+                      [activeWorker], 
+                      (progress, speed) => {
+                         console.log(`[Share] Download progress: ${Math.round(progress * 100)}%, Speed: ${speed}`);
+                      }, 
+                      node.mimeType, 
+                      node.telegramChannelId
+                    );
+                    console.log('[Share] downloadFromTelegram completed. Blob URL generated:', url);
+
                     if (url) {
+                      console.log('[Share] Fetching blob URL to arrayBuffer...');
                       const response = await fetch(url);
                       const finalBuffer = await response.arrayBuffer();
+                      console.log('[Share] Buffer successfully loaded. Initiating virtual anchor click.');
                       const downloadedBlob = new Blob([finalBuffer], { type: node.mimeType || 'application/octet-stream' });
                       const link = document.createElement('a');
                       link.href = URL.createObjectURL(downloadedBlob);
@@ -305,12 +317,14 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       link.click();
                       document.body.removeChild(link);
                       setDownloadStatus('idle');
+                      console.log('[Share] Download successfully completed');
                     } else {
+                      console.log('[Share] Blob URL was null');
                       setDownloadStatus('error');
                     }
                   }
-                } catch (err) {
-                  console.error('Direct download failed:', err);
+                } catch (err: any) {
+                  console.error('[Share] Direct download failed explicitly:', err);
                   setDownloadStatus('error');
                 }
               }}
