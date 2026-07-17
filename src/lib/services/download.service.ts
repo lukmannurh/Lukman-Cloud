@@ -86,7 +86,44 @@ export class DownloadService {
 
     const activeChannelId = explicitChannelId || ref.channelId;
 
-    // 1. Setup Native ReadableStream to prevent main-thread memory exhaustion
+    // 1. Single Chunk Bypass: Instantly resolve to Blob URL without ReadableStream pooling
+    if (ref.chunks.length === 1) {
+      const chunk = ref.chunks[0];
+      const activeWorker = workers[0];
+      const requestId = crypto.randomUUID();
+      
+      const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const handler = (event: MessageEvent) => {
+          const msg = event.data;
+          if (msg.requestId !== requestId) return;
+
+          if (msg.type === 'DOWNLOAD_PROGRESS') {
+            if (onProgress) onProgress(msg.progress, '');
+          } else if (msg.type === 'DOWNLOAD_COMPLETE') {
+            activeWorker.removeEventListener('message', handler);
+            resolve(msg.data);
+          } else if (msg.type === 'DOWNLOAD_ERROR') {
+            activeWorker.removeEventListener('message', handler);
+            reject(new Error(msg.error));
+          }
+        };
+
+        activeWorker.addEventListener('message', handler);
+        activeWorker.postMessage({
+          type: 'DOWNLOAD_FILE',
+          messageId: chunk.messageId,
+          channelId: activeChannelId,
+          expectedHash: '',
+          requestId
+        });
+      });
+
+      const finalBlob = mimeType ? new Blob([chunkData], { type: mimeType }) : new Blob([chunkData]);
+      if (onProgress) onProgress(1.0, 'Done');
+      return URL.createObjectURL(finalBlob);
+    }
+
+    // 2. Setup Native ReadableStream to prevent main-thread memory exhaustion (Multi-part files)
     const stream = new ReadableStream({
       async start(controller) {
         let loadedBytes = 0;

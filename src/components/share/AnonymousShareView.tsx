@@ -240,6 +240,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     ].filter(Boolean) as string[];
                     
                     if (BOT_POOL.length === 0) {
+                      alert('System Error: Target connection keys missing from production bundle. Re-build required.');
                       throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
                     }
                     let availableTokens = [...BOT_POOL];
