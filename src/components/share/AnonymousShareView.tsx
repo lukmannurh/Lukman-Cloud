@@ -79,11 +79,25 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   activeWorker = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
                   
                   const connectPromise = new Promise<boolean>((resolve) => {
+                    let isResolved = false;
+                    const timeout = setTimeout(() => {
+                      if (!isResolved) {
+                        isResolved = true;
+                        activeWorker?.terminate();
+                        resolve(false);
+                      }
+                    }, 10000);
+
                     const handler = (msg: MessageEvent) => {
+                      if (isResolved) return;
                       if (msg.data.type === 'WORKER_READY') {
+                        isResolved = true;
+                        clearTimeout(timeout);
                         activeWorker?.removeEventListener('message', handler);
                         resolve(true);
-                      } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+                      } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization') || msg.data.message.includes('timed out'))) {
+                        isResolved = true;
+                        clearTimeout(timeout);
                         activeWorker?.removeEventListener('message', handler);
                         activeWorker?.terminate();
                         resolve(false);
@@ -258,11 +272,25 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       activeWorker = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
                       
                       const connectPromise = new Promise<boolean>((resolve) => {
+                        let isResolved = false;
+                        const timeout = setTimeout(() => {
+                          if (!isResolved) {
+                            isResolved = true;
+                            activeWorker?.terminate();
+                            resolve(false);
+                          }
+                        }, 10000);
+
                         const handler = (msg: MessageEvent) => {
+                          if (isResolved) return;
                           if (msg.data.type === 'WORKER_READY') {
+                            isResolved = true;
+                            clearTimeout(timeout);
                             activeWorker?.removeEventListener('message', handler);
                             resolve(true);
                           } else if (msg.data.type === 'ERROR' || msg.data.type === 'DOWNLOAD_ERROR' || (msg.data.type === 'STATE_CHANGE' && msg.data.state === 'DISCONNECTED')) {
+                            isResolved = true;
+                            clearTimeout(timeout);
                             activeWorker?.removeEventListener('message', handler);
                             activeWorker?.terminate();
                             resolve(false);
