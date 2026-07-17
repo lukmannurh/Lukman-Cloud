@@ -416,6 +416,19 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
+  // Task 5: Inject active upload refresh disruption life guards
+  useEffect(() => {
+    const hasActiveUploads = activeTransfers.some(t => t.status.toLowerCase().includes('upload') || t.status === 'Routing...');
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasActiveUploads) {
+        e.preventDefault();
+        e.returnValue = "Upload in progress! Refreshing or closing this tab will permanently cancel the current transfer. Are you sure?";
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [activeTransfers]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (newMenuRef.current && !newMenuRef.current.contains(event.target as Node)) {

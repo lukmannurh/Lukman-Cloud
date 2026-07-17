@@ -48,7 +48,11 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
         setNode(vfsNode);
 
         // Pre-fetch preview if supported
-        if (!vfsNode.name.endsWith('.enc')) {
+        const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isVideo = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'ogg'].includes(ext);
+
+        if (isImage || isVideo) {
           try {
              let url: string | null = null;
              
@@ -118,19 +122,22 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                    } as any;
                 }
                 
-                url = await downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
+                // Task 3: 5-second timeout race
+                const downloadPromise = downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
+                const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 5000));
+                
+                url = await Promise.race([downloadPromise, timeoutPromise]) as string;
              }
 
              if (url) {
-               const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
-               if (ext === 'pdf') {
-                 // Depromoted PDF blob conversion - direct download only
-               }
                setPreviewUrl(url);
              }
           } catch(e) {
              console.error("Preview fetch failed:", e);
+             setPreviewError(true);
           }
+        } else {
+          setPreviewError(true);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load shared file.');
@@ -194,8 +201,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             </>
           ) : (
             <div className="text-slate-500 flex flex-col items-center">
-              {isImage ? <ImageIcon className="w-16 h-16 mb-4 opacity-50" /> : isVideo ? <VideoIcon className="w-16 h-16 mb-4 opacity-50" /> : <FileIcon className="w-16 h-16 mb-4 opacity-50" />}
-              <p>{previewError ? 'Preview failed to load' : 'Preview generating...'}</p>
+              <p>{(!isImage && !isVideo && !isPdf) ? 'Preview Unavailable' : (previewError ? 'Preview Unavailable' : 'Preview generating...')}</p>
             </div>
           )}
         </div>
@@ -293,36 +299,54 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                        } as any;
                     }
                     
-                    console.log('[Share] Invoking downloadService.downloadFromTelegram with 1 worker:', activeWorker);
-                    const url = await downloadService.downloadFromTelegram(
-                      ref as any, 
-                      [activeWorker], 
-                      (progress, speed) => {
-                         console.log(`[Share] Download progress: ${Math.round(progress * 100)}%, Speed: ${speed}`);
-                      }, 
-                      node.mimeType, 
-                      node.telegramChannelId
-                    );
-                    console.log('[Share] downloadFromTelegram completed. Blob URL generated:', url);
-
-                    if (url) {
-                      console.log('[Share] Fetching blob URL to arrayBuffer...');
-                      const response = await fetch(url);
-                      const finalBuffer = await response.arrayBuffer();
-                      console.log('[Share] Buffer successfully loaded. Initiating virtual anchor click.');
-                      const downloadedBlob = new Blob([finalBuffer], { type: node.mimeType || 'application/octet-stream' });
-                      const link = document.createElement('a');
-                      link.href = URL.createObjectURL(downloadedBlob);
-                      link.download = node.name;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      setDownloadStatus('idle');
-                      console.log('[Share] Download successfully completed');
-                    } else {
-                      console.log('[Share] Blob URL was null');
-                      setDownloadStatus('error');
+                    console.log('[Share] Accumulating chunks directly via Worker...');
+                    const downloadedChunks: any[] = [];
+                    const totalSize = ref.chunks.reduce((acc: number, c: any) => acc + c.chunkSize, 0);
+                    
+                    for (let i = 0; i < ref.chunks.length; i++) {
+                      const chunk = ref.chunks[i];
+                      const requestId = crypto.randomUUID();
+                      
+                      const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
+                        const handler = (msg: MessageEvent) => {
+                          const data = msg.data;
+                          if (data.requestId !== requestId) return;
+                          
+                          if (data.type === 'DOWNLOAD_PROGRESS') {
+                             const currentLoaded = downloadedChunks.reduce((acc, c) => acc + c.byteLength, 0) + (data.progress * chunk.chunkSize);
+                             console.log(`[Share] Download progress: ${Math.round((currentLoaded / totalSize) * 100)}%`);
+                          } else if (data.type === 'DOWNLOAD_COMPLETE') {
+                             activeWorker?.removeEventListener('message', handler);
+                             resolve(data.data);
+                          } else if (data.type === 'DOWNLOAD_ERROR' || data.type === 'ERROR') {
+                             activeWorker?.removeEventListener('message', handler);
+                             reject(new Error(data.error || data.message || 'Worker error'));
+                          }
+                        };
+                        
+                        activeWorker!.addEventListener('message', handler);
+                        activeWorker!.postMessage({
+                          type: 'DOWNLOAD_FILE',
+                          messageId: chunk.messageId,
+                          channelId: node.telegramChannelId || ref.channelId || ref.channel_id,
+                          expectedHash: '',
+                          requestId
+                        });
+                      });
+                      
+                      downloadedChunks.push(chunkData);
                     }
+                    
+                    console.log('[Share] Buffer successfully loaded. Initiating virtual anchor click.');
+                    const downloadedBlob = new Blob(downloadedChunks, { type: node.mimeType || 'application/octet-stream' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(downloadedBlob);
+                    link.download = node.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setDownloadStatus('idle');
+                    console.log('[Share] Download successfully completed');
                   }
                 } catch (err: any) {
                   console.error('[Share] Direct download failed explicitly:', err);

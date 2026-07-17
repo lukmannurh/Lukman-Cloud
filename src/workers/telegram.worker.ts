@@ -310,10 +310,13 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
       );
 
       // Forward real-time progress to Main Thread (plain primitives only — no BigInt)
+      const current = end;
+      const total = file.size;
+      const percent = total && total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
       workerSelf.postMessage({
         type: 'UPLOAD_PROGRESS',
         requestId,
-        progress: Math.min(1, end / file.size),
+        progress: percent / 100,
       });
     }
 
@@ -407,8 +410,11 @@ async function handleDownloadFile(messageId: number, channelId: string, expected
     while (true) {
       try {
         buffer = await client!.downloadMedia(message, {
-          progressCallback: (progress: any) => {
-            sendEvent({ type: 'DOWNLOAD_PROGRESS', requestId, progress: Number(progress) });
+          progressCallback: (downloaded: any, totalBytes: any) => {
+            const current = Number(downloaded);
+            const total = Number(totalBytes);
+            const percent = total && total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+            sendEvent({ type: 'DOWNLOAD_PROGRESS', requestId, progress: percent / 100 });
           }
         });
         break;

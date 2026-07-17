@@ -101,7 +101,19 @@ export function FileExplorer({
     setPreviewError(false);
     setArchiveFiles([]);
 
-    onFetchPreviewUrl(previewNode)
+    const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+    const isVideo = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'ogg'].includes(ext);
+
+    if (!isImage && !isVideo) {
+      setPreviewError(true);
+      setIsFetchingPreview(false);
+      return;
+    }
+
+    const timeoutPromise = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 5000));
+    
+    Promise.race([onFetchPreviewUrl(previewNode), timeoutPromise])
       .then(async (url) => {
         const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
         let finalUrl = url;
