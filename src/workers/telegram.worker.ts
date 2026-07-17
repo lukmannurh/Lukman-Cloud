@@ -149,7 +149,8 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
       client = new TelegramClient(session, apiId, apiHash, {
         connection: ConnectionTCPObfuscated as any,
         networkSocket: PromisedWebSockets as any, // FORCES BROWSER WEBSOCKET CLASS — defeats PromisedNetSockets relative imports
-        connectionRetries: 5,
+        connectionRetries: 1,
+        requestRetries: 1, // Prevent hanging on FloodWait
         useWSS: true,
         deviceModel: "LukmanCloudWorker",
       });
@@ -157,9 +158,10 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
       await client.connect();
 
       if (botToken) {
-        await client.start({
-          botAuthToken: botToken
-        });
+        await Promise.race([
+          client.start({ botAuthToken: botToken }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('client.start timed out (possible FloodWait)')), 5000))
+        ]);
       }
 
       const isAuth = await client.checkAuthorization();

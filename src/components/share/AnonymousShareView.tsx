@@ -262,7 +262,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                           if (msg.data.type === 'WORKER_READY') {
                             activeWorker?.removeEventListener('message', handler);
                             resolve(true);
-                          } else if (msg.data.type === 'ERROR' || msg.data.type === 'DOWNLOAD_ERROR') {
+                          } else if (msg.data.type === 'ERROR' || msg.data.type === 'DOWNLOAD_ERROR' || (msg.data.type === 'STATE_CHANGE' && msg.data.state === 'DISCONNECTED')) {
                             activeWorker?.removeEventListener('message', handler);
                             activeWorker?.terminate();
                             resolve(false);
