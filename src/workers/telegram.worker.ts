@@ -128,6 +128,54 @@ async function calculateSHA256(data: ArrayBuffer): Promise<string> {
   return bufferToHex(hashBuffer);
 }
 
+// ── IndexedDB Session Cache ──────────────────────────────────────────────────
+
+const IDB_NAME = 'AetherVault_TelegramAuth';
+const IDB_STORE = 'sessions';
+
+async function initDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = (e: any) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = (e: any) => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getCachedSession(botToken: string): Promise<string | null> {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(botToken);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    console.warn('[TelegramWorker] Failed to read from IndexedDB', e);
+    return null;
+  }
+}
+
+async function saveCachedSession(botToken: string, sessionString: string): Promise<void> {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const req = tx.objectStore(IDB_STORE).put(sessionString, botToken);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    console.warn('[TelegramWorker] Failed to write to IndexedDB', e);
+  }
+}
+
 // ── Command Handlers ───────────────────────────────────────────────────────
 
 async function handleConnect(apiId: number, apiHash: string, sessionString?: string, botToken?: string) {
@@ -145,7 +193,15 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
       const { MemorySession } = await import('telegram/sessions/Memory');
       // ConnectionTCPObfuscated is statically imported at the top — no dynamic import needed.
 
-      const session = sessionString ? new StringSession(sessionString) : new MemorySession();
+      let activeSessionStr = sessionString;
+      if (!activeSessionStr && botToken) {
+        activeSessionStr = await getCachedSession(botToken) || undefined;
+        if (activeSessionStr) {
+          console.log('[TelegramWorker] Loaded session from IndexedDB cache');
+        }
+      }
+
+      const session = activeSessionStr ? new StringSession(activeSessionStr) : new MemorySession();
       client = new TelegramClient(session, apiId, apiHash, {
         connection: ConnectionTCPObfuscated as any,
         networkSocket: PromisedWebSockets as any, // FORCES BROWSER WEBSOCKET CLASS — defeats PromisedNetSockets relative imports
@@ -157,11 +213,15 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
 
       await client.connect();
 
-      if (botToken) {
+      // Only perform bot authentication if we didn't have a cached session
+      if (!activeSessionStr && botToken) {
         await Promise.race([
           client.start({ botAuthToken: botToken }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('client.start timed out (possible FloodWait)')), 5000))
         ]);
+        const newSessionStr = client.session.save() as unknown as string;
+        await saveCachedSession(botToken, newSessionStr);
+        console.log('[TelegramWorker] Saved new session to IndexedDB cache');
       }
 
       const isAuth = await client.checkAuthorization();
