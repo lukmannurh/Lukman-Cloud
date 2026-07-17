@@ -558,21 +558,38 @@ export default function App() {
         console.error('[App] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
         throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
       }
-      const workers = BOT_POOL.map(token => {
+      let availableTokens = [...BOT_POOL];
+      const createWorker = (token: string, index: number): Worker => {
         const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
         w.onerror = (e) => {
           e.preventDefault();
           console.error('[Worker] Fatal error:', e.message);
         };
+        const msgHandler = (msg: MessageEvent) => {
+          if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+            w.removeEventListener('message', msgHandler);
+            console.warn(`[App] Token fail-over triggered. Evicting invalid token at slot ${index}.`);
+            availableTokens = availableTokens.filter(t => t !== token);
+            if (availableTokens.length > 0) {
+              const nextToken = availableTokens[Math.floor(Math.random() * availableTokens.length)];
+              console.log(`[App] Spinning up healthy worker with fallback token...`);
+              workerPoolRef.current[index] = createWorker(nextToken, index);
+            }
+          }
+        };
+        w.addEventListener('message', msgHandler);
         w.postMessage({
           type: 'CONNECT',
-          apiId: 35691342,
-          apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
-          botToken: token
+          payload: {
+            apiId: 35691342,
+            apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+            token: token
+          }
         });
         return w;
-      });
-      workerPoolRef.current = workers;
+      };
+
+      workerPoolRef.current = BOT_POOL.map((token, i) => createWorker(token, i));
     }
 
     const ensurePathExists = async (pathStr: string, rootFolderId: string): Promise<string> => {
@@ -790,21 +807,38 @@ export default function App() {
               console.error('[App] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
               throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
             }
-            const workers = BOT_POOL.map(token => {
+            let availableTokens = [...BOT_POOL];
+            const createWorker = (token: string, index: number): Worker => {
               const w = new Worker(new URL('./workers/telegram.worker.ts', import.meta.url), { type: 'module' });
               w.onerror = (e) => {
                 e.preventDefault();
                 setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: `Error: Worker crashed` } : t));
               };
+              const msgHandler = (msg: MessageEvent) => {
+                if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+                  w.removeEventListener('message', msgHandler);
+                  console.warn(`[App] Token fail-over triggered (DL). Evicting invalid token at slot ${index}.`);
+                  availableTokens = availableTokens.filter(t => t !== token);
+                  if (availableTokens.length > 0) {
+                    const nextToken = availableTokens[Math.floor(Math.random() * availableTokens.length)];
+                    console.log(`[App] Spinning up healthy worker with fallback token...`);
+                    workerPoolRef.current[index] = createWorker(nextToken, index);
+                  }
+                }
+              };
+              w.addEventListener('message', msgHandler);
               w.postMessage({ 
                 type: 'CONNECT', 
-                apiId: 35691342, 
-                apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
-                botToken: token
+                payload: {
+                  apiId: 35691342, 
+                  apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                  token: token
+                }
               });
               return w;
-            });
-            workerPoolRef.current = workers;
+            };
+            
+            workerPoolRef.current = BOT_POOL.map((token, i) => createWorker(token, i));
             
             // Allow 500ms for immediate synchronous readiness (MTProto usually caches session internally)
             await new Promise(r => setTimeout(r, 500));

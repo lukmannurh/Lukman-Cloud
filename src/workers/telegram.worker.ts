@@ -21,7 +21,16 @@ import type { TelegramClient } from 'telegram';
 import { ConnectionTCPObfuscated } from 'telegram/network';
 import { PromisedWebSockets } from 'telegram/extensions/PromisedWebSockets';
 import { Api } from 'telegram';
-import { WorkerCommand, WorkerEvent, TelegramWorkerState } from './telegram.types';
+export interface WorkerCommandConnect {
+  type: 'CONNECT';
+  apiId: number;
+  apiHash: string;
+  sessionString?: string;
+  botToken?: string; // Newly added dynamic botToken
+}
+export type WorkerCommand = WorkerCommandConnect | any; // Simplified for chunk replacing
+export type WorkerEvent = any;
+export type TelegramWorkerState = string;
 
 const _global = globalThis as any;
 
@@ -121,7 +130,7 @@ async function calculateSHA256(data: ArrayBuffer): Promise<string> {
 
 // ── Command Handlers ───────────────────────────────────────────────────────
 
-async function handleConnect(apiId: number, apiHash: string, sessionString?: string) {
+async function handleConnect(apiId: number, apiHash: string, sessionString?: string, botToken?: string) {
   if (client) {
     sendEvent({ type: 'ERROR', message: 'Client already connected.' });
     return;
@@ -147,7 +156,6 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
 
       await client.connect();
 
-      const botToken = '778532517:AAGfLWpYw9-IIEhxs9b-7EL5Of7d3mXfKVk';
       if (botToken) {
         await client.start({
           botAuthToken: botToken
@@ -330,14 +338,22 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
     const peer = await client!.getInputEntity(targetChannel);
 
     // 6. Send the document via raw SendMedia RPC
-    const result = await client!.invoke(
-      new Api.messages.SendMedia({
-        peer,
-        media,
-        message: `Uploaded via Lukman Cloud: ${pristineName}`,
-        randomId: fileId, // Reuse fileId as deduplication key
-      })
-    );
+    let result;
+    try {
+      result = await client!.invoke(
+        new Api.messages.SendMedia({
+          peer,
+          media,
+          message: `Uploaded via Lukman Cloud: ${pristineName}`,
+          randomId: fileId, // Reuse fileId as deduplication key
+        })
+      );
+    } catch (sendErr: any) {
+      if (sendErr.message?.includes('FLOOD_WAIT')) {
+        throw new Error(`FloodWaitError: ${sendErr.message}`);
+      }
+      throw sendErr;
+    }
 
     // 7. Extract message ID — GramJS returns Updates; find the Message inside
     let safeMessageId: number;
@@ -431,7 +447,13 @@ workerSelf.addEventListener('message', async (event: MessageEvent<WorkerCommand>
 
   switch (command.type) {
     case 'CONNECT':
-      await handleConnect(command.apiId, command.apiHash, command.sessionString);
+      {
+        const apiId = command.payload?.apiId || command.apiId || 35691342;
+        const apiHash = command.payload?.apiHash || command.apiHash || '';
+        const token = command.payload?.token || command.botToken;
+        const sessionString = command.payload?.sessionString || command.sessionString;
+        await handleConnect(apiId, apiHash, sessionString, token);
+      }
       break;
 
     case 'SEND_CODE':

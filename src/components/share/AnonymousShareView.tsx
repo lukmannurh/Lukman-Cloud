@@ -66,18 +66,47 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   console.error('[Share] Critical: No VITE_TELEGRAM_BOT_TOKEN environment variables found.');
                   throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
                 }
-                const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
+                let availableTokens = [...BOT_POOL];
+                let activeWorker: Worker | null = null;
+                let connected = false;
+
+                while (!connected && availableTokens.length > 0) {
+                  const randomToken = availableTokens[Math.floor(Math.random() * availableTokens.length)];
+                  activeWorker = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+                  
+                  const connectPromise = new Promise<boolean>((resolve) => {
+                    const handler = (msg: MessageEvent) => {
+                      if (msg.data.type === 'AUTHENTICATED') {
+                        activeWorker?.removeEventListener('message', handler);
+                        resolve(true);
+                      } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+                        activeWorker?.removeEventListener('message', handler);
+                        activeWorker?.terminate();
+                        resolve(false);
+                      }
+                    };
+                    activeWorker.addEventListener('message', handler);
+                    activeWorker.postMessage({ 
+                      type: 'CONNECT', 
+                      payload: {
+                        apiId: 35691342, 
+                        apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                        token: randomToken
+                      }
+                    });
+                  });
+
+                  connected = await connectPromise;
+                  if (!connected) {
+                    availableTokens = availableTokens.filter(t => t !== randomToken);
+                    console.warn('[Share] Preview Token failed auth, blacklisted slot. Retrying...');
+                  }
+                }
+
+                if (!connected || !activeWorker) {
+                  throw new Error('All storage nodes failed authentication.');
+                }
                 
-                const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
-                w.postMessage({ 
-                  type: 'CONNECT', 
-                  apiId: 35691342, 
-                  apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
-                  botToken: randomToken
-                });
-                
-                // Allow MTProto session to initialize
-                await new Promise(r => setTimeout(r, 500));
                 
                 let ref = vfsNode.rawRef;
                 if (!ref || !ref.chunks) {
@@ -89,7 +118,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                    } as any;
                 }
                 
-                url = await downloadService.downloadFromTelegram(ref as any, [w], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
+                url = await downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
              }
 
              if (url) {
@@ -213,17 +242,46 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     if (BOT_POOL.length === 0) {
                       throw new Error('Storage Nodes Offline: Missing Telegram Bot Tokens');
                     }
-                    const randomToken = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
-                    
-                    const w = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
-                    w.postMessage({ 
-                      type: 'CONNECT', 
-                      apiId: 35691342, 
-                      apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
-                      botToken: randomToken
-                    });
-                    
-                    await new Promise(r => setTimeout(r, 500));
+                    let availableTokens = [...BOT_POOL];
+                    let activeWorker: Worker | null = null;
+                    let connected = false;
+
+                    while (!connected && availableTokens.length > 0) {
+                      const randomToken = availableTokens[Math.floor(Math.random() * availableTokens.length)];
+                      activeWorker = new Worker(new URL('../../workers/telegram.worker.ts', import.meta.url), { type: 'module' });
+                      
+                      const connectPromise = new Promise<boolean>((resolve) => {
+                        const handler = (msg: MessageEvent) => {
+                          if (msg.data.type === 'AUTHENTICATED') {
+                            activeWorker?.removeEventListener('message', handler);
+                            resolve(true);
+                          } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+                            activeWorker?.removeEventListener('message', handler);
+                            activeWorker?.terminate();
+                            resolve(false);
+                          }
+                        };
+                        activeWorker.addEventListener('message', handler);
+                        activeWorker.postMessage({ 
+                          type: 'CONNECT', 
+                          payload: {
+                            apiId: 35691342, 
+                            apiHash: '84d8f1a2c0e9c4c09cff23316db186ec',
+                            token: randomToken
+                          }
+                        });
+                      });
+
+                      connected = await connectPromise;
+                      if (!connected) {
+                        availableTokens = availableTokens.filter(t => t !== randomToken);
+                        console.warn('[Share] Download Token failed auth, blacklisted slot. Retrying...');
+                      }
+                    }
+
+                    if (!connected || !activeWorker) {
+                      throw new Error('All storage nodes failed authentication.');
+                    }
                     
                     let ref = node.rawRef;
                     if (!ref || !ref.chunks) {
@@ -235,7 +293,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                        } as any;
                     }
                     
-                    const url = await downloadService.downloadFromTelegram(ref as any, [w], undefined, node.mimeType, node.telegramChannelId);
+                    const url = await downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, node.mimeType, node.telegramChannelId);
                     if (url) {
                       const response = await fetch(url);
                       const finalBuffer = await response.arrayBuffer();
@@ -256,7 +314,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                   setDownloadStatus('error');
                 }
               }}
-              disabled={false}
+              disabled={downloadStatus === 'downloading'}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-medium transition-colors"
             >
               <Download className="w-5 h-5" />

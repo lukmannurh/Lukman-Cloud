@@ -506,7 +506,7 @@ export function FileExplorer({
                          </div>
                          <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
                          <p className="text-slate-400 text-sm max-w-sm">
-                           PDF Preview is disabled for maximum security. Please click download below to view this document.
+                           PDF Preview is deactivated for maximum system performance. Please use the direct download option below to read this document.
                          </p>
                       </div>
                     );

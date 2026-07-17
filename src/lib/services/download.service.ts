@@ -76,7 +76,7 @@ export class DownloadService {
    */
   public async downloadFromTelegram(
     ref: TelegramRef, 
-    worker: Worker,
+    workers: Worker[],
     onProgress?: (progress: number, speedText?: string) => void,
     mimeType?: string,
     explicitChannelId?: string
@@ -94,8 +94,11 @@ export class DownloadService {
         let lastLoaded = 0;
         const totalSize = ref.chunks.reduce((acc, c) => acc + c.chunkSize, 0);
 
+        let currentWorkerIndex = 0;
         for (let i = 0; i < ref.chunks.length; i++) {
           const chunk = ref.chunks[i];
+          const activeWorker = workers[currentWorkerIndex];
+          currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
           const requestId = crypto.randomUUID();
 
           const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -120,16 +123,16 @@ export class DownloadService {
 
                 if (onProgress) onProgress(Math.min(1.0, Math.max(0, overallProgress)), speedText);
               } else if (msg.type === 'DOWNLOAD_COMPLETE') {
-                worker.removeEventListener('message', handler);
+                activeWorker.removeEventListener('message', handler);
                 resolve(msg.data);
               } else if (msg.type === 'DOWNLOAD_ERROR') {
-                worker.removeEventListener('message', handler);
+                activeWorker.removeEventListener('message', handler);
                 reject(new Error(msg.error));
               }
             };
 
-            worker.addEventListener('message', handler);
-            worker.postMessage({
+            activeWorker.addEventListener('message', handler);
+            activeWorker.postMessage({
               type: 'DOWNLOAD_FILE',
               messageId: chunk.messageId,
               channelId: activeChannelId,

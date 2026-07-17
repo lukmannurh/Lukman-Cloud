@@ -21,7 +21,7 @@ export type TelegramWorkerState =
 // ── Messages: Main Thread → Worker ─────────────────────────────────────────
 
 export type WorkerCommand =
-  | { type: 'CONNECT'; apiId: number; apiHash: string; sessionString?: string }
+  | { type: 'CONNECT'; payload?: { apiId: number; apiHash: string; token?: string; sessionString?: string }; apiId?: number; apiHash?: string; sessionString?: string; botToken?: string }
   | { type: 'SEND_CODE'; phoneNumber: string }
   | { type: 'SUBMIT_CODE'; code: string; phoneCodeHash: string; phoneNumber: string }
   | { type: 'SUBMIT_PASSWORD'; password: string }
