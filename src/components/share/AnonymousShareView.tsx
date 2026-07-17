@@ -4,8 +4,10 @@ import { downloadService } from '../../lib/services/download.service';
 import { VFSNode } from '../../types';
 import { Download, File as FileIcon, Image as ImageIcon, Video as VideoIcon, FileText } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { useParams } from 'react-router-dom';
 
 export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
+  console.log('[AnonymousShareView] Component rendered!');
   const [node, setNode] = useState<VFSNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -43,7 +45,10 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
           createdAt: data.raw_ref?.createdAt || new Date().toISOString(),
           modifiedAt: data.raw_ref?.modifiedAt || new Date().toISOString(),
           parentId: data.parent_id,
-          children: []
+          children: [],
+          rawRef: data.raw_ref,
+          storageRef: data.storage_ref,
+          telegramChannelId: data.telegramChannelId || data.storage_ref?.channel_id
         };
         setNode(vfsNode);
 
