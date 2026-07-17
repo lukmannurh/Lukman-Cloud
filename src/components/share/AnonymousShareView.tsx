@@ -274,6 +274,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       const connectPromise = new Promise<boolean>((resolve) => {
                         let isResolved = false;
                         const timeout = setTimeout(() => {
+                          console.log('[Share Debug] connectPromise timeout fired after 10s for token', randomToken.substring(0, 5));
                           if (!isResolved) {
                             isResolved = true;
                             activeWorker?.terminate();
@@ -282,13 +283,16 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                         }, 10000);
 
                         const handler = (msg: MessageEvent) => {
+                          console.log('[Share Debug] Worker message received:', msg.data.type, msg.data.state || '', msg.data.error || msg.data.message || '');
                           if (isResolved) return;
                           if (msg.data.type === 'WORKER_READY') {
+                            console.log('[Share Debug] WORKER_READY received');
                             isResolved = true;
                             clearTimeout(timeout);
                             activeWorker?.removeEventListener('message', handler);
                             resolve(true);
                           } else if (msg.data.type === 'ERROR' || msg.data.type === 'DOWNLOAD_ERROR' || (msg.data.type === 'STATE_CHANGE' && msg.data.state === 'DISCONNECTED')) {
+                            console.log('[Share Debug] Error or Disconnected received. Resolving false.');
                             isResolved = true;
                             clearTimeout(timeout);
                             activeWorker?.removeEventListener('message', handler);
@@ -308,13 +312,16 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       });
 
                       connected = await connectPromise;
+                      console.log('[Share Debug] connectPromise resolved with:', connected);
                       if (!connected) {
                         availableTokens = availableTokens.filter(t => t !== randomToken);
-                        console.warn('[Share] Download Token failed auth, blacklisted slot. Retrying...');
+                        console.warn('[Share] Download Token failed auth, blacklisted slot. Retrying... (Remaining:', availableTokens.length, ')');
                       }
                     }
 
+                    console.log('[Share Debug] Exited while loop. connected =', connected);
                     if (!connected || !activeWorker) {
+                      console.log('[Share Debug] Throwing All storage nodes failed authentication.');
                       throw new Error('All storage nodes failed authentication.');
                     }
                     
