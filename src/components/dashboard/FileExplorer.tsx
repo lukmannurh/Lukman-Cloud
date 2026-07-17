@@ -200,7 +200,8 @@ export function FileExplorer({
     const isRoot = node.id === 'root' || node.name === 'Root';
     return (
       <div className="relative">
-        <button 
+        <button
+          data-testid={`context-menu-${node.name}`}
           onClick={(e) => {
             e.stopPropagation();
             const rect = e.currentTarget.getBoundingClientRect();
@@ -426,7 +427,7 @@ export function FileExplorer({
               <div className="flex items-center gap-3 overflow-hidden">
                 <span className="text-3xl shrink-0">📄</span>
                 <div className="truncate">
-                  <h3 className="text-xl font-bold text-slate-800 truncate">{previewNode.name}</h3>
+                  <h3 data-testid="file-name" className="text-xl font-bold text-slate-800 truncate">{previewNode.name}</h3>
                   <p className="text-sm text-slate-500">{formatSize(previewNode.size || 0)}</p>
                 </div>
               </div>

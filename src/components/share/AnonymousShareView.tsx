@@ -262,7 +262,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                           if (msg.data.type === 'WORKER_READY') {
                             activeWorker?.removeEventListener('message', handler);
                             resolve(true);
-                          } else if (msg.data.type === 'ERROR' && (msg.data.message.includes('ACCESS_TOKEN_EXPIRED') || msg.data.message.includes('ImportBotAuthorization'))) {
+                          } else if (msg.data.type === 'ERROR' || msg.data.type === 'DOWNLOAD_ERROR') {
                             activeWorker?.removeEventListener('message', handler);
                             activeWorker?.terminate();
                             resolve(false);
