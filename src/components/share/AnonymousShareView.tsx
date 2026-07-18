@@ -401,55 +401,19 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                        } as any;
                     }
                     
-                    console.log('[Share] Accumulating chunks directly via Worker...');
-                    const downloadedChunks: any[] = [];
-                    const totalSize = ref.chunks.reduce((acc: number, c: any) => acc + c.chunkSize, 0);
+                    console.log('[Share] Initiating native streaming download directly via Worker...');
                     
-                    for (let i = 0; i < ref.chunks.length; i++) {
-                      const chunk = ref.chunks[i];
-                      const requestId = crypto.randomUUID();
-                      
-                      const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
-                        const handler = (msg: MessageEvent) => {
-                          const data = msg.data;
-                          if (data.requestId !== requestId) return;
-                          
-                          if (data.type === 'DOWNLOAD_PROGRESS') {
-                             // TASK 3: Math.min(100,...) guards against chunk-size overflow
-                             const currentLoaded = downloadedChunks.reduce((acc: number, c: any) => acc + c.byteLength, 0) + (data.progress * chunk.chunkSize);
-                             const rawPercent = totalSize > 0 ? Math.round((currentLoaded / totalSize) * 100) : 0;
-                             const percent = Math.min(100, Math.max(0, rawPercent));
-                             console.log(`[Share] Download progress: ${percent}%`);
-                          } else if (data.type === 'DOWNLOAD_COMPLETE') {
-                             activeWorker?.removeEventListener('message', handler);
-                             resolve(data.data);
-                          } else if (data.type === 'DOWNLOAD_ERROR' || data.type === 'ERROR') {
-                             activeWorker?.removeEventListener('message', handler);
-                             reject(new Error(data.error || data.message || 'Worker error'));
-                          }
-                        };
-                        
-                        activeWorker!.addEventListener('message', handler);
-                        activeWorker!.postMessage({
-                          type: 'DOWNLOAD_FILE',
-                          messageId: chunk.messageId,
-                          channelId: node.telegramChannelId || ref.channelId || ref.channel_id,
-                          expectedHash: '',
-                          requestId
-                        });
-                      });
-                      
-                      downloadedChunks.push(chunkData);
-                    }
-                    
-                    console.log('[Share] Buffer successfully loaded. Initiating virtual anchor click.');
-                    const downloadedBlob = new Blob(downloadedChunks, { type: node.mimeType || 'application/octet-stream' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(downloadedBlob);
-                    link.download = node.name;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    await downloadService.streamDownloadFromTelegram(
+                      ref as any,
+                      [activeWorker!],
+                      node.name,
+                      node.size,
+                      (progress, speedText) => {
+                        const percent = Math.min(100, Math.max(0, Math.round(progress * 100)));
+                        console.log(`[Share] Download progress: ${percent}%`);
+                      },
+                      node.telegramChannelId || ref.channelId || ref.channel_id
+                    );
                     setDownloadStatus('idle');
                     console.log('[Share] Download successfully completed');
                   }

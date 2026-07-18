@@ -56,7 +56,7 @@ const Sidebar = ({
         />
       )}
       <div 
-        className={`bg-slate-900 border-r border-slate-800 flex flex-col h-screen text-slate-300 fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out
+        className={`bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-dvh text-slate-300 fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'} w-64`}
       >
@@ -92,9 +92,6 @@ const Sidebar = ({
                 <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
               </div>
               <div className="flex gap-2 mt-1 items-center overflow-hidden">
-                <span className="hidden md:inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
-                  VAULT UNLOCKED
-                </span>
                 <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
                   @{activeUser?.username || 'guest'}
                 </span>
@@ -738,7 +735,7 @@ export default function App() {
     }
   };
 
-  const handleGetFileUrl = async (fileNode: VFSNode): Promise<string> => {
+  const handleGetFileUrl = async (fileNode: VFSNode, isNativeStream = false): Promise<string> => {
     if (accounts.length === 0 && !isTelegramRef(fileNode.rawRef as any)) {
       throw new Error('No accounts configured for Google Drive node');
     }
@@ -870,12 +867,21 @@ export default function App() {
             await new Promise(r => setTimeout(r, 500));
           }
           
-          blobUrl = await downloadService.downloadFromTelegram(ref, workerPoolRef.current, (progress, speedText) => {
-            const pct = Math.min(100, Math.max(0, progress * 100)); // TASK 3: overflow guard
-            const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
-            setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: pct } : t));
-            setDownloadProgress(prev => ({ ...prev, progress: pct }));
-          }, fileNode.mimeType, fileNode.telegramChannelId);
+          if (isNativeStream) {
+            await downloadService.streamDownloadFromTelegram(ref as any, workerPoolRef.current, fileNode.name, fileNode.size, (progress, speedText) => {
+              const pct = Math.min(100, Math.max(0, progress * 100)); // TASK 3: overflow guard
+              const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
+              setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: pct } : t));
+              setDownloadProgress(prev => ({ ...prev, progress: pct }));
+            }, fileNode.telegramChannelId);
+          } else {
+            blobUrl = await downloadService.downloadFromTelegram(ref as any, workerPoolRef.current, (progress, speedText) => {
+              const pct = Math.min(100, Math.max(0, progress * 100)); // TASK 3: overflow guard
+              const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
+              setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: pct } : t));
+              setDownloadProgress(prev => ({ ...prev, progress: pct }));
+            }, fileNode.mimeType, fileNode.telegramChannelId);
+          }
         } else {
           throw new Error('Unknown storage provider reference (post-fallback)');
         }
@@ -897,14 +903,17 @@ export default function App() {
 
   const handleDownloadFile = async (fileNode: VFSNode) => {
     try {
-      const blobUrl = await handleGetFileUrl(fileNode);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileNode.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      const isTelegram = fileNode.storageRef?.provider === 'telegram' || fileNode.storageRef?.message_id || fileNode.telegramChannelId || (fileNode.rawRef as any)?.provider === 'telegram';
+      const blobUrl = await handleGetFileUrl(fileNode, !!isTelegram);
+      if (blobUrl) {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileNode.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      }
     } catch (err) {
       // Error is handled and displayed by the fetcher
     }

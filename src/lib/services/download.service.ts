@@ -9,6 +9,7 @@
  */
 
 import { GoogleDriveRef, TelegramRef } from '../../types';
+import streamSaver from 'streamsaver';
 
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3';
 
@@ -205,6 +206,97 @@ export class DownloadService {
     // requires loading it into memory. Pure streaming integrity should be handled via a worker.
     if (onProgress) onProgress(1.0, '');
     return URL.createObjectURL(finalBlob);
+  }
+
+  /**
+   * Native streaming pipeline using StreamSaver to directly stream chunks to disk,
+   * bypassing RAM hoarding entirely.
+   */
+  public async streamDownloadFromTelegram(
+    ref: TelegramRef, 
+    workers: Worker[],
+    fileName: string,
+    fileSize: number,
+    onProgress?: (progress: number, speedText?: string) => void,
+    explicitChannelId?: string
+  ): Promise<void> {
+    
+    if (onProgress) onProgress(0, '');
+
+    const activeChannelId = explicitChannelId || ref.channelId;
+    
+    const fileStream = streamSaver.createWriteStream(fileName, {
+      size: fileSize
+    });
+    
+    const writer = fileStream.getWriter();
+
+    let loadedBytes = 0;
+    let lastTime = Date.now();
+    let lastLoaded = 0;
+    const totalSize = ref.chunks.reduce((acc, c) => acc + c.chunkSize, 0);
+
+    let currentWorkerIndex = 0;
+    for (let i = 0; i < ref.chunks.length; i++) {
+      const chunk = ref.chunks[i];
+      
+      const activeWorker = workers.length === 1 ? workers[0] : workers[currentWorkerIndex];
+      if (workers.length > 1) {
+        currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
+      }
+      
+      const requestId = crypto.randomUUID();
+
+      try {
+        const chunkData = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const handler = (event: MessageEvent) => {
+            const msg = event.data;
+            if (msg.requestId !== requestId) return;
+
+            if (msg.type === 'DOWNLOAD_PROGRESS') {
+              const currentLoaded = loadedBytes + (msg.progress * chunk.chunkSize);
+              const overallProgress = currentLoaded / totalSize;
+              
+              const now = Date.now();
+              const deltaT = (now - lastTime) / 1000;
+              let speedText = '';
+              if (deltaT >= 0.5) {
+                const speed = (currentLoaded - lastLoaded) / deltaT / (1024 * 1024);
+                speedText = `${speed.toFixed(1)} MB/s`;
+                lastTime = now;
+                lastLoaded = currentLoaded;
+              }
+
+              if (onProgress) onProgress(Math.min(1.0, Math.max(0, overallProgress)), speedText);
+            } else if (msg.type === 'DOWNLOAD_COMPLETE') {
+              activeWorker.removeEventListener('message', handler);
+              resolve(msg.data);
+            } else if (msg.type === 'DOWNLOAD_ERROR') {
+              activeWorker.removeEventListener('message', handler);
+              reject(new Error(msg.error));
+            }
+          };
+
+          activeWorker.addEventListener('message', handler);
+          activeWorker.postMessage({
+            type: 'DOWNLOAD_FILE',
+            messageId: chunk.messageId,
+            channelId: activeChannelId,
+            expectedHash: '',
+            requestId
+          });
+        });
+
+        loadedBytes += chunkData.byteLength;
+        await writer.write(new Uint8Array(chunkData));
+      } catch (err: any) {
+        console.error('[DownloadService] Decryption or network error on chunk:', err);
+        writer.abort(err);
+        throw err;
+      }
+    }
+    await writer.close();
+    if (onProgress) onProgress(1.0, 'Done');
   }
 }
 
