@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/services/supabaseClient';
 import { downloadService } from '../../lib/services/download.service';
 import { VFSNode } from '../../types';
-import { Download, File as FileIcon, Image as ImageIcon, Video as VideoIcon, FileText } from 'lucide-react';
+import { Download, File as FileIcon, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { useParams } from 'react-router-dom';
 
 export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
-  console.log('[AnonymousShareView] Component rendered!');
+  // TASK 2: Strict media-only constants — must match all preview paths
+  const PREVIEW_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+  const PREVIEW_VIDEO_EXTS = ['mp4', 'mkv', 'avi', 'mov', 'webm'];
   const [node, setNode] = useState<VFSNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,12 +54,13 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
         };
         setNode(vfsNode);
 
-        // Pre-fetch preview if supported
+        // TASK 2: Only attempt Telegram preview for supported media extensions.
+        // All other file types (APK, ZIP, PDF, RAR etc.) skip at ms-zero.
         const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-        const isVideo = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'ogg'].includes(ext);
+        const isPreviewableImage = PREVIEW_IMAGE_EXTS.includes(ext);
+        const isPreviewableVideo = PREVIEW_VIDEO_EXTS.includes(ext);
 
-        if (isImage || isVideo) {
+        if (isPreviewableImage || isPreviewableVideo) {
           try {
              let url: string | null = null;
              
@@ -140,22 +143,22 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                      chunks: vfsNode.rawRef?.chunks || []
                    } as any;
                 }
-                
-                // Task 3: 5-second timeout race
-                const downloadPromise = downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
-                const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 5000));
-                
-                url = await Promise.race([downloadPromise, timeoutPromise]) as string;
+                                // TASK 2: Strict 7-second timeout race for preview decryption
+                 const downloadPromise = downloadService.downloadFromTelegram(ref as any, [activeWorker], undefined, vfsNode.mimeType, vfsNode.telegramChannelId);
+                 const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Preview timed out after 7s')), 7000));
+                 
+                 url = await Promise.race([downloadPromise, timeoutPromise]) as string;
              }
 
              if (url) {
                setPreviewUrl(url);
              }
           } catch(e) {
-             console.error("Preview fetch failed:", e);
+             console.error('Preview fetch failed:', e);
              setPreviewError(true);
           }
         } else {
+          // TASK 2: Non-media file — immediately signal preview unavailable, no Telegram touch
           setPreviewError(true);
         }
       } catch (err: any) {
@@ -188,8 +191,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
 
   const ext = node.name.split('.').pop()?.toLowerCase() || '';
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-  const isVideo = ['mp4', 'webm', 'ogg'].includes(ext);
-  const isPdf = ext === 'pdf';
+  const isVideo = ['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'].includes(ext);
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-8">
@@ -200,18 +202,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             <>
               {isImage && <img src={previewUrl} alt={node.name} className="max-h-[60vh] object-contain rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
               {isVideo && <video src={previewUrl} controls className="max-h-[60vh] rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
-              {isPdf && (
-                <div className="w-full flex flex-col items-center justify-center text-center p-6 bg-slate-900/50 rounded-lg border border-slate-800">
-                  <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4">
-                    <FileText className="w-8 h-8 text-rose-400" />
-                  </div>
-                  <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
-                  <p className="text-slate-400 text-sm max-w-sm">
-                    PDF Preview is deactivated for maximum system performance. Please use the direct download option below to read this document.
-                  </p>
-                </div>
-              )}
-              {!isImage && !isVideo && !isPdf && (
+              {!isImage && !isVideo && (
                 <div className="text-slate-500 flex flex-col items-center">
                   <FileIcon className="w-16 h-16 mb-4 opacity-50" />
                   <p>Preview not available for this file type</p>
@@ -219,8 +210,12 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
               )}
             </>
           ) : (
-            <div className="text-slate-500 flex flex-col items-center">
-              <p>{(!isImage && !isVideo && !isPdf) ? 'Preview Unavailable' : (previewError ? 'Preview Unavailable' : 'Preview generating...')}</p>
+            <div className="text-slate-500 flex flex-col items-center text-center p-4">
+              <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-3">
+                {isImage ? <ImageIcon className="w-8 h-8 text-slate-400" /> : isVideo ? <VideoIcon className="w-8 h-8 text-slate-400" /> : <FileIcon className="w-8 h-8 text-slate-400" />}
+              </div>
+              <p className="text-slate-300 font-medium text-sm">{(!isImage && !isVideo) ? 'Preview Unavailable' : (previewError ? 'Preview Unavailable' : 'Generating preview...')}</p>
+              {(!isImage && !isVideo) && <p className="text-slate-500 text-xs mt-1">Use the download button to access this file</p>}
             </div>
           )}
         </div>
@@ -353,8 +348,11 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                           if (data.requestId !== requestId) return;
                           
                           if (data.type === 'DOWNLOAD_PROGRESS') {
-                             const currentLoaded = downloadedChunks.reduce((acc, c) => acc + c.byteLength, 0) + (data.progress * chunk.chunkSize);
-                             console.log(`[Share] Download progress: ${Math.round((currentLoaded / totalSize) * 100)}%`);
+                             // TASK 3: Math.min(100,...) guards against chunk-size overflow
+                             const currentLoaded = downloadedChunks.reduce((acc: number, c: any) => acc + c.byteLength, 0) + (data.progress * chunk.chunkSize);
+                             const rawPercent = totalSize > 0 ? Math.round((currentLoaded / totalSize) * 100) : 0;
+                             const percent = Math.min(100, Math.max(0, rawPercent));
+                             console.log(`[Share] Download progress: ${percent}%`);
                           } else if (data.type === 'DOWNLOAD_COMPLETE') {
                              activeWorker?.removeEventListener('message', handler);
                              resolve(data.data);

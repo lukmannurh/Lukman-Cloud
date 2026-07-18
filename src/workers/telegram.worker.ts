@@ -46,7 +46,7 @@ if (typeof _global.document === 'undefined') {
 
 _global.Buffer = Buffer;
 _global.process = {
-  env: { NODE_ENV: 'development', browser: true },
+  env: { NODE_ENV: 'production', browser: true }, // PRODUCTION: forces GramJS to use production DCs, not test DCs
   versions: {}, // Explicitly empty to force GramJS into Browser/WebSocket mode
   nextTick: (cb: any) => setTimeout(cb, 0)
 } as any;
@@ -205,10 +205,11 @@ async function handleConnect(apiId: number, apiHash: string, sessionString?: str
       client = new TelegramClient(session, apiId, apiHash, {
         connection: ConnectionTCPObfuscated as any,
         networkSocket: PromisedWebSockets as any, // FORCES BROWSER WEBSOCKET CLASS — defeats PromisedNetSockets relative imports
-        connectionRetries: 1,
-        requestRetries: 1, // Prevent hanging on FloodWait
+        connectionRetries: 3,  // Increased for robustness against transient DC migration errors
+        requestRetries: 2,     // Allow one retry before surfacing FloodWait
         useWSS: true,
-        deviceModel: "LukmanCloudWorker",
+        testServers: false,    // CRITICAL: always connect to production Telegram, never test DCs
+        deviceModel: 'LukmanCloudWorker',
       });
 
       await client.connect();

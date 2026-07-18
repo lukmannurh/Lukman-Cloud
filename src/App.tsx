@@ -858,9 +858,10 @@ export default function App() {
           }
           
           blobUrl = await downloadService.downloadFromTelegram(ref, workerPoolRef.current, (progress, speedText) => {
+            const pct = Math.min(100, Math.max(0, progress * 100)); // TASK 3: overflow guard
             const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
-            setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: progress * 100 } : t));
-            setDownloadProgress(prev => ({ ...prev, progress: progress * 100 }));
+            setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: pct } : t));
+            setDownloadProgress(prev => ({ ...prev, progress: pct }));
           }, fileNode.mimeType, fileNode.telegramChannelId);
         } else {
           throw new Error('Unknown storage provider reference (post-fallback)');
