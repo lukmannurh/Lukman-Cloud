@@ -467,7 +467,6 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             </div>
           </div>
         </div>
-        </div>
       </Card>
       )}
     </div>
