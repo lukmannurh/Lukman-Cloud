@@ -225,7 +225,7 @@ export class DownloadService {
 
     const activeChannelId = explicitChannelId || ref.channelId;
     
-    streamSaver.mitm = window.location.origin + '/mitm.html';
+    streamSaver.mitm = window.location.origin + '/mitm.html?v=2';
     const fileStream = streamSaver.createWriteStream(fileName, {
       size: fileSize
     });
