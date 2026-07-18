@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/services/supabaseClient';
 import { downloadService } from '../../lib/services/download.service';
+import streamSaver from 'streamsaver';
 import { VFSNode } from '../../types';
 import { Download, File as FileIcon, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { useParams } from 'react-router-dom';
+
+streamSaver.mitm = '/mitm.html';
 
 export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
   // TASK 2: Strict media-only constants — must match all preview paths
@@ -403,6 +406,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     
                     console.log('[Share] Initiating native streaming download directly via Worker...');
                     
+                    streamSaver.mitm = window.location.origin + '/mitm.html';
                     await downloadService.streamDownloadFromTelegram(
                       ref as any,
                       [activeWorker!],
