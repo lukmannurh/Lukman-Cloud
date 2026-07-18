@@ -88,11 +88,11 @@ const Sidebar = ({
 
             <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
               <div className="flex items-center gap-2">
-                <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain" />
+                <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain hidden md:block" />
                 <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
               </div>
               <div className="flex gap-2 mt-1 items-center overflow-hidden">
-                <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
+                <span className="hidden md:inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
                   VAULT UNLOCKED
                 </span>
                 <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>

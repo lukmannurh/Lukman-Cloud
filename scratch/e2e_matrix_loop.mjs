@@ -48,9 +48,9 @@ async function runMatrix() {
     
     // Create Folder
     await pageA.click('button:has-text("New")');
-    await pageA.click('button:has-text("New Folder")');
+    await pageA.click('button:has-text("New Folder")', { force: true });
     await pageA.fill('input[placeholder="Folder Name"]', 'Platinum Matrix Folder');
-    await pageA.click('button:has-text("Create")');
+    await pageA.click('button:has-text("Create")', { force: true });
     await pageA.waitForSelector('text=Platinum Matrix Folder', { timeout: 10000 }).catch(() => {});
     
     // ------------------------------------------------------------------
