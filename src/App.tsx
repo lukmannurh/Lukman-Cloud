@@ -7,6 +7,7 @@ import { accountPoolService } from './lib/services/accountPool.service';
 import { vfsService } from './lib/services/vfs.service';
 import { initiateGoogleLogin } from './lib/googleAuth';
 import { LogOut } from 'lucide-react';
+import logoAsset from './assets/logo.webp';
 
 import { BetterAuthForm } from './components/auth/BetterAuthForm';
 import { authClient } from './lib/auth-client';
@@ -86,7 +87,10 @@ const Sidebar = ({
             )}
 
             <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
-              <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
+              <div className="flex items-center gap-2">
+                <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain" />
+                <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
+              </div>
               <div className="flex gap-2 mt-1 items-center overflow-hidden">
                 <span className="inline-flex text-[8px] font-mono font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 border border-emerald-400/20 rounded-full shrink-0">
                   VAULT UNLOCKED
@@ -1015,9 +1019,7 @@ export default function App() {
           </svg>
         </button>
         <div className="ml-3 font-bold text-white tracking-tight flex items-center gap-2 text-lg">
-          <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
+          <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain" />
           Lukman Cloud
         </div>
       </div>
@@ -1118,7 +1120,7 @@ export default function App() {
 
                 return (
                     <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto animate-[fadeIn_0.3s_ease-out]">
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3 w-full items-start md:items-center">
                         {/* + New Button Dropdown */}
                         <div className="relative shrink-0" ref={newMenuRef}>
                           <button
@@ -1221,7 +1223,7 @@ export default function App() {
                             }}
                             onFocus={() => setIsSearchFocused(true)}
                             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            className="w-full bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-slate-800 placeholder-slate-500 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border focus:border-blue-300 border border-transparent pl-11 pr-4 py-2.5 transition-all"
+                            className="w-full md:w-64 bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-slate-800 placeholder-slate-500 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border focus:border-blue-300 border border-transparent pl-11 pr-4 py-2.5 transition-all"
                           />
                           
                           {/* Search Results Dropdown */}

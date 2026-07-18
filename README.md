@@ -56,3 +56,7 @@ Security and scalability are paramount. The architecture ensures that all operat
 
 ---
 *Developed for unparalleled scalability, reliability, and security.*
+
+## Architecture
+- Multi-bot parallel storage matrix architecture
+- Virtual File System layout with strict deterministic root tracking

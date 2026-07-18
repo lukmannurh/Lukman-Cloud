@@ -423,8 +423,15 @@ class VFSService {
     const nodeToCopy = await this.getNode(nodeId);
     if (!nodeToCopy) throw new Error('Node not found');
     
-    // In a real implementation we would recurse for folders. For simplicity:
-    if (nodeToCopy.type === 'folder') throw new Error('Folder copying not fully implemented in DB layer yet');
+    if (nodeToCopy.type === 'folder') {
+      const clonedFolder = await this.createFolder(nodeToCopy.name, targetParentId);
+      const children = await this.getDirectoryContents(nodeToCopy.id);
+      
+      for (const child of children) {
+        await this.copyNode(child.id, clonedFolder.id);
+      }
+      return clonedFolder;
+    }
     
     return this.addFile({
       ...nodeToCopy,

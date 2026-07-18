@@ -11,6 +11,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
   const PREVIEW_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
   const PREVIEW_VIDEO_EXTS = ['mp4', 'mkv', 'avi', 'mov', 'webm'];
   const [node, setNode] = useState<VFSNode | null>(null);
+  const [children, setChildren] = useState<VFSNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -59,6 +60,32 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
         const ext = vfsNode.name.split('.').pop()?.toLowerCase() || '';
         const isPreviewableImage = PREVIEW_IMAGE_EXTS.includes(ext);
         const isPreviewableVideo = PREVIEW_VIDEO_EXTS.includes(ext);
+
+        if (vfsNode.type === 'folder') {
+          const { data: childrenData, error: childrenErr } = await supabase
+            .from('vfs_nodes')
+            .select('*')
+            .eq('parent_id', vfsNode.id);
+            
+          if (!childrenErr && childrenData) {
+            setChildren(childrenData.map((d: any) => ({
+              id: d.id,
+              name: d.name,
+              type: d.is_folder ? 'folder' : 'file',
+              size: d.size || 0,
+              path: d.path,
+              createdAt: d.raw_ref?.createdAt || new Date().toISOString(),
+              modifiedAt: d.raw_ref?.modifiedAt || new Date().toISOString(),
+              parentId: d.parent_id,
+              children: [],
+              rawRef: d.raw_ref,
+              storageRef: d.storage_ref,
+              telegramChannelId: d.telegram_channel_id || d.storage_ref?.channel_id
+            })));
+          }
+          setLoading(false);
+          return;
+        }
 
         if (isPreviewableImage || isPreviewableVideo) {
           try {
@@ -195,6 +222,44 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-8">
+      {node.type === 'folder' ? (
+        <Card className="w-full max-w-5xl border-slate-800 bg-slate-900/80 backdrop-blur shadow-2xl overflow-hidden flex flex-col p-6 min-h-[500px]">
+          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-800">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <FileIcon className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">{node.name}</h1>
+              <p className="text-slate-400 text-sm">Public Folder • {children.length} item(s)</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto">
+            {children.map(child => (
+              <a 
+                key={child.id}
+                href={`/share/${btoa(child.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-4 rounded-xl border border-slate-800 bg-slate-800/30 hover:bg-slate-800/70 transition-all group"
+              >
+                <div className="p-2 rounded-lg bg-slate-900 group-hover:bg-slate-950 transition-colors">
+                  {child.type === 'folder' ? <FileIcon className="w-5 h-5 text-indigo-400" /> : <FileIcon className="w-5 h-5 text-slate-400" />}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">{child.name}</p>
+                  {child.type !== 'folder' && <p className="text-xs text-slate-500">{(child.size / 1024 / 1024).toFixed(2)} MB</p>}
+                </div>
+              </a>
+            ))}
+            {children.length === 0 && (
+              <div className="col-span-full py-12 text-center text-slate-500">
+                This folder is empty.
+              </div>
+            )}
+          </div>
+        </Card>
+      ) : (
       <Card className="w-full max-w-4xl border-slate-800 bg-slate-900/80 backdrop-blur shadow-2xl overflow-hidden flex flex-col md:flex-row">
         {/* Preview Section */}
         <div className="flex-1 bg-black/40 min-h-[300px] flex items-center justify-center p-6 border-b md:border-b-0 md:border-r border-slate-800">
@@ -402,7 +467,9 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
             </div>
           </div>
         </div>
+        </div>
       </Card>
+      )}
     </div>
   );
 }

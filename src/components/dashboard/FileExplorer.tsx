@@ -111,7 +111,7 @@ export function FileExplorer({
       return;
     }
 
-    const timeoutPromise = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 5000));
+    const timeoutPromise = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 7000));
     
     Promise.race([onFetchPreviewUrl(previewNode), timeoutPromise])
       .then(async (url) => {
