@@ -180,10 +180,12 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
              if (url) {
                setPreviewUrl(url);
              }
-          } catch(e) {
-             console.error('Preview fetch failed:', e);
-             setPreviewError(true);
-          }
+           } catch(e) {
+              console.error('Preview fetch failed:', e);
+              setPreviewError(true);
+              // Forcefully reset active download/decryption percentage variable modal strictly to 0
+              window.dispatchEvent(new CustomEvent('preview-timeout'));
+           }
         } else {
           // TASK 2: Non-media file — immediately signal preview unavailable, no Telegram touch
           setPreviewError(true);

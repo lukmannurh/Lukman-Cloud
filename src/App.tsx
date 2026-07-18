@@ -443,6 +443,15 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Forcefully reset floating decryption modal telemetry on timeout exceptions
+  useEffect(() => {
+    const handlePreviewTimeout = () => {
+      setDownloadProgress({ status: 'idle', progress: 0, fileName: '', isMinimized: false });
+    };
+    window.addEventListener('preview-timeout', handlePreviewTimeout);
+    return () => window.removeEventListener('preview-timeout', handlePreviewTimeout);
+  }, []);
+
   const handleNativeFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       handleUploadFiles(Array.from(e.target.files));

@@ -155,6 +155,8 @@ export function FileExplorer({
           setIsFetchingPreview(false);
           setPreviewError(true);
         }
+        // Forcefully reset active download/decryption percentage variable modal strictly to 0
+        window.dispatchEvent(new CustomEvent('preview-timeout'));
       });
 
     return () => {

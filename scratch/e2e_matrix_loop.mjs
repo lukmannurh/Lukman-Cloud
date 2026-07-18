@@ -35,17 +35,22 @@ async function runMatrix() {
     // A: Auth & Folder Creation
     // ------------------------------------------------------------------
     await pageA.goto(PROD_URL);
-    await pageA.fill('input[type="email"]', `test_${Date.now()}@aethervault.local`);
-    await pageA.fill('input[type="password"]', 'Password123!');
-    await pageA.click('button:has-text("Sign Up")');
+    await pageA.click('text="Create an account"').catch(() => {});
+    await pageA.fill('input[name="name"]', 'Test User');
+    await pageA.fill('input[name="username"]', `test_${Date.now()}`);
+    await pageA.fill('input[name="password"]', 'Password123!');
+    await pageA.click('button:has-text("Create Account")');
+    await pageA.waitForSelector('text=Account created successfully', { timeout: 10000 }).catch(() => {});
+    await pageA.fill('input[name="password"]', 'Password123!');
+    await pageA.click('button:has-text("Sign In")');
     await pageA.waitForSelector('text=VAULT UNLOCKED', { timeout: 15000 }).catch(() => {});
     console.log('[Context A] Authenticated successfully.');
     
     // Create Folder
     await pageA.click('button:has-text("New")');
     await pageA.click('button:has-text("New Folder")');
-    await pageA.fill('input[placeholder="Enter folder name"]', 'Platinum Matrix Folder');
-    await pageA.click('button:has-text("Create Folder")');
+    await pageA.fill('input[placeholder="Folder Name"]', 'Platinum Matrix Folder');
+    await pageA.click('button:has-text("Create")');
     await pageA.waitForSelector('text=Platinum Matrix Folder', { timeout: 10000 }).catch(() => {});
     
     // ------------------------------------------------------------------
@@ -60,9 +65,14 @@ async function runMatrix() {
     // C: Android UI Validation
     // ------------------------------------------------------------------
     await pageC.goto(PROD_URL);
-    await pageC.fill('input[type="email"]', `test_${Date.now()}@aethervault.local`);
-    await pageC.fill('input[type="password"]', 'Password123!');
-    await pageC.click('button:has-text("Sign Up")');
+    await pageC.click('text="Create an account"').catch(() => {});
+    await pageC.fill('input[name="name"]', 'Test User 2');
+    await pageC.fill('input[name="username"]', `test_${Date.now()}`);
+    await pageC.fill('input[name="password"]', 'Password123!');
+    await pageC.click('button:has-text("Create Account")');
+    await pageC.waitForSelector('text=Account created successfully', { timeout: 10000 }).catch(() => {});
+    await pageC.fill('input[name="password"]', 'Password123!');
+    await pageC.click('button:has-text("Sign In")');
     await pageC.waitForSelector('text=VAULT UNLOCKED', { timeout: 15000 }).catch(() => {});
     
     // Check Logo Asset
