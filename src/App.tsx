@@ -1052,31 +1052,6 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-dvh bg-slate-50 font-sans">
       
-      {/* Floating Download Progress Widget */}
-      {downloadProgress.status !== 'idle' && (
-        <div className="fixed top-4 right-4 z-50 shadow-2xl rounded-xl border border-slate-800 bg-slate-950/90 backdrop-blur-md p-4 w-80 animate-[slideInRight_0.3s_ease-out]">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-semibold text-white truncate pr-2" title={downloadProgress.fileName || 'file'}>
-              {downloadProgress.status === 'success' ? 'Download Complete' :
-               downloadProgress.status === 'error' ? 'Download Failed' : 
-               `Downloading ${downloadProgress.fileName || 'file'}...`}
-            </h3>
-            <span className="text-xs font-mono text-blue-400 font-bold">
-              {downloadProgress.status === 'success' ? '100%' : `${Math.round(downloadProgress.progress)}%`}
-            </span>
-          </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div 
-              className={`h-1.5 rounded-full transition-all duration-300 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
-              style={{ width: `${downloadProgress.status === 'success' ? 100 : Math.round(downloadProgress.progress)}%` }}
-            ></div>
-          </div>
-          {downloadProgress.errorMessage && (
-            <p className="mt-2 text-xs text-red-400 break-words">{downloadProgress.errorMessage}</p>
-          )}
-        </div>
-      )}
-
       {/* Mobile Header Topbar */}
       <div className="md:hidden flex items-center h-14 bg-slate-900 border-b border-slate-800 px-4 shrink-0">
         <button 
