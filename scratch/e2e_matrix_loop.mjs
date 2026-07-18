@@ -48,9 +48,14 @@ async function runMatrix() {
     
     // Create Folder
     await pageA.click('button:has-text("New")');
-    await pageA.click('button:has-text("New Folder")', { force: true });
+    await pageA.waitForSelector('button:has-text("New Folder")', { state: 'visible' });
+    await pageA.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const btn = btns.find(b => b.textContent.includes('New Folder'));
+      if (btn) btn.click();
+    });
     await pageA.fill('input[placeholder="Folder Name"]', 'Platinum Matrix Folder');
-    await pageA.click('button:has-text("Create")', { force: true });
+    await pageA.click('button:has-text("Create")');
     await pageA.waitForSelector('text=Platinum Matrix Folder', { timeout: 10000 }).catch(() => {});
     
     // ------------------------------------------------------------------
@@ -127,7 +132,7 @@ async function runMatrix() {
     if (pageA) await pageA.screenshot({ path: 'scratch/matrix_fail_A.png' }).catch(()=>console.log('No context A'));
     if (pageB) await pageB.screenshot({ path: 'scratch/matrix_fail_B.png' }).catch(()=>console.log('No context B'));
     if (pageC) await pageC.screenshot({ path: 'scratch/matrix_fail_C.png' }).catch(()=>console.log('No context C'));
-    process.exit(1);
+    await pageA.screenshot({path: 'scratch/e2e-failure-A.png'}).catch(()=>console.log('no pageA')); process.exit(1);
   } finally {
     await browser.close();
   }

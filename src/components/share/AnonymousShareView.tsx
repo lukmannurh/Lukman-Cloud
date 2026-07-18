@@ -20,6 +20,12 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloading' | 'error'>('idle');
+  const [downloadProgress, setDownloadProgress] = useState<{
+    status: 'idle' | 'downloading' | 'decrypting' | 'success' | 'error';
+    progress: number;
+    fileName: string;
+    errorMessage?: string;
+  }>({ status: 'idle', progress: 0, fileName: '' });
 
   useEffect(() => {
     async function loadSharedNode() {
@@ -227,6 +233,30 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-8">
+      {/* Floating Download Progress Widget */}
+      {downloadProgress.status !== 'idle' && (
+        <div className="fixed top-4 right-4 z-50 shadow-2xl rounded-xl border border-slate-800 bg-slate-950/90 backdrop-blur-md p-4 w-80 animate-[slideInRight_0.3s_ease-out]">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-semibold text-white truncate pr-2" title={downloadProgress.fileName || 'file'}>
+              {downloadProgress.status === 'success' ? 'Download Complete' :
+               downloadProgress.status === 'error' ? 'Download Failed' : 
+               `Downloading ${downloadProgress.fileName || 'file'}...`}
+            </h3>
+            <span className="text-xs font-mono text-blue-400 font-bold">
+              {downloadProgress.status === 'success' ? '100%' : `${Math.round(downloadProgress.progress)}%`}
+            </span>
+          </div>
+          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
+              style={{ width: `${downloadProgress.status === 'success' ? 100 : Math.round(downloadProgress.progress)}%` }}
+            ></div>
+          </div>
+          {downloadProgress.errorMessage && (
+            <p className="mt-2 text-xs text-red-400 break-words">{downloadProgress.errorMessage}</p>
+          )}
+        </div>
+      )}
       {node.type === 'folder' ? (
         <Card className="w-full max-w-5xl border-slate-800 bg-slate-900/80 backdrop-blur shadow-2xl overflow-hidden flex flex-col p-6 min-h-[500px]">
           <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-800">
@@ -405,7 +435,7 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                     }
                     
                     console.log('[Share] Initiating native streaming download directly via Worker...');
-                    
+                    setDownloadProgress({ status: 'downloading', progress: 0, fileName: node.name });
                     streamSaver.mitm = window.location.origin + '/mitm.html';
                     await downloadService.streamDownloadFromTelegram(
                       ref as any,
@@ -414,16 +444,20 @@ export function AnonymousShareView({ sharedNodeId }: { sharedNodeId: string }) {
                       node.size,
                       (progress, speedText) => {
                         const percent = Math.min(100, Math.max(0, Math.round(progress * 100)));
+                        setDownloadProgress(prev => ({ ...prev, progress: percent }));
                         console.log(`[Share] Download progress: ${percent}%`);
                       },
                       node.telegramChannelId || ref.channelId || ref.channel_id
                     );
                     setDownloadStatus('idle');
+                    setDownloadProgress(prev => ({ ...prev, status: 'success', progress: 100 }));
+                    setTimeout(() => setDownloadProgress(prev => prev.status === 'success' ? { status: 'idle', progress: 0, fileName: '' } : prev), 3000);
                     console.log('[Share] Download successfully completed');
                   }
                 } catch (err: any) {
                   console.error('[Share] Direct download failed explicitly:', err);
                   setDownloadStatus('error');
+                  setDownloadProgress(prev => ({ ...prev, status: 'error', errorMessage: err.message || String(err) }));
                 }
               }}
               disabled={downloadStatus === 'downloading'}
