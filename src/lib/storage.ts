@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * Lukman Cloud — Cryptographic Vault (Milestone 1.3)
+ * Lukman Cloud — Cryptographic storage (Milestone 1.3)
  *
  * Implements PBKDF2 key derivation and AES-256-GCM encryption using
  * native SubtleCrypto. Manages the IndexedDB `aethervault_secure_vault`
@@ -107,10 +107,10 @@ if (typeof window !== 'undefined') {
   );
 }
 
-// ── Public Vault API ───────────────────────────────────────────────────────
+// ── Public storage API ───────────────────────────────────────────────────────
 
 /**
- * Checks if the vault is already initialized (salt exists).
+ * Checks if the storage is already initialized (salt exists).
  */
 export async function isVaultInitialized(): Promise<boolean> {
   const db = await getDB();
@@ -124,12 +124,12 @@ export async function isVaultInitialized(): Promise<boolean> {
 }
 
 /**
- * Initializes the vault with a new master password. Generates and stores the salt.
+ * Initializes the storage with a new master password. Generates and stores the salt.
  */
 export async function initializeVault(password: string): Promise<void> {
   const initialized = await isVaultInitialized();
   if (initialized) {
-    throw new Error('Vault is already initialized.');
+    throw new Error('storage is already initialized.');
   }
 
   const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
@@ -155,7 +155,7 @@ export async function initializeVault(password: string): Promise<void> {
 }
 
 /**
- * Unlocks the vault using the master password.
+ * Unlocks the storage using the master password.
  */
 export async function unlockVault(password: string): Promise<boolean> {
   const db = await getDB();
@@ -168,7 +168,7 @@ export async function unlockVault(password: string): Promise<boolean> {
   });
 
   if (!saltRecord) {
-    throw new Error('Vault is not initialized.');
+    throw new Error('storage is not initialized.');
   }
 
   try {
@@ -182,7 +182,7 @@ export async function unlockVault(password: string): Promise<boolean> {
 }
 
 /**
- * Locks the vault by immediately zeroing out the key reference.
+ * Locks the storage by immediately zeroing out the key reference.
  */
 export function lockVault(): void {
   masterCryptoKey = null;
@@ -190,7 +190,7 @@ export function lockVault(): void {
     clearTimeout(idleTimeoutHandle);
     idleTimeoutHandle = null;
   }
-  console.log('[Vault] Vault locked.');
+  console.log('[storage] storage locked.');
 }
 
 /**
@@ -198,7 +198,7 @@ export function lockVault(): void {
  */
 export async function encryptData(plaintext: Uint8Array): Promise<EncryptedData> {
   if (!masterCryptoKey) {
-    throw new Error('Vault is locked. Cannot encrypt data.');
+    throw new Error('storage is locked. Cannot encrypt data.');
   }
 
   resetIdleTimeout();
@@ -220,7 +220,7 @@ export async function encryptData(plaintext: Uint8Array): Promise<EncryptedData>
  */
 export async function decryptData(encrypted: EncryptedData): Promise<Uint8Array> {
   if (!masterCryptoKey) {
-    throw new Error('Vault is locked. Cannot decrypt data.');
+    throw new Error('storage is locked. Cannot decrypt data.');
   }
 
   resetIdleTimeout();

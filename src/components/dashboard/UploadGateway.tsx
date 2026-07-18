@@ -82,7 +82,7 @@ export function UploadGateway({ onUpload, disabled = false, requiresAuth = false
           
           {requiresAuth ? (
              <span className="text-sm font-medium text-slate-500 flex items-center gap-2">
-               <span className="text-rose-500">🔒</span> Read-only mode. Login to upload.
+               <span className="text-rose-500"></span> Read-only mode. Login to upload.
              </span>
           ) : (
              <span className="text-sm text-slate-500">Drop files anywhere to upload</span>

@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * Lukman Cloud — Google Drive PKCE & API Engine (Milestone 1.3)
+ * Lukman Cloud — Google Drive PKCE & API system (Milestone 1.3)
  *
  * Implements the browser-native OAuth 2.0 PKCE flow and provides
  * low-level fetch wrappers for Drive appDataFolder operations.
@@ -21,7 +21,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email'
 ].join(' ');
 
-// ── OAuth Engine ───────────────────────────────────────────────────────────
+// ── OAuth system ───────────────────────────────────────────────────────────
 
 /**
  * Fetches the user's email address using the access token.

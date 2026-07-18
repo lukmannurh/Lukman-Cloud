@@ -148,21 +148,21 @@ export function StorageNodes({
           </CardHeader>
           <CardContent className="p-6 flex flex-col gap-6">
             
-            {/* Core Engine Quota */}
-            <div className="relative group bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:border-blue-300 transition-all duration-300 hover:shadow-md overflow-hidden flex items-start justify-between">
+            {/* Core system Quota */}
+            <div className="relative group bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:border-blue-300 transition-all duration-200 hover:shadow-md overflow-hidden flex items-start justify-between">
               <div className="flex gap-4 items-start">
                 <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shrink-0">
                   <img src={aetherNodeIcon} alt="Storage Node" className="w-7 h-7 object-contain opacity-80" />
                 </div>
                 <div>
-                  <h3 className="text-base font-medium text-slate-800 tracking-tight">Lukman Cloud High-Speed Core Vault</h3>
+                  <h3 className="text-base font-medium text-slate-800 tracking-tight">Lukman Cloud High-Speed Core storage</h3>
                   <p className="text-sm text-slate-500 mt-1 max-w-md">
                     Primary cloud core active and fully encrypted. Connection Status: <span className="text-emerald-500 font-medium">Secure & Synchronized</span>.
                   </p>
                 </div>
               </div>
               <span className="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full border border-emerald-100 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] "></span>
                 Synchronized
               </span>
             </div>
@@ -180,7 +180,7 @@ export function StorageNodes({
                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-1">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Vault Cluster Integrity</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">storage servers reliability</h4>
                 <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   100% Operational / Optimal
@@ -190,7 +190,7 @@ export function StorageNodes({
                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-1">
                   <RefreshCw className="w-4 h-4" />
                 </div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Google Drive Sync Pipeline</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Google Drive Sync process</h4>
                 <p className="text-sm font-bold text-slate-700">
                   {accounts.length > 0 ? (activeTransfers.length > 0 ? 'Active Mirroring Mode Enabled' : 'Active Mirroring Mode Enabled') : 'Idle / Standby'}
                 </p>
@@ -268,7 +268,7 @@ export function StorageNodes({
                       {tx.progress !== undefined && (
                         <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-blue-500 transition-all duration-300" 
+                            className="h-full bg-blue-500 transition-all duration-200" 
                             style={{ width: `${tx.progress}%` }}
                           />
                         </div>

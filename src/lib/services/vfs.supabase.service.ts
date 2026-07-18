@@ -1,6 +1,6 @@
 import { VFSNode } from '../../types';
 import { supabase } from './supabaseClient';
-import { retrieveCredential, storeCredential } from './vault.service';
+import { retrieveCredential, storeCredential } from './storage.service';
 
 /**
  * Isolated Virtual File System (VFS) Service - Supabase Postgres Edition

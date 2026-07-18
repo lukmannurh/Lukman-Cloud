@@ -1,17 +1,17 @@
 import { VFSNode } from '../../types';
-import { retrieveCredential, storeCredential } from './vault.service';
+import { retrieveCredential, storeCredential } from './storage.service';
 
 /**
  * Isolated Virtual File System (VFS) Service
  * Manages the internal metadata hierarchy independently of any cloud provider's physical structure.
- * Stored securely within the encrypted vault.
+ * Stored securely within the encrypted storage.
  */
 class VFSService {
   private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
 
   /**
-   * Initialize and load the VFS registry from the encrypted vault.
+   * Initialize and load the VFS registry from the encrypted storage.
    */
   async loadRegistry(): Promise<VFSNode[]> {
     if (this.memoryCache) return this.memoryCache;
@@ -45,7 +45,7 @@ class VFSService {
   }
 
   /**
-   * Save the current VFS state to the encrypted vault.
+   * Save the current VFS state to the encrypted storage.
    */
   private async saveRegistry(): Promise<void> {
     if (!this.memoryCache) return;

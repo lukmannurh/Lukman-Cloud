@@ -3,7 +3,7 @@
  * Lukman Cloud — Centralized Auth Gate
  * Path: src/components/auth/AuthGate.tsx
  *
- * Replaces the legacy BYOS/vault-password flow entirely.
+ * Replaces the legacy BYOS/storage-password flow entirely.
  * Users authenticate via a Telegram-dispatched 6-digit TOTP code.
  * No local master passwords. No BYOS wizards. Purely centralized SaaS auth.
  * ═══════════════════════════════════════════════════════════════════════════
@@ -79,7 +79,7 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
     setExpirationTime(expiry);
 
     const msg =
-      `🔐 <b>[Lukman Cloud Access Request]</b>\n\n` +
+      ` <b>[Lukman Cloud Access Request]</b>\n\n` +
       `A login was initiated from the web app.\n` +
       `<b>One-Time Code: <code>${code}</code></b>\n` +
       `<i>Valid for 5 minutes. Do not share this code.</i>`;

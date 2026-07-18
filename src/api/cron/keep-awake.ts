@@ -16,7 +16,7 @@ export default async function handler(req: Request) {
     await supabase.rpc('ping'); // Assuming a basic RPC function exists, or we simply query a tiny table
     // Fallback if RPC doesn't exist: await supabase.from('user').select('id').limit(1);
 
-    return new Response(JSON.stringify({ status: 'synchronized', integrity: 'optimal' }), {
+    return new Response(JSON.stringify({ status: 'synchronized', reliability: 'optimal' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -16,7 +16,7 @@ import { broadcastCoordinator } from './broadcast-coordinator.service';
 export class MetadataService {
   
   /**
-   * Fetches a FolderDocument from Google Drive and validates its integrity.
+   * Fetches a FolderDocument from Google Drive and validates its reliability.
    */
   public async fetchFolder(accessToken: string, driveFileId: string): Promise<FolderDocument> {
     // Dynamically resolve the root folder file ID if 'root' is requested
@@ -39,7 +39,7 @@ export class MetadataService {
     // Validate INV-01 through INV-08 invariants immediately upon read
     const validation = validateFolderDocument(doc);
     if (!validation.valid) {
-      console.error(`[MetadataService] Integrity violation in folder ${doc.folderId}:`, validation.violations);
+      console.error(`[MetadataService] reliability violation in folder ${doc.folderId}:`, validation.violations);
       throw new Error(`Folder metadata corrupted: ${validation.violations[0]}`);
     }
 

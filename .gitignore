@@ -72,3 +72,6 @@ signup_timeout.png
 .vite/
 .cache/
 .eslintcache
+
+# Design Specs
+design baru/

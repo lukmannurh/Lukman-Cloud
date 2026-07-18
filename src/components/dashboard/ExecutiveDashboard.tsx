@@ -73,6 +73,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
 
   return (
     <div className="flex flex-col gap-6 w-full">
+      <h1 className="sr-only">Executive Dashboard</h1>
       {/* Unified Storage Pool Core (Top) */}
       <Card className="p-8 bg-slate-900 border-slate-800 shadow-xl overflow-hidden relative w-full">
         <div className="absolute top-0 right-0 p-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -88,11 +89,11 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
               </span>
             </div>
             <div className="mt-4 inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full text-xs font-bold border border-indigo-500/20">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-indigo-500 "></span>
               {accounts.length} Nodes Active
             </div>
           </div>
-          {/* Dual-Track VFS Node Density & Speedometer */}
+          {/* Dual-Track VFS Node Density & indicator */}
           <div className="flex-1 w-full max-w-sm shrink-0 flex flex-col gap-4">
             {/* VFS Node Density */}
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
@@ -112,17 +113,17 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
               </div>
             </div>
 
-            {/* Infrastructure Speedometer */}
-            <div className={`rounded-xl p-4 border transition-all duration-500 ${isIdle ? 'bg-slate-800/30 border-slate-700/50' : 'bg-indigo-900/40 border-indigo-500/30'}`}>
+            {/* Infrastructure indicator */}
+            <div className={`rounded-xl p-4 border transition-all duration-200 ${isIdle ? 'bg-slate-800/30 border-slate-700/50' : 'bg-indigo-900/40 border-indigo-500/30'}`}>
               <div className="flex justify-between text-xs text-slate-400 font-bold mb-1 uppercase tracking-wider">
-                <span>Throughput Speedometer</span>
+                <span>speed indicator</span>
                 {isIdle ? (
                   <span className="text-slate-500 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
                     System Idle
                   </span>
                 ) : (
-                  <span className="text-emerald-400 flex items-center gap-1 animate-pulse">
+                  <span className="text-emerald-400 flex items-center gap-1 ">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     Active Stream
                   </span>
@@ -140,14 +141,14 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        {/* Active Data Pipeline & Speed Telemetry (Bottom Left) */}
+        {/* Active Data process & Speed Telemetry (Bottom Left) */}
         <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
               <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Live Operations Pipeline
+              Live Operations process
             </h3>
             
             <div className="space-y-4">
@@ -166,7 +167,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
                     </div>
                   </div>
                 </div>
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 "></div>
               </div>
 
               {/* Telemetry Item 2: Encryption Overhead */}
@@ -178,8 +179,8 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 font-medium">Vault Security Status</div>
-                    <div className="text-sm font-bold text-slate-800">Maximum Encryption (Military-Grade Enabled)</div>
+                    <div className="text-xs text-slate-500 font-medium">storage Security Status</div>
+                    <div className="text-sm font-bold text-slate-800">Maximum Encryption (secure Enabled)</div>
                   </div>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div>
@@ -194,11 +195,11 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 font-medium">System Core Integrity</div>
+                    <div className="text-xs text-slate-500 font-medium">System Core reliability</div>
                     <div className="text-sm font-bold text-slate-800">Optimal (100% Uptime)</div>
                   </div>
                 </div>
-                <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse shadow-[0_0_8px_rgba(14,165,233,0.5)]"></div>
+                <div className="w-2 h-2 rounded-full bg-sky-500  shadow-[0_0_8px_rgba(14,165,233,0.5)]"></div>
               </div>
             </div>
           </div>
@@ -218,7 +219,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                  <span className="text-2xl">📁</span>
+                  <span className="text-2xl"></span>
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">Google Drive Pool</h4>
@@ -236,7 +237,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center shrink-0 group-hover:bg-cyan-100 transition-colors">
-                  <span className="text-2xl">☁️</span>
+                  <span className="text-2xl"></span>
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">Lukman Cloud Storage</h4>

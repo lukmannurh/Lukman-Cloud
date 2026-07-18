@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { vfsService } from '../lib/services/vfs.service';
-import * as vaultService from '../lib/services/vault.service';
+import * as vaultService from '../lib/services/storage.service';
 import { VFSNode } from '../types';
 
 describe('VFS UI Interaction flows', () => {

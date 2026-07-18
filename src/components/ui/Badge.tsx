@@ -1,0 +1,3 @@
+import * as React from 'react'; export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> { variant?: 'success' | 'warning' | 'danger' | 'neutral';
+} export function Badge({ className = '', variant = 'neutral', ...props }: BadgeProps) { let baseClass = 'inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-xs font-medium'; if (variant === 'success') { baseClass += ' bg-success-soft text-success'; } else if (variant === 'warning') { baseClass += ' bg-warning-soft text-warning'; } else if (variant === 'danger') { baseClass += ' bg-danger-soft text-danger'; } else { baseClass += ' bg-surface-muted text-muted-foreground'; } return ( <span className={`${baseClass} ${className}`.trim()} {...props} /> );
+}

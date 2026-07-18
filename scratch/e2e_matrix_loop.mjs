@@ -55,6 +55,7 @@ async function runMatrix() {
       if (btn) btn.click();
     });
     await pageA.fill('input[placeholder="Folder Name"]', 'Platinum Matrix Folder');
+    await pageA.waitForTimeout(500);
     await pageA.click('button:has-text("Create")');
     await pageA.waitForSelector('text=Platinum Matrix Folder', { timeout: 10000 }).catch(() => {});
     

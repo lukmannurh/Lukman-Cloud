@@ -281,7 +281,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 disabled={isGuestLoading}
                 className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 py-2.5 rounded-lg flex items-center transition-all disabled:opacity-70"
               >
-                {isGuestLoading ? 'Activating...' : 'Enter Vault'}
+                {isGuestLoading ? 'Activating...' : 'Continue'}
               </button>
             </div>
           </div>
@@ -476,7 +476,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-medium py-2.5 px-4 rounded-lg transition-all w-full flex items-center justify-center gap-2 mt-2"
                 disabled={loading}
               >
-                <span>⚡</span>
+                <span></span>
                 Instant Guest Access
               </button>
             </div>

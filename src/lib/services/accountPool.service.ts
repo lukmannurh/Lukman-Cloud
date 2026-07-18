@@ -1,9 +1,9 @@
 import { PooledAccount } from '../../types';
-import { retrieveCredential, storeCredential } from './vault.service';
+import { retrieveCredential, storeCredential } from './storage.service';
 
 export class AccountPoolService {
   /**
-   * Retrieves the current pool of accounts from the vault.
+   * Retrieves the current pool of accounts from the storage.
    * Bootstraps the old single 'google_oauth_tokens' format into a pool if needed.
    */
   public async getPool(): Promise<PooledAccount[]> {
@@ -34,7 +34,7 @@ export class AccountPoolService {
   }
 
   /**
-   * Saves the pool to the vault.
+   * Saves the pool to the storage.
    */
   public async savePool(pool: PooledAccount[]): Promise<void> {
     await storeCredential('pooled_accounts', JSON.stringify(pool));

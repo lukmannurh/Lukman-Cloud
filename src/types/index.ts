@@ -31,7 +31,7 @@ export type VFSEntry = VFSFile | VFSFolder;
 
 /** Base fields shared by all VFS entries. */
 export interface VFSEntryBase {
-  /** UUID v4 — globally unique across ALL entries in the vault */
+  /** UUID v4 — globally unique across ALL entries in the storage */
   id: string;
   type: VFSEntryType;
   /** Display name — validated to exclude path traversal chars (/, \, ..) */
@@ -150,7 +150,7 @@ export interface GoogleDriveRef {
   /** Google Drive file ID — used for download, delete, and metadata operations */
   driveFileId: string;
   mimeType: string;
-  /** MD5 checksum from Google Drive API — for post-download integrity verification */
+  /** MD5 checksum from Google Drive API — for post-download reliability verification */
   md5Checksum?: string;
   /** UUID of the PooledAccount that owns this file for multi-account routing */
   accountId?: string;
@@ -172,7 +172,7 @@ export interface TelegramRef {
   /**
    * SHA-256 hash of the COMPLETE reassembled file, computed BEFORE chunking.
    * Verified AFTER full reassembly on download.
-   * null if the file was uploaded before integrity hashing was implemented.
+   * null if the file was uploaded before reliability hashing was implemented.
    */
   sha256Hash: string | null;
   /** MUST equal chunks.length — INVARIANT INV-01 */
@@ -228,14 +228,14 @@ export interface StorageRoutingDecision {
 /**
  * In-memory session state held by SessionManager.
  * The CryptoKey MUST NEVER be serialized, logged, or persisted.
- * It exists only in volatile memory while the vault is unlocked.
+ * It exists only in volatile memory while the storage is unlocked.
  */
 export interface SessionState {
   isUnlocked: boolean;
   /**
    * AES-256-GCM CryptoKey derived from Master Password via PBKDF2.
    * Phase 0 SEC-01: MUST be created with extractable: false.
-   * null when vault is locked.
+   * null when storage is locked.
    */
   encryptionKey: CryptoKey | null;
   idleTimeoutHandle: ReturnType<typeof setTimeout> | null;
@@ -273,7 +273,7 @@ export interface EncryptedData {
  * IndexedDB is binary-safe — no encoding roundtrip needed.
  */
 export interface SecurityParamsRecord {
-  /** Fixed key — single record per vault */
+  /** Fixed key — single record per storage */
   id: 'master_salt';
   /** Raw 32-byte (256-bit) ArrayBuffer — stored natively, never base64 encoded */
   salt: ArrayBuffer;
@@ -353,7 +353,7 @@ export interface AppConfig {
   sizeThresholdBytes: number;
   /** Default: 500MB — abort upload if Drive would have less than this free */
   safetyBufferBytes: number;
-  /** Default: 30 minutes — lock vault after this many minutes of inactivity */
+  /** Default: 30 minutes — lock storage after this many minutes of inactivity */
   idleTimeoutMinutes: number;
 }
 
@@ -439,7 +439,7 @@ export type BroadcastMessage =
  */
 export type AppPhase =
   | 'loading'            // Initial load — checking IndexedDB and Web API availability
-  | 'access_gate'        // Uninitialized vault — show TOTP prompt
+  | 'access_gate'        // Uninitialized storage — show TOTP prompt
   | 'vault_setup'        // TOTP passed — create master password + authorize providers
   | 'vault_unlock'       // Returning user — enter master password to unlock
   | 'app'                // Unlocked — main file browser
@@ -591,7 +591,7 @@ export function validateTelegramRef(ref: TelegramRef): ValidationResult {
 }
 
 /**
- * Validate a FolderDocument's structural integrity.
+ * Validate a FolderDocument's structural reliability.
  * Used before persisting to Google Drive to prevent corrupt metadata.
  */
 export function validateFolderDocument(doc: FolderDocument): ValidationResult {

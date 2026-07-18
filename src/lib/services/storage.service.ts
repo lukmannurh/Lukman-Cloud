@@ -1,11 +1,11 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * AetherVault — Serverless Cryptographic Vault Service
- * Path: src/lib/services/vault.service.ts
+ * AetherVault — Serverless Cryptographic storage Service
+ * Path: src/lib/services/storage.service.ts
  *
  * Rewritten to bypass local passphrases. It derives a stable master key
  * seamlessly using the static VITE_APP_TOTP_SECRET. This allows the VFS
- * engine to encrypt and decrypt registry metadata without prompting the user.
+ * system to encrypt and decrypt registry metadata without prompting the user.
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -144,7 +144,7 @@ export async function retrieveCredential(key: EncryptedCredentialRecord['credent
     const decrypted = await decryptData(encrypted);
     return new TextDecoder().decode(decrypted);
   } catch (error) {
-    console.warn(`[Vault] Failed to decrypt credential "${key}":`, error);
+    console.warn(`[storage] Failed to decrypt credential "${key}":`, error);
     return null;
   }
 }

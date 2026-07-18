@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * Lukman Cloud — Storage Allocation Engine
+ * Lukman Cloud — Storage Allocation system
  * Milestone 2.3
  *
  * Implements Google Drive quota checking and size-based file routing.

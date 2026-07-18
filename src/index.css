@@ -27,3 +27,9 @@ body {
 
 /* Selection */
 ::selection { background-color: #bfdbfe; color: #1e3a8a; } /* blue-200 / blue-900 */
+
+/* A11Y Focus Trapping */
+*:focus-visible {
+  outline: 2px solid #4f46e5; /* indigo-600 */
+  outline-offset: 2px;
+}

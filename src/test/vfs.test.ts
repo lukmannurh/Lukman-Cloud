@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { vfsService } from '../lib/services/vfs.service';
-import * as vaultService from '../lib/services/vault.service';
+import * as vaultService from '../lib/services/storage.service';
 
 describe('Virtual File System (VFS)', () => {
   let mockRegistry: any[] = [];
@@ -8,7 +8,7 @@ describe('Virtual File System (VFS)', () => {
   beforeEach(() => {
     mockRegistry = [];
     
-    // Mock the vault service retrieve/store
+    // Mock the storage service retrieve/store
     vi.spyOn(vaultService, 'retrieveCredential').mockImplementation(async (key) => {
       if (key === 'vfs_registry' && mockRegistry.length > 0) {
         return JSON.stringify(mockRegistry);
@@ -116,7 +116,7 @@ describe('Virtual File System (VFS)', () => {
     expect(deletedNodes.length).toBe(1);
     expect(deletedNodes[0].id).toBe(file1.id);
 
-    // Assert file1 is gone from Vault/VFS map
+    // Assert file1 is gone from storage/VFS map
     const nodeCheck = await vfsService.getNode(file1.id);
     expect(nodeCheck).toBeUndefined();
 

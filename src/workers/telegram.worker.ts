@@ -497,7 +497,7 @@ async function handleDownloadFile(messageId: number, channelId: string, expected
       throw new Error('Failed to download media buffer');
     }
 
-    // 3. Verify Integrity
+    // 3. Verify reliability
     console.log(`[TelegramWorker] Downloaded buffer for message ${messageId}, calculating SHA256...`);
     const sha256 = await calculateSHA256(buffer.buffer);
     const verified = sha256 === expectedHash;

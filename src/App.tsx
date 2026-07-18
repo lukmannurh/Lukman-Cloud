@@ -56,7 +56,7 @@ const Sidebar = ({
         />
       )}
       <div 
-        className={`bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-dvh text-slate-300 fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out
+        className={`bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-dvh text-slate-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'} w-64`}
       >
@@ -86,10 +86,10 @@ const Sidebar = ({
               </div>
             )}
 
-            <div className={`flex flex-col transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
+            <div className={`flex flex-col transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
               <div className="flex items-center gap-2">
                 <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain hidden md:block" />
-                <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">Lukman Cloud</h1>
+                <span className="text-xl font-bold text-white tracking-tight whitespace-nowrap block">Lukman Cloud</span>
               </div>
               <div className="flex gap-2 mt-1 items-center overflow-hidden">
                 <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
@@ -117,7 +117,7 @@ const Sidebar = ({
         <nav className="flex-1 flex flex-col gap-2 p-3 relative">
           {/* Active Indicator Pill */}
           <div 
-            className="absolute left-3 right-3 h-[44px] bg-blue-500/10 border border-blue-500/20 rounded-lg transition-transform duration-300 ease-in-out pointer-events-none"
+            className="absolute left-3 right-3 h-[44px] bg-blue-500/10 border border-blue-500/20 rounded-lg transition-transform duration-200 ease-in-out pointer-events-none"
             style={{ 
               top: '12px',
               transform: currentView === 'dashboard' ? 'translateY(0px)' : 
@@ -137,7 +137,7 @@ const Sidebar = ({
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Dashboard</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Dashboard</span>
           </button>
           
           <button 
@@ -149,7 +149,7 @@ const Sidebar = ({
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Virtual Storage</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Virtual Storage</span>
           </button>
           
           <button 
@@ -161,7 +161,7 @@ const Sidebar = ({
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
           </button>
           
         </nav>
@@ -224,7 +224,7 @@ const Sidebar = ({
             title="Sign Out"
           >
             <LogOut className="w-5 h-5 shrink-0 text-rose-400 group-hover:text-rose-300 transition-colors" />
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-300 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
           </button>
         </div>
       </div>
@@ -361,6 +361,30 @@ export default function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>('vfs');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // SEO / Dynamic Metadata
+  useEffect(() => {
+    let title = 'Lukman Cloud';
+    let description = 'Secure and scalable cloud storage for your files.';
+    if (currentView === 'vfs') {
+      title = 'My Drive - Lukman Cloud';
+    } else if (currentView === 'dashboard') {
+      title = 'Dashboard - Lukman Cloud';
+      description = 'View your storage analytics and recent activity on Lukman Cloud.';
+    } else if (currentView === 'nodes') {
+      title = 'Storage Nodes - Lukman Cloud';
+      description = 'Manage your distributed storage nodes and Telegram integration.';
+    }
+    
+    document.title = title;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description);
+  }, [currentView]);
 
   // VFS Explorer State
   const [currentFolderId, setCurrentFolderId] = useState<string>('root');
@@ -721,7 +745,7 @@ export default function App() {
         setTimeout(() => setActiveTransfers(prev => prev.filter(t => t.id !== txId)), 3000);
 
       } catch (err: any) {
-        console.error('[Upload] Telegram pipeline failed:', err);
+        console.error('[Upload] Telegram process failed:', err);
         setActiveTransfers(prev => prev.map(t =>
           t.id === txId ? { ...t, status: `Error: ${err.message}` } : t
         ));
@@ -816,7 +840,7 @@ export default function App() {
           }
         } else if (isTelegramRef(ref as any)) {
           if (workerPoolRef.current.length === 0) {
-            console.warn('[App] Telegram worker pool not connected. Lazy-warming up MTProto pipeline...');
+            console.warn('[App] Telegram worker pool not connected. Lazy-warming up MTProto process...');
             const BOT_POOL = [
               import.meta.env.VITE_TELEGRAM_BOT_TOKEN_P,
               import.meta.env.VITE_TELEGRAM_BOT_TOKEN_W1,
@@ -935,7 +959,7 @@ export default function App() {
       </div>
       <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
         <div 
-          className={`h-1.5 rounded-full transition-all duration-300 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
+          className={`h-1.5 rounded-full transition-all duration-200 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
           style={{ width: `${downloadProgress.status === 'success' ? 100 : Math.round(downloadProgress.progress)}%` }}
         ></div>
       </div>
@@ -1083,7 +1107,7 @@ export default function App() {
           setAccounts={setAccounts}
           allFlattenedNodes={allFlattenedNodes}
         />
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-white flex flex-col`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-white flex flex-col`}>
           <div className="w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8 py-4 md:py-6">
           {currentView === 'dashboard' && (
             <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
@@ -1100,7 +1124,7 @@ export default function App() {
           {currentView === 'vfs' && (
             <div className="flex flex-col gap-6">
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
-                Cloud Storage Core Engine
+                Cloud Storage Core system
               </h2>
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Hidden File Inputs */}
@@ -1582,7 +1606,7 @@ export default function App() {
                           className="flex items-center gap-3 w-full text-left hover:bg-white rounded-lg border border-transparent hover:border-slate-200 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <span className="text-2xl shrink-0 opacity-70">
-                            {depth === 0 ? '🗄️' : '📁'}
+                            {depth === 0 ? '' : ''}
                           </span>
                           <div className="truncate">
                             <div className="font-semibold text-slate-700 text-sm truncate">{folder.name}</div>
@@ -1641,7 +1665,7 @@ export default function App() {
                 <div className="flex items-center gap-3 mt-3">
                   <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                     <div 
-                      className={`h-full transition-all duration-300 ${upload.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
+                      className={`h-full transition-all duration-200 ${upload.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
                       style={{ width: `${Math.min(upload.progress, 100)}%` }}
                     />
                   </div>
@@ -1709,7 +1733,7 @@ export default function App() {
               <div className="flex items-center gap-3 mt-3">
                 <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className={`h-full transition-all duration-300 ${downloadProgress.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
+                    className={`h-full transition-all duration-200 ${downloadProgress.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
                     style={{ width: `${Math.min(downloadProgress.progress, 100)}%` }}
                   />
                 </div>

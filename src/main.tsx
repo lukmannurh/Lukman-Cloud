@@ -26,7 +26,7 @@ if (missing.length > 0) {
       margin: 4rem auto;
       background: #FAFAFA;
     ">
-      <h1 style="margin-top:0; font-size:1.25rem;">⚠️ Browser Compatibility Error</h1>
+      <h1 style="margin-top:0; font-size:1.25rem;"> Browser Compatibility Error</h1>
       <p>Lukman Cloud requires modern browser APIs that are not available in your browser:</p>
       <ul>
         ${missing.map((name) => `<li><strong>${name}</strong></li>`).join('')}

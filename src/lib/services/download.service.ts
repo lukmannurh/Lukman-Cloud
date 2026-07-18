@@ -4,7 +4,7 @@
  * Milestone 2.5
  *
  * Streams bytes from Google Drive and Telegram Web Worker.
- * Performs client-side SHA-256 integrity verification.
+ * Performs client-side SHA-256 reliability verification.
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -72,7 +72,7 @@ export class DownloadService {
 
   /**
    * Streams a multi-part file from Telegram via the GramJS Web Worker.
-   * Concatenates the chunks and performs a strict SHA-256 integrity check
+   * Concatenates the chunks and performs a strict SHA-256 reliability check
    * against the original pre-upload hash to guarantee data purity.
    */
   public async downloadFromTelegram(
@@ -203,13 +203,13 @@ export class DownloadService {
     const finalBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
     
     // Note: Client-Side SHA-256 is skipped here because computing it on the final blob 
-    // requires loading it into memory. Pure streaming integrity should be handled via a worker.
+    // requires loading it into memory. Pure streaming reliability should be handled via a worker.
     if (onProgress) onProgress(1.0, '');
     return URL.createObjectURL(finalBlob);
   }
 
   /**
-   * Native streaming pipeline using StreamSaver to directly stream chunks to disk,
+   * Native streaming process using StreamSaver to directly stream chunks to disk,
    * bypassing RAM hoarding entirely.
    */
   public async streamDownloadFromTelegram(

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccountPoolService } from '../lib/services/accountPool.service';
 
-// Mock the vault service
-vi.mock('../lib/services/vault.service', () => {
+// Mock the storage service
+vi.mock('../lib/services/storage.service', () => {
   return {
     retrieveCredential: vi.fn(),
     storeCredential: vi.fn(),
   };
 });
 
-import { retrieveCredential, storeCredential } from '../lib/services/vault.service';
+import { retrieveCredential, storeCredential } from '../lib/services/storage.service';
 
 describe('AccountPoolService: Token Migration Fallback', () => {
   let service: AccountPoolService;

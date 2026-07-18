@@ -72,6 +72,24 @@ export function FileExplorer({
   const [isFetchingPreview, setIsFetchingPreview] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [archiveFiles, setArchiveFiles] = useState<string[]>([]);
+  const [shareNode, setShareNode] = useState<VFSNode | null>(null);
+  const [deleteNode, setDeleteNode] = useState<VFSNode | null>(null);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewNode(null);
+        setDownloadConfirmNode(null);
+        setInfoNode(null);
+        setRenameNode(null);
+        setShareNode(null);
+        setDeleteNode(null);
+        setPickerModalNode(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   useEffect(() => {
     if (initialPreviewNodeId) {
@@ -168,7 +186,7 @@ export function FileExplorer({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[300px]">
-        <Card className="p-12 text-center animate-pulse bg-slate-50 border border-slate-200 shadow-sm rounded-xl w-full max-w-md">
+        <Card className="p-12 text-center  bg-slate-50 border border-slate-200 shadow-sm rounded-xl w-full max-w-md">
           <h2 className="text-lg font-semibold text-slate-600 tracking-tight">Loading Directory...</h2>
         </Card>
       </div>
@@ -288,6 +306,7 @@ export function FileExplorer({
 
   return (
     <>
+      <h1 className="sr-only">My Drive</h1>
       {isGridView ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {folders.map(folder => (
@@ -307,7 +326,7 @@ export function FileExplorer({
                 }
               }}
             >
-              <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 cursor-pointer min-h-[120px] shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-blue-400 bg-blue-50/50 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 scale-105' : 'border border-slate-200'}`}>
+              <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 cursor-pointer min-h-[120px] shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-blue-400 bg-blue-50/50 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center justify-center p-2 bg-slate-50 rounded-lg border border-slate-100">
                     <Folder className="w-8 h-8 text-slate-500 fill-slate-500/20" />
@@ -427,7 +446,7 @@ export function FileExplorer({
             {/* Header & Toolbar */}
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-3 overflow-hidden">
-                <span className="text-3xl shrink-0">📄</span>
+                <span className="text-3xl shrink-0"></span>
                 <div className="truncate">
                   <h3 data-testid="file-name" className="text-xl font-bold text-slate-800 truncate">{previewNode.name}</h3>
                   <p className="text-sm text-slate-500">{formatSize(previewNode.size || 0)}</p>
@@ -464,7 +483,7 @@ export function FileExplorer({
               ) : previewError ? (
                 <div className="m-auto text-center p-8">
                   <div className="w-24 h-24 bg-rose-50 text-rose-500 shadow-sm border border-rose-200 rounded-2xl mx-auto flex items-center justify-center mb-4">
-                    <span className="text-4xl">⚠️</span>
+                    <span className="text-4xl"></span>
                   </div>
                   <h4 className="text-lg font-bold text-slate-800 mb-2">Decryption Failed</h4>
                   <p className="text-sm text-slate-500 max-w-sm mx-auto">
@@ -519,7 +538,7 @@ export function FileExplorer({
                          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4">
                            <FileText className="w-8 h-8 text-rose-400" />
                          </div>
-                         <h3 className="text-white font-medium mb-2">Secure PDF Vault</h3>
+                         <h3 className="text-white font-medium mb-2">Secure PDF storage</h3>
                          <p className="text-slate-400 text-sm max-w-sm">
                            PDF Preview is deactivated for maximum system performance. Please use the direct download option below to read this document.
                          </p>
@@ -538,7 +557,7 @@ export function FileExplorer({
                       </div>
                       <h4 className="text-xl font-bold text-slate-800 mb-3 tracking-tight">Preview Unavailable</h4>
                       <p className="text-sm text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
-                        Preview Unavailable for this file extension. Please use the direct high-speed download pipeline below.
+                        Preview Unavailable for this file extension. Please use the direct high-speed download process below.
                       </p>
                       <button
                         onClick={() => handleDownloadClick(previewNode)}
@@ -570,7 +589,7 @@ export function FileExplorer({
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Confirm File Decryption</h3>
               <p className="text-sm text-slate-500">
-                Are you sure you want to securely decrypt and download <br/><span className="font-semibold text-slate-700">{downloadConfirmNode.name}</span> from the pooled vault?
+                Are you sure you want to securely decrypt and download <br/><span className="font-semibold text-slate-700">{downloadConfirmNode.name}</span> from the pooled storage?
               </p>
             </div>
             
@@ -599,7 +618,7 @@ export function FileExplorer({
       {infoNode && (
         <>
           <div className="fixed inset-0 z-[60] bg-slate-950/20 backdrop-blur-sm transition-opacity" onClick={() => setInfoNode(null)}></div>
-          <div className="fixed inset-y-0 right-0 z-[70] w-full max-w-sm bg-white shadow-2xl border-l border-slate-200 transform transition-transform duration-300 ease-in-out translate-x-0 flex flex-col">
+          <div className="fixed inset-y-0 right-0 z-[70] w-full max-w-sm bg-white shadow-2xl border-l border-slate-200 transform transition-transform duration-200 ease-in-out translate-x-0 flex flex-col">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="font-medium text-slate-800 text-lg">Details</h3>
               <button onClick={() => setInfoNode(null)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
