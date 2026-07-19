@@ -225,8 +225,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
     <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] min-h-dvh bg-background text-foreground font-sans">
       
       {/* Left Side: Brand Panel */}
-      <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
-        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+      <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-slate-50 dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800">
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
         
         <div className="relative z-10 flex items-center gap-3">
           <img src={logoAsset} alt="Lukman Cloud Logo" className="h-10 w-10 object-contain drop-shadow-md" />
@@ -326,7 +326,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 <button 
                   onClick={handleGuestConfirm} 
                   disabled={isGuestLoading}
-                  className="w-full justify-center bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary/20 flex items-center disabled:opacity-70"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 rounded-lg shadow-sm flex items-center justify-center transition-colors disabled:opacity-70"
                 >
                   {isGuestLoading ? 'Activating...' : 'Continue to Dashboard'}
                 </button>
@@ -412,7 +412,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full justify-center bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary/20 flex items-center disabled:opacity-70"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 rounded-lg shadow-sm flex items-center justify-center transition-colors disabled:opacity-70"
                     disabled={loading}
                   >
                     {loading ? (
@@ -433,7 +433,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                     <div className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-surface text-muted-foreground">Or continue with</span>
+                    <span className="bg-white px-3 relative z-10 text-slate-400 text-xs">Or continue with</span>
                   </div>
                 </div>
 

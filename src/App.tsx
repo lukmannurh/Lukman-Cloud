@@ -56,9 +56,9 @@ const Sidebar = ({
         />
       )}
       <div 
-        className={`bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-dvh text-slate-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
+        className={`bg-surface-muted border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between h-dvh text-slate-700 dark:text-slate-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'} w-64`}
+        ${isSidebarCollapsed ? 'md:w-16' : 'md:w-[240px]'} w-[240px]`}
       >
         <div className="p-4 border-b border-slate-800 flex items-center justify-between h-20">
           <div className="flex items-center gap-2 overflow-hidden">
@@ -149,7 +149,7 @@ const Sidebar = ({
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Virtual Storage</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Files</span>
           </button>
           
           <button 
@@ -161,7 +161,7 @@ const Sidebar = ({
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage Nodes</span>
+            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>Storage</span>
           </button>
           
         </nav>
@@ -236,6 +236,8 @@ export default function App() {
   const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean>(false);
   const [activeUser, setActiveUser] = useState<any>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  
+  const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -472,6 +474,36 @@ export default function App() {
     window.addEventListener('preview-timeout', handlePreviewTimeout);
     return () => window.removeEventListener('preview-timeout', handlePreviewTimeout);
   }, []);
+
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingGlobal(true);
+    };
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.relatedTarget === null) {
+        setIsDraggingGlobal(false);
+      }
+    };
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingGlobal(false);
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0 && currentView === 'vfs') {
+        handleUploadFiles(Array.from(e.dataTransfer.files));
+      }
+    };
+    
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+    
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+    };
+  }, [currentView, currentFolderId]);
 
   const handleNativeFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -1055,6 +1087,33 @@ export default function App() {
               {onboardingError && <div className="text-red-500 text-sm mt-4 text-center">{onboardingError}</div>}
             </form>
           </div>
+          {/* Global Drag Overlay */}
+          {isDraggingGlobal && currentView === 'vfs' && (
+            <div className="fixed inset-0 z-[100] bg-blue-500/20 backdrop-blur-sm flex items-center justify-center border-4 border-dashed border-blue-500 m-4 rounded-3xl pointer-events-none">
+              <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800">Drop files to upload</h2>
+                <p className="text-slate-500 mt-2">Files will be uploaded to {breadcrumbs[breadcrumbs.length - 1]?.name || 'current folder'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Upload FAB for Mobile */}
+          {currentView === 'vfs' && (
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-transform active:scale-95"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          )}
+
         </div>
       </div>
     );

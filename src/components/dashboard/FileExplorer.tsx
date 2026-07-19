@@ -196,10 +196,27 @@ export function FileExplorer({
 
   if (nodes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[300px]">
-        <div className="p-12 text-center border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl max-w-md w-full">
-          <h2 className="text-lg font-semibold text-slate-600 mb-2">Folder is Empty</h2>
-          <p className="text-sm text-slate-500">No files or subfolders found.</p>
+      <div 
+        className="flex items-center justify-center h-full min-h-[400px] w-full"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOverFolderId('global_empty');
+        }}
+        onDragLeave={() => setDragOverFolderId(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOverFolderId(null);
+          // Handled by App.tsx drop zone if global, but we highlight the empty state
+        }}
+      >
+        <div className={`p-12 text-center border-2 border-dashed rounded-xl max-w-md w-full transition-colors ${dragOverFolderId === 'global_empty' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-slate-50'}`}>
+          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-slate-700 mb-2">Folder is Empty</h2>
+          <p className="text-sm text-slate-500">Drag and drop files here to upload instantly</p>
         </div>
       </div>
     );
@@ -308,12 +325,12 @@ export function FileExplorer({
     <>
       <h1 className="sr-only">My Drive</h1>
       {isGridView ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="flex flex-wrap gap-4">
           {folders.map(folder => (
             <div
               key={folder.id}
               onClick={() => onNavigateFolder(folder.id)}
-              className="text-left cursor-pointer focus:outline-none w-full relative"
+              className="text-left cursor-pointer focus:outline-none relative w-[160px] h-[160px] shrink-0"
               onDragOver={(e) => e.preventDefault()}
               onDragEnter={() => setDragOverFolderId(folder.id)}
               onDragLeave={() => setDragOverFolderId(null)}
@@ -326,14 +343,14 @@ export function FileExplorer({
                 }
               }}
             >
-              <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 cursor-pointer min-h-[120px] shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-blue-400 bg-blue-50/50 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-slate-200'}`}>
+              <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-blue-400 bg-blue-50/50 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center justify-center p-2 bg-slate-50 rounded-lg border border-slate-100">
                     <Folder className="w-8 h-8 text-slate-500 fill-slate-500/20" />
                   </div>
                   {renderContextMenu(folder)}
                 </div>
-                <div className="font-medium text-slate-700 truncate text-sm sm:text-base mt-auto" title={folder.name}>
+                <div className="font-medium text-slate-700 text-sm line-clamp-2 mt-auto" title={folder.name}>
                   {folder.name}
                 </div>
               </Card>
@@ -347,13 +364,13 @@ export function FileExplorer({
               <div
                 key={file.id}
                 onClick={() => setPreviewNode(file)}
-                className="text-left cursor-pointer focus:outline-none w-full relative"
+                className="text-left cursor-pointer focus:outline-none relative w-[160px] h-[160px] shrink-0"
                 draggable={true}
                 onDragStart={(e) => {
                   e.dataTransfer.setData("text/plain", file.id);
                 }}
               >
-                <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 border cursor-pointer min-h-[120px] shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-blue-400 bg-blue-50/50 scale-[1.02]' : 'border-slate-200'}`}>
+                <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 border cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-blue-400 bg-blue-50/50 scale-[1.02]' : 'border-slate-200'}`}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center justify-center p-2 bg-slate-50 rounded-lg">
                       {icon}
@@ -362,7 +379,7 @@ export function FileExplorer({
                       {renderContextMenu(file)}
                     </div>
                   </div>
-                  <div className="font-medium text-slate-700 truncate text-sm sm:text-base mb-1" title={file.name}>
+                  <div className="font-medium text-slate-700 text-sm line-clamp-2 mb-1" title={file.name}>
                     {file.name}
                   </div>
                   <div className="text-xs text-slate-400 mt-auto font-medium">
