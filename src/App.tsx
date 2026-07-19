@@ -1327,20 +1327,20 @@ export default function App() {
                             }}
                             onFocus={() => setIsSearchFocused(true)}
                             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            className="w-full md:w-64 bg-slate-100 hover:bg-slate-200/60 focus:bg-white text-slate-800 placeholder-slate-500 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border focus:border-blue-300 border border-transparent pl-11 pr-4 py-2.5 transition-all"
+                            className="w-full md:w-64 bg-[#0a0a1a]/60 hover:bg-[#1e1e5a]/40 focus:bg-[#141432] text-zinc-100 placeholder-zinc-500 text-sm rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border focus:border-indigo-500 border border-[#1e1e5a]/60 pl-11 pr-4 py-2.5 transition-all"
                           />
                           
                           {/* Search Results Dropdown */}
                           {isSearchFocused && searchQuery.trim() !== '' && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 max-h-96 overflow-y-auto">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-[#141432] rounded-xl shadow-xl border border-[#1e1e5a]/40 overflow-hidden z-50 max-h-96 overflow-y-auto">
                               {searchResults.length === 0 ? (
-                                <div className="p-4 text-center text-sm text-slate-500">No results found for "{searchQuery}"</div>
+                                <div className="p-4 text-center text-sm text-zinc-500">No results found for "{searchQuery}"</div>
                               ) : (
                                 <div className="py-2">
                                   {searchResults.map((result, index) => (
                                     <div 
                                       key={result.id} 
-                                      className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${activeSuggestionIndex === index ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                                      className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${activeSuggestionIndex === index ? 'bg-indigo-500/10' : 'hover:bg-[#1e1e5a]/40'}`}
                                       onClick={() => {
                                         flushSync(() => {
                                           setSearchQuery('');
@@ -1358,16 +1358,16 @@ export default function App() {
                                         }
                                       }}
                                     >
-                                      <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                                      <div className="w-8 h-8 rounded bg-[#1e1e5a]/40 flex items-center justify-center shrink-0">
                                         {result.type === 'folder' ? (
-                                          <svg className="w-4 h-4 text-slate-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
+                                          <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
                                         ) : (
-                                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                          <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                         )}
                                       </div>
                                       <div className="flex flex-col min-w-0">
-                                        <span className="text-sm font-medium text-slate-700 truncate">{result.name}</span>
-                                        <span className="text-[11px] text-slate-400 truncate">
+                                        <span className="text-sm font-medium text-zinc-200 truncate">{result.name}</span>
+                                        <span className="text-[11px] text-zinc-500 truncate">
                                           Cloud Root {result.path.replace(`/${result.name}`, '').replace(/\//g, ' > ')}
                                         </span>
                                       </div>
@@ -1384,7 +1384,7 @@ export default function App() {
                           <select 
                             value={sortKey}
                             onChange={(e) => setSortKey(e.target.value as any)}
-                            className="hidden md:block bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2.5 pl-3 pr-8 outline-none cursor-pointer"
+                            className="hidden md:block bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 py-2.5 pl-3 pr-8 outline-none cursor-pointer"
                           >
                             <option>Alphabetical</option>
                             <option>Last Modified</option>
@@ -1392,7 +1392,7 @@ export default function App() {
                           </select>
                           <button 
                             onClick={() => setSortDirection(d => d === 'asc' ? 'desc' : 'asc')}
-                            className="p-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
+                            className="p-2.5 bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 rounded-lg shadow-sm hover:bg-[#1e1e5a]/40 transition-colors"
                           >
                             {sortDirection === 'asc' ? (
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
@@ -1400,16 +1400,16 @@ export default function App() {
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             )}
                           </button>
-                          <div className="flex bg-slate-100 border border-slate-200 rounded-lg p-1 ml-2">
+                          <div className="flex bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 rounded-lg p-1 ml-2">
                             <button 
                               onClick={() => setIsGridView(true)}
-                              className={`p-1.5 rounded transition-colors ${isGridView ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              className={`p-1.5 rounded transition-colors ${isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                             </button>
                             <button 
                               onClick={() => setIsGridView(false)}
-                              className={`p-1.5 rounded transition-colors ${!isGridView ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              className={`p-1.5 rounded transition-colors ${!isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                             </button>
@@ -1424,7 +1424,7 @@ export default function App() {
                         />
                       </div>
 
-                      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 min-h-[500px]">
+                      <div className="bg-[#141432]/30 border border-[#1e1e5a]/40 shadow-sm rounded-xl p-6 min-h-[500px]">
                       <FileExplorer 
                         nodes={sortedNodes}
                         loading={loadingFolder}
