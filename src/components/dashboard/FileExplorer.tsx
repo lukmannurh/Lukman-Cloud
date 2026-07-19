@@ -325,12 +325,12 @@ export function FileExplorer({
     <>
       <h1 className="sr-only">My Drive</h1>
       {isGridView ? (
-        <div className="flex flex-wrap gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 auto-rows-max w-full">
           {folders.map(folder => (
             <div
               key={folder.id}
               onClick={() => onNavigateFolder(folder.id)}
-              className="text-left cursor-pointer focus:outline-none relative w-[160px] h-[160px] shrink-0"
+              className="text-left cursor-pointer focus:outline-none relative w-full h-[160px] shrink-0"
               onDragOver={(e) => e.preventDefault()}
               onDragEnter={() => setDragOverFolderId(folder.id)}
               onDragLeave={() => setDragOverFolderId(null)}
@@ -364,7 +364,7 @@ export function FileExplorer({
               <div
                 key={file.id}
                 onClick={() => setPreviewNode(file)}
-                className="text-left cursor-pointer focus:outline-none relative w-[160px] h-[160px] shrink-0"
+                className="text-left cursor-pointer focus:outline-none relative w-full h-[160px] shrink-0"
                 draggable={true}
                 onDragStart={(e) => {
                   e.dataTransfer.setData("text/plain", file.id);

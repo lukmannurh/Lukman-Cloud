@@ -1185,7 +1185,7 @@ export default function App() {
           allFlattenedNodes={allFlattenedNodes}
         />
         <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-[#0a0a1a] flex flex-col`}>
-          <div className="w-full space-y-6 px-6 lg:px-8 py-4 md:py-6">
+          <div className="w-full flex-1 min-w-0 pl-6 lg:pl-8 pr-6 lg:pr-8 py-4 md:py-6 space-y-6">
           {currentView === 'dashboard' && (
             <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
               <div className="w-full">
@@ -1478,9 +1478,6 @@ export default function App() {
 
           {currentView === 'nodes' && (
             <div className="flex flex-col gap-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Storage & backups</h2>
-              </div>
               <div className="w-full">
                 <StorageNodes 
                   accounts={accounts}
