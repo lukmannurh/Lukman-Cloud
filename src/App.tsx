@@ -375,7 +375,7 @@ export default function App() {
       description = 'View your storage analytics and recent activity on Lukman Cloud.';
     } else if (currentView === 'nodes') {
       title = 'Storage Nodes - Lukman Cloud';
-      description = 'Manage your distributed storage nodes and Telegram integration.';
+      description = 'Manage your distributed storage nodes and secure integration.';
     }
     
     document.title = title;
@@ -1183,7 +1183,7 @@ export default function App() {
           {currentView === 'vfs' && (
             <div className="flex flex-col gap-6">
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
-                Cloud Storage Core system
+                My Drive
               </h2>
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Hidden File Inputs */}
@@ -1203,32 +1203,7 @@ export default function App() {
                   onChange={(e) => e.target.files && handleUploadFiles(Array.from(e.target.files))}
                 />
                 
-                {/* Mirror Mirror — GDrive Backup Toggle */}
-                <button
-                  onClick={() => setGdriveMirrorEnabled(prev => !prev)}
-                  disabled={accounts.length === 0}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full border font-semibold text-sm transition-all shadow-sm ${
-                    accounts.length === 0 
-                      ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
-                      : gdriveMirrorEnabled
-                        ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-blue-300'
-                  }`}
-                  title={accounts.length === 0 ? "Please connect an active account under Node Management first." : gdriveMirrorEnabled ? 'Google Drive mirroring is ON' : 'Enable Google Drive mirror backup'}
-                >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 87.3 78" fill="currentColor">
-                    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill={gdriveMirrorEnabled ? '#fff' : '#0066DA'}/>
-                    <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill={gdriveMirrorEnabled ? '#fff' : '#00AC47'}/>
-                    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.85l5.9 11.5z" fill={gdriveMirrorEnabled ? '#fff' : '#EA4335'}/>
-                    <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill={gdriveMirrorEnabled ? '#fff' : '#00832D'}/>
-                    <path d="M59.85 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill={gdriveMirrorEnabled ? '#fff' : '#2684FC'}/>
-                    <path d="M73.4 26.5l-12.6-21.8c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28H87.3c0-1.55-.4-3.1-1.2-4.5z" fill={gdriveMirrorEnabled ? '#fff' : '#FFBA00'}/>
-                  </svg>
-                  <span>Mirror Backup to Google Drive</span>
-                  <div className={`ml-1 w-8 h-4 rounded-full transition-colors relative ${accounts.length === 0 ? 'bg-slate-200' : gdriveMirrorEnabled ? 'bg-white/40' : 'bg-slate-200'}`}>
-                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${gdriveMirrorEnabled && accounts.length > 0 ? 'left-4' : 'left-0.5'}`}></div>
-                  </div>
-                </button>
+
               </div>
               
               {/* The sorting logic block */}

@@ -107,8 +107,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           setLoading(false);
           return;
         }
-        
-        setTimeout(() => window.location.reload(), 800);
+        // SPA state will naturally update via onAuthStateChange listener in App.tsx
       }
     } catch (err: any) {
       setError(err.message || 'Authentication error');
@@ -209,8 +208,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         setIsGuestLoading(false);
         return;
       }
-
-      setTimeout(() => window.location.reload(), 1500);
+      
+      // The onAuthStateChange listener in App.tsx will pick up the new session automatically
     } catch (err: any) {
       setError(err.message || 'Guest generation error');
       setIsGuestLoading(false);
@@ -238,7 +237,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
             Simple cloud storage.<br/>Unlimited space.
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Unify your Telegram storage and Google Drive into one secure, seamless interface. 
+            Unify your personal cloud storage and digital drives into one secure, seamless interface. 
           </p>
         </div>
 

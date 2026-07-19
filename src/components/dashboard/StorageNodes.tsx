@@ -26,7 +26,7 @@ export function StorageNodes({
   onAddAccount,
   activeTransfers
 }: StorageNodesProps) {
-  // Telegram configurations are now globally hardcoded.
+  // Secure configurations are now globally hardcoded.
 
 
   
@@ -144,7 +144,7 @@ export function StorageNodes({
       <div className="col-span-1 lg:col-span-2 flex flex-col gap-6">
         <Card className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden flex-1">
           <CardHeader className="border-b border-slate-100 p-6">
-            <h2 className="text-lg font-medium text-slate-800">Network & Accounts</h2>
+            <h2 className="text-lg font-medium text-slate-800">Storage & backups</h2>
           </CardHeader>
           <CardContent className="p-6 flex flex-col gap-6">
             
@@ -155,9 +155,9 @@ export function StorageNodes({
                   <img src={aetherNodeIcon} alt="Storage Node" className="w-7 h-7 object-contain opacity-80" />
                 </div>
                 <div>
-                  <h3 className="text-base font-medium text-slate-800 tracking-tight">Lukman Cloud High-Speed Core storage</h3>
+                  <h3 className="text-base font-medium text-slate-800 tracking-tight">Lukman Cloud Storage</h3>
                   <p className="text-sm text-slate-500 mt-1 max-w-md">
-                    Primary cloud core active and fully encrypted. Connection Status: <span className="text-emerald-500 font-medium">Secure & Synchronized</span>.
+                    Primary cloud storage active and fully encrypted. Connection Status: <span className="text-emerald-500 font-medium">Secure & Synchronized</span>.
                   </p>
                 </div>
               </div>

@@ -69,7 +69,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
             </div>
             <div className="flex justify-between mt-2 text-xs text-slate-500 font-medium">
               <span>{pct.toFixed(1)}% Used</span>
-              <span>{accounts.length} Active Node(s)</span>
+              <span>{accounts.length} Connected Account(s)</span>
             </div>
           </div>
         </Card>
@@ -133,7 +133,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">Connection Verified</h4>
-                  <p className="text-xs text-slate-500 font-medium">All storage nodes synchronized</p>
+                  <p className="text-xs text-slate-500 font-medium">All backups synchronized</p>
                 </div>
               </div>
               <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
