@@ -1,3 +1,5 @@
+import { Home } from 'lucide-react';
+
 export interface BreadcrumbItem {
   id: string;
   name: string;
@@ -21,11 +23,12 @@ export function Breadcrumbs({
           )}
           <button
             onClick={() => onNavigate(item.id)}
-            className={`text-lg transition-colors px-2 py-1 rounded-md ${
+            className={`text-sm flex items-center gap-1.5 transition-colors px-2 py-1 rounded-md ${
               index === path.length - 1 ? 'text-slate-200 font-semibold' : 'text-slate-400/80 hover:bg-[#1e1e5a]/40 font-medium'
             }`}
           >
-            {item.name}
+            {index === 0 && <Home className="w-4 h-4" />}
+            {index !== 0 ? item.name : 'Home'}
           </button>
         </div>
       ))}

@@ -77,13 +77,12 @@ export function StorageNodes({
   return (
     <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.4s_ease-out]">
       {/* Page header */}
-      <header className="max-w-3xl">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-2">Infrastructure</p>
+      <header className="max-w-3xl mb-8">
         <h1 className="text-3xl md:text-4xl font-semibold text-zinc-100 tracking-tight leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
           Storage &amp; backups
         </h1>
         <p className="mt-3 text-sm text-zinc-400">
-          Lukman Cloud Storage is active and synchronized. Manage your storage distribution and add external cloud accounts as needed.
+          Manage your unified cloud storage footprint, synchronized data buckets, and external configurations.
         </p>
       </header>
 

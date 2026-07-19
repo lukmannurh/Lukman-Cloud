@@ -62,39 +62,10 @@ const Sidebar = ({
       >
         <div className="p-4 border-b border-[#1e1e5a]/40 flex items-center justify-between h-20">
           <div className="flex items-center gap-2 overflow-hidden">
-            {activeUser?.image ? (
-              <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
-                <img 
-                  src={activeUser.image} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    if (e.currentTarget.parentElement) {
-                      const fallback = e.currentTarget.parentElement.querySelector('.fallback-initial');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }
-                  }}
-                />
-                <span className="fallback-initial hidden text-white font-bold text-sm">
-                  {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
-                </span>
-              </div>
-            ) : (
-              <div className="w-8 h-8 shrink-0 rounded-md bg-indigo-500 border border-indigo-400/30 text-white flex items-center justify-center font-bold text-sm">
-                {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
-              </div>
-            )}
-
             <div className={`flex flex-col transition-opacity duration-200 min-w-0 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain hidden md:block flex-shrink-0" />
-                <span className="text-xl font-bold text-white tracking-tight whitespace-nowrap block truncate">Lukman Cloud</span>
-              </div>
-              <div className="flex gap-2 mt-1 items-center overflow-hidden flex-shrink-0">
-                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate whitespace-nowrap" title={`@${activeUser?.username || 'guest'}`}>
-                  @{activeUser?.username || 'guest'}
-                </span>
+                <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap block truncate">Lukman Cloud</span>
               </div>
             </div>
           </div>
@@ -168,7 +139,38 @@ const Sidebar = ({
         
         {/* Unlimited Storage Widget (Google Drive Style) */}
         {!isSidebarCollapsed && (
-          <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40">
+          <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40 flex flex-col gap-4">
+            
+            {/* User Profile Widget - Moved to bottom */}
+            <div className="flex items-center gap-3 bg-[#1e1e5a]/20 p-2.5 rounded-xl border border-[#1e1e5a]/40 shrink-0">
+              {activeUser?.image ? (
+                <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
+                  <img 
+                    src={activeUser.image} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.parentElement) {
+                        const fallback = e.currentTarget.parentElement.querySelector('.fallback-initial');
+                        if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <span className="fallback-initial hidden text-white font-bold text-sm">
+                    {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              ) : (
+                <div className="w-8 h-8 shrink-0 rounded-md bg-indigo-500 border border-indigo-400/30 text-white flex items-center justify-center font-bold text-sm">
+                  {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold text-zinc-200 truncate">{activeUser?.name || 'User'}</span>
+                <span className="text-[10px] text-zinc-500 truncate" title={`@${activeUser?.username || 'guest'}`}>@{activeUser?.username || 'guest'}</span>
+              </div>
+            </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
                 <div className="flex items-center gap-1.5">
@@ -1384,7 +1386,7 @@ export default function App() {
                           <select 
                             value={sortKey}
                             onChange={(e) => setSortKey(e.target.value as any)}
-                            className="hidden md:block bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 py-2.5 pl-3 pr-8 outline-none cursor-pointer"
+                            className="block bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 py-2.5 pl-3 pr-8 outline-none cursor-pointer"
                           >
                             <option>Alphabetical</option>
                             <option>Last Modified</option>
@@ -1523,7 +1525,7 @@ export default function App() {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="Folder Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
                 autoFocus
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {

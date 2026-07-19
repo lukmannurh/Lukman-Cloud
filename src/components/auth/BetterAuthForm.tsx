@@ -218,6 +218,23 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    setSuccess('Copied to clipboard!');
+    setTimeout(() => setSuccess(''), 2000);
+  };
+
+  const handleDownloadCredentials = () => {
+    const text = `Lukman Cloud Guest Credentials\n--------------------------\nUsername: ${guestCredentials.username}\nPassword: ${guestCredentials.password}\n\nPlease keep these credentials safe!`;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'akun-cloud.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSuccess('Credentials downloaded to akun-cloud.txt!');
+    setTimeout(() => setSuccess(''), 3000);
   };
 
   return (
@@ -321,6 +338,13 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 className="mt-2 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[.99] transition-all py-3 text-sm font-medium text-white ring-1 ring-indigo-500/50 shadow-[0_0_24px_rgba(79,70,229,0.25)] disabled:opacity-60"
               >
                 {isGuestLoading ? 'Activating…' : 'Continue to Dashboard'}
+              </button>
+              
+              <button
+                onClick={handleDownloadCredentials}
+                className="w-full text-zinc-400 hover:text-zinc-200 text-xs font-medium underline underline-offset-4 transition-colors text-center"
+              >
+                Download Credentials (.txt)
               </button>
             </div>
           ) : (
