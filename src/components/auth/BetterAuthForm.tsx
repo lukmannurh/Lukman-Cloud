@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { supabase } from '../../lib/services/supabaseClient';
+import { Eye, EyeOff, CheckCircle2, Copy } from 'lucide-react';
 import logoAsset from '../../assets/logo.webp';
-import { Eye, EyeOff } from 'lucide-react';
 
 export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => void }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,7 +57,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       if (isSignUp) {
         const normalizedUsername = username.toLowerCase();
         
-        // Block if username is taken in public.user table
         const { data: existingUser } = await supabase
           .from('user')
           .select('username')
@@ -72,7 +71,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
 
         const dummyEmail = `${normalizedUsername}@lukman.cloud`;
         
-        // Prevent App.tsx from auto-mounting dashboard when Supabase auto-logs in
         localStorage.setItem('block_auto_login', 'true');
         
         const { error: signUpError } = await authClient.signUp.email({
@@ -89,7 +87,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           return;
         }
         
-        // At this point Supabase auto-logged in. We force sign out.
         await supabase.auth.signOut();
         localStorage.removeItem('block_auto_login');
         
@@ -106,13 +103,11 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         });
 
         if (signInError) {
-          console.error('[Sign In Error]:', signInError);
           setError(signInError.message || 'Invalid credentials');
           setLoading(false);
           return;
         }
         
-        // Resilient delay to mitigate client-side clock skew parameters during token injection
         setTimeout(() => window.location.reload(), 800);
       }
     } catch (err: any) {
@@ -155,7 +150,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       const generatedUsername = `guest_lukman_${crypto.randomUUID()}`;
       const generatedPassword = Math.random().toString(36).slice(-10) + "X1!";
 
-      // Only show the modal first, DO NOT trigger signup yet
       setGuestCredentials({ username: generatedUsername, password: generatedPassword, id: `dev-guest-${Date.now()}` });
       setShowGuestModal(true);
       setLoading(false);
@@ -172,7 +166,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
     try {
       const normalizedUsername = guestCredentials.username.toLowerCase();
       
-      // Block if guest username is already taken in public.user table
       const { data: existingUser } = await supabase
         .from('user')
         .select('username')
@@ -180,7 +173,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         .maybeSingle();
         
       if (existingUser) {
-        setError('This guest username is already taken. Please close and try generating again.');
+        setError('This guest username is already taken. Please try generating again.');
         setIsGuestLoading(false);
         return;
       }
@@ -200,7 +193,6 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         };
         users.push(newUser);
         localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
-        
         onDevBypass?.(newUser);
         return;
       }
@@ -215,273 +207,276 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       if (guestError) {
         setError(guestError.message || 'Failed to generate guest account');
         setIsGuestLoading(false);
-        // Do not close modal on error so they can still see credentials
         return;
       }
 
-      // Enforce a component state delay so it doesn't abruptly unmount
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err: any) {
       setError(err.message || 'Guest generation error');
       setIsGuestLoading(false);
     }
   };
 
-
-  const copyToClipboard = () => {
-    const text = `Username: ${guestCredentials.username}\nPassword: ${guestCredentials.password}`;
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
-  if (showGuestModal) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
-        {/* Glassmorphism background elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
-        
-        <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-[scaleIn_0.3s_ease-out]">
-          <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
-                <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white">Welcome to Lukman Cloud!</h3>
-              <p className="text-sm text-slate-300 mt-2">Here are your temporary access credentials. Save them to log back in anytime:</p>
-            </div>
-            
-            <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg mb-6">
-              <div className="flex flex-col space-y-1 mb-4 bg-slate-950/50 p-3 rounded-md border border-slate-800">
-                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Username</span>
-                <span className="text-xs md:text-sm font-mono text-white select-all break-all whitespace-normal">
-                  {guestCredentials.username}
-                </span>
-              </div>
-              <div className="flex flex-col space-y-1 bg-slate-950/50 p-3 rounded-md border border-slate-800">
-                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Password</span>
-                <span className="text-xs md:text-sm font-mono text-white select-all break-all whitespace-normal">
-                  {guestCredentials.password}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              <button onClick={copyToClipboard} className="w-full justify-center bg-slate-800/50 border border-slate-600 text-white hover:bg-slate-700 py-2.5 rounded-lg flex items-center transition-colors">
-                <svg className="w-4 h-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-                Copy to Clipboard
-              </button>
-              <button 
-                onClick={handleGuestConfirm} 
-                disabled={isGuestLoading}
-                className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 py-2.5 rounded-lg flex items-center transition-all disabled:opacity-70"
-              >
-                {isGuestLoading ? 'Activating...' : 'Continue'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
-      {/* Glassmorphism background elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
+    <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] min-h-dvh bg-background text-foreground font-sans">
       
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="flex justify-center">
-          <img src={logoAsset} alt="Lukman Cloud Logo" className="h-14 w-14 mx-auto mb-4 object-contain drop-shadow-xl" />
+      {/* Left Side: Brand Panel */}
+      <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+        
+        <div className="relative z-10 flex items-center gap-3">
+          <img src={logoAsset} alt="Lukman Cloud Logo" className="h-10 w-10 object-contain drop-shadow-md" />
+          <span className="font-bold text-xl tracking-tight text-foreground">Lukman Cloud</span>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
-          {isSignUp ? 'Create your account' : 'Sign in to Lukman Cloud'}
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-300">
-          {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
-          <button 
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
-            className="font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none"
-          >
-            {isSignUp ? 'Sign in instead' : 'Create an account'}
-          </button>
-        </p>
+
+        <div className="relative z-10 max-w-lg mt-24 mb-auto">
+          <h1 className="text-5xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 font-['Inter_Tight']">
+            Simple cloud storage.<br/>Unlimited space.
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Unify your Telegram storage and Google Drive into one secure, seamless interface. 
+          </p>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-sm font-medium text-muted-foreground/60">
+            Powered by modern web infrastructure.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-[fadeIn_0.4s_ease-out] relative z-10">
-        <div className="bg-slate-800/60 backdrop-blur-xl py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-slate-700/50">
+      {/* Right Side: Auth Surface */}
+      <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 bg-surface relative">
+        <div className="w-full max-w-sm mx-auto animate-[fadeIn_0.4s_ease-out]">
           
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-rose-500/10 border-l-4 border-rose-500 p-4 rounded-r-md">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-rose-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-rose-200 font-medium">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {success && (
-              <div className="bg-emerald-500/10 border-l-4 border-emerald-500 p-4 rounded-r-md">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-emerald-200 font-medium">{success}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {isSignUp && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-slate-300">
-                  Full Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
-                    placeholder="John Doe"
-                  />
-                </div>
-              </div>
-            )}
+          <div className="lg:hidden flex items-center gap-3 mb-10">
+            <img src={logoAsset} alt="Lukman Cloud Logo" className="h-10 w-10 object-contain drop-shadow-md" />
+            <span className="font-bold text-xl tracking-tight text-foreground">Lukman Cloud</span>
+          </div>
 
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-300">
-                Username
-              </label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  pattern="[a-zA-Z0-9_]+"
-                  title="Only alphanumeric characters and underscores are allowed"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  className="appearance-none block w-full px-3 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
-                  placeholder="cool_user_123"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 pr-10"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white focus:outline-none"
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground mb-2">
+              {showGuestModal ? 'Guest Access' : (isSignUp ? 'Create account' : 'Welcome back')}
+            </h2>
+            {!showGuestModal && (
+              <p className="text-sm text-muted-foreground">
+                {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
+                <button 
+                  onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
+                  className="font-medium text-primary hover:text-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {isSignUp ? 'Sign in' : 'Create an account'}
+                </button>
+              </p>
+            )}
+          </div>
+
+          {showGuestModal ? (
+            <div className="space-y-6">
+              <div className="flex items-start gap-3 bg-primary/10 p-4 rounded-xl border border-primary/20 text-sm text-foreground/90 leading-relaxed mb-8">
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <p>You're in. We saved these credentials to your browser, but you can copy them below if you need them later.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="text" 
+                      readOnly 
+                      value={guestCredentials.username}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl font-mono text-sm text-foreground focus:outline-none"
+                    />
+                    <button 
+                      onClick={() => copyToClipboard(guestCredentials.username)}
+                      className="p-3 bg-background border border-border rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      title="Copy Username"
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="text" 
+                      readOnly 
+                      value={guestCredentials.password}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl font-mono text-sm text-foreground focus:outline-none"
+                    />
+                    <button 
+                      onClick={() => copyToClipboard(guestCredentials.password)}
+                      className="p-3 bg-background border border-border rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      title="Copy Password"
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  onClick={handleGuestConfirm} 
+                  disabled={isGuestLoading}
+                  className="w-full justify-center bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary/20 flex items-center disabled:opacity-70"
+                >
+                  {isGuestLoading ? 'Activating...' : 'Continue to Dashboard'}
                 </button>
               </div>
             </div>
-
-            <div>
-              <button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-md w-full block text-center flex items-center justify-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
+          ) : (
+            <>
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm rounded-xl">
+                    {error}
+                  </div>
                 )}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-600" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-800 text-slate-400">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-3">
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="w-full inline-flex justify-center py-2.5 px-4 rounded-lg shadow-sm bg-white hover:bg-slate-50 text-slate-700 font-medium border border-slate-200 transition-colors"
-                disabled={loading || googleLoading}
-              >
-                {googleLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Connecting to Google Accounts...
-                  </span>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    Continue with Google
-                  </>
+                {success && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm rounded-xl">
+                    {success}
+                  </div>
                 )}
-              </button>
+                
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                )}
 
-              <button
-                type="button"
-                onClick={handleGuestAccess}
-                className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-medium py-2.5 px-4 rounded-lg transition-all w-full flex items-center justify-center gap-2 mt-2"
-                disabled={loading}
-              >
-                <span></span>
-                Instant Guest Access
-              </button>
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
+                    Username
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    pattern="[a-zA-Z0-9_]+"
+                    title="Only alphanumeric characters and underscores are allowed"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50"
+                    placeholder="cool_user_123"
+                  />
+                </div>
 
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete={isSignUp ? "new-password" : "current-password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50 pr-12"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    className="w-full justify-center bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary/20 flex items-center disabled:opacity-70"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      isSignUp ? 'Create Account' : 'Sign In'
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-8">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-3 bg-surface text-muted-foreground">Or continue with</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 gap-4">
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-sm bg-background hover:bg-muted text-foreground font-medium border border-border transition-colors disabled:opacity-70"
+                    disabled={loading || googleLoading}
+                  >
+                    {googleLoading ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Connecting...
+                      </span>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Google
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleGuestAccess}
+                    className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-sm bg-background hover:bg-muted text-foreground font-medium border border-border transition-colors disabled:opacity-70"
+                    disabled={loading}
+                  >
+                    Guest Access
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

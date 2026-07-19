@@ -30,10 +30,12 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/streamsaver": "^2.0.5",
     "@types/uuid": "^10.0.0",
+    "@vercel/node": "^5.8.26",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^2.1.0",
     "jsdom": "^29.1.1",

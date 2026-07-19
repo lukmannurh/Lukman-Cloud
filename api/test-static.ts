@@ -1,4 +1,4 @@
-import { auth } from "../src/lib/auth";
+import { auth } from "../src/lib/auth.js";
 
 export default function handler(req: any, res: any) {
   res.statusCode = 200;

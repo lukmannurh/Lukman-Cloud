@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { username } from 'better-auth/plugins';
-import { supabase } from './services/supabaseClient';
+import { supabase } from './services/supabaseClient.js';
 
 const getEnv = (nodeKey: string, viteKey: string): string => {
   if (typeof process !== 'undefined' && process.env) {

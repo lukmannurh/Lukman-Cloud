@@ -1,4 +1,4 @@
-import { testString } from "../src/lib/test-dep";
+import { testString } from "../src/lib/test-dep.js";
 
 export default function handler(req: any, res: any) {
   res.statusCode = 200;
