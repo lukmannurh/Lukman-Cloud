@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { supabase } from '../../lib/services/supabaseClient';
 import { Eye, EyeOff, CheckCircle2, Copy, Zap } from 'lucide-react';
+import logoAsset from '../../assets/logo.webp';
 
 export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => void }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -231,10 +232,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       <div className="relative w-full max-w-[440px] animate-[fadeIn_0.4s_ease-out]">
 
         {/* Brand Mark */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/40">
-            <div className="size-4 rounded-full bg-indigo-500 shadow-[0_0_18px_rgba(79,70,229,0.8)]" />
-          </div>
+        <div className="mb-8 text-center flex flex-col items-center">
+          <img src={logoAsset} alt="Lukman Cloud Logo" className="w-16 h-16 object-contain mb-4 drop-shadow-lg" />
           <h1 className="text-2xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             {showGuestModal ? 'Guest Access Ready' : (isSignUp ? 'Create your account' : 'Sign in to Lukman Cloud')}
           </h1>

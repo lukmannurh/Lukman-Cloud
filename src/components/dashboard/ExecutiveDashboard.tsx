@@ -8,9 +8,12 @@ interface ExecutiveDashboardProps {
   accounts: PooledAccount[];
   activeTransfers: TransferTask[];
   vfsNodes: VFSNode[];
+  onUploadClick?: () => void;
+  onNewFolderClick?: () => void;
+  onSharedLinksClick?: () => void;
 }
 
-export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: ExecutiveDashboardProps) {
+export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onNewFolderClick, onSharedLinksClick }: ExecutiveDashboardProps) {
   const [localNodes, setLocalNodes] = useState<VFSNode[]>(vfsNodes);
 
   useEffect(() => {
@@ -114,19 +117,19 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
         <div className="col-span-12 lg:col-span-4 rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">Quick actions</p>
           <div className="grid grid-cols-1 gap-2">
-            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+            <button onClick={onUploadClick} className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors w-full text-left">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
                 <UploadCloud className="w-4 h-4" />
               </span>
               Upload files
             </button>
-            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+            <button onClick={onNewFolderClick} className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors w-full text-left">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
                 <FolderPlus className="w-4 h-4" />
               </span>
               New folder
             </button>
-            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+            <button onClick={onSharedLinksClick} className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors w-full text-left">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
                 <Share2 className="w-4 h-4" />
               </span>

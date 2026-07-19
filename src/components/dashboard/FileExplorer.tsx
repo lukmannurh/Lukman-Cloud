@@ -186,8 +186,8 @@ export function FileExplorer({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[300px]">
-        <Card className="p-12 text-center  bg-slate-50 border border-slate-200 shadow-sm rounded-xl w-full max-w-md">
-          <h2 className="text-lg font-semibold text-slate-600 tracking-tight">Loading Directory...</h2>
+        <Card className="p-12 text-center bg-[#141432] border border-[#1e1e5a]/40 shadow-sm rounded-xl w-full max-w-md">
+          <h2 className="text-lg font-semibold text-zinc-300 tracking-tight">Loading Directory...</h2>
         </Card>
       </div>
     );
@@ -209,14 +209,14 @@ export function FileExplorer({
           // Handled by App.tsx drop zone if global, but we highlight the empty state
         }}
       >
-        <div className={`p-12 text-center border-2 border-dashed rounded-xl max-w-md w-full transition-colors ${dragOverFolderId === 'global_empty' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-slate-50'}`}>
-          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={`p-12 text-center border-2 border-dashed rounded-xl max-w-md w-full transition-colors ${dragOverFolderId === 'global_empty' ? 'border-indigo-500 bg-indigo-500/10' : 'border-[#1e1e5a]/60 bg-[#141432]'}`}>
+          <div className="w-16 h-16 rounded-full bg-[#1e1e5a]/40 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-slate-700 mb-2">Folder is Empty</h2>
-          <p className="text-sm text-slate-500">Drag and drop files here to upload instantly</p>
+          <h2 className="text-lg font-semibold text-zinc-200 mb-2">Folder is Empty</h2>
+          <p className="text-sm text-zinc-400">Drag and drop files here to upload instantly</p>
         </div>
       </div>
     );
@@ -249,21 +249,21 @@ export function FileExplorer({
             }
             setActiveMenuId(activeMenuId === node.id ? null : node.id);
           }}
-          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+          className="p-1 text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors"
         >
           ⋮
         </button>
         {activeMenuId === node.id && (
-          <div className={`absolute right-0 ${menuAlignment === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-[60] text-sm font-medium`}>
+          <div className={`absolute right-0 ${menuAlignment === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[60] text-sm font-medium`}>
             <button 
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setDownloadConfirmNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition-colors flex items-center gap-2"
+              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 hover:text-indigo-400 transition-colors flex items-center gap-2"
             >
               <Download className="w-4 h-4" /> Download
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'copy' }); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2 border-t border-slate-100"
+              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
             >
               <Copy className="w-4 h-4" /> Make a Copy
             </button>
@@ -271,13 +271,13 @@ export function FileExplorer({
               <>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'move' }); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2"
+                  className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2"
                 >
                   <Folder className="w-4 h-4" /> Move to
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setRenameInput(node.name); setRenameNode(node); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2 border-t border-slate-100"
+                  className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
                 >
                   <Edit2 className="w-4 h-4" /> Rename
                 </button>
@@ -297,20 +297,20 @@ export function FileExplorer({
                 setToastMessage('Secure Share Link Copied to Clipboard');
                 setTimeout(() => setToastMessage(null), 3000);
               }}
-              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2"
+              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2"
             >
               <Link className="w-4 h-4" /> Share Link
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setInfoNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2 border-t border-slate-100"
+              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
             >
               <Info className="w-4 h-4" /> Detail / Info
             </button>
             {!isRoot && (
               <button 
                 onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); onDeleteNode(node); }}
-                className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 transition-colors flex items-center gap-2 border-t border-rose-50"
+                className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-400 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
               >
                 <X className="w-4 h-4" /> Delete
               </button>
@@ -343,14 +343,14 @@ export function FileExplorer({
                 }
               }}
             >
-              <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-blue-400 bg-blue-50/50 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-slate-200'}`}>
+              <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-indigo-400 bg-indigo-500/10 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-[#1e1e5a]/40'}`}>
                 <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center justify-center p-2 bg-slate-50 rounded-lg border border-slate-100">
-                    <Folder className="w-8 h-8 text-slate-500 fill-slate-500/20" />
+                  <div className="flex items-center justify-center p-2 bg-[#0a0a1a]/60 rounded-lg border border-[#1e1e5a]/40">
+                    <Folder className="w-8 h-8 text-zinc-500 fill-zinc-500/20" />
                   </div>
                   {renderContextMenu(folder)}
                 </div>
-                <div className="font-medium text-slate-700 text-sm line-clamp-2 mt-auto" title={folder.name}>
+                <div className="font-medium text-zinc-200 text-sm line-clamp-2 mt-auto" title={folder.name}>
                   {folder.name}
                 </div>
               </Card>
@@ -370,19 +370,19 @@ export function FileExplorer({
                   e.dataTransfer.setData("text/plain", file.id);
                 }}
               >
-                <Card hoverable className={`h-full flex flex-col p-4 bg-white hover:bg-slate-50 border cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-blue-400 bg-blue-50/50 scale-[1.02]' : 'border-slate-200'}`}>
+                <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] border cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-indigo-400 bg-indigo-500/10 scale-[1.02]' : 'border-[#1e1e5a]/40'}`}>
                   <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center justify-center p-2 bg-slate-50 rounded-lg">
+                    <div className="flex items-center justify-center p-2 bg-[#0a0a1a]/60 rounded-lg border border-[#1e1e5a]/40">
                       {icon}
                     </div>
                     <div className="flex items-center gap-2">
                       {renderContextMenu(file)}
                     </div>
                   </div>
-                  <div className="font-medium text-slate-700 text-sm line-clamp-2 mb-1" title={file.name}>
+                  <div className="font-medium text-zinc-200 text-sm line-clamp-2 mb-1" title={file.name}>
                     {file.name}
                   </div>
-                  <div className="text-xs text-slate-400 mt-auto font-medium">
+                  <div className="text-xs text-zinc-400 mt-auto font-medium">
                     {formatSize(file.size || 0)}
                   </div>
                 </Card>
@@ -391,19 +391,19 @@ export function FileExplorer({
           })}
         </div>
       ) : (
-        <div className="flex flex-col w-full border border-slate-200 rounded-xl overflow-hidden bg-white">
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="flex flex-col w-full border border-[#1e1e5a]/40 rounded-xl overflow-hidden bg-[#141432]">
+          <div className="grid grid-cols-12 gap-4 p-4 border-b border-[#1e1e5a]/40 bg-[#0a0a1a]/60 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
             <div className="col-span-6 md:col-span-7">Name</div>
             <div className="col-span-3 md:col-span-2 text-right">File Size</div>
             <div className="col-span-3 md:col-span-2 hidden md:block text-right">Last Modified</div>
             <div className="col-span-3 md:col-span-1 flex justify-end"></div>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[#1e1e5a]/40">
             {folders.map(folder => (
               <div
                 key={folder.id}
                 onClick={() => onNavigateFolder(folder.id)}
-                className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === folder.id ? 'bg-blue-50/70' : 'hover:bg-slate-50'}`}
+                className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === folder.id ? 'bg-indigo-500/10' : 'hover:bg-[#1a1a40]'}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnter={() => setDragOverFolderId(folder.id)}
                 onDragLeave={() => setDragOverFolderId(null)}
@@ -417,13 +417,13 @@ export function FileExplorer({
                 }}
               >
                 <div className="col-span-6 md:col-span-7 flex items-center gap-3 overflow-hidden">
-                  <div className={`flex items-center justify-center p-1.5 rounded-lg shrink-0 ${dragOverFolderId === folder.id ? 'bg-indigo-100' : 'bg-slate-50 border border-slate-100'}`}>
-                    <Folder className={`w-5 h-5 ${dragOverFolderId === folder.id ? 'text-indigo-600' : 'text-slate-500 fill-slate-500/20'}`} />
+                  <div className={`flex items-center justify-center p-1.5 rounded-lg shrink-0 ${dragOverFolderId === folder.id ? 'bg-indigo-500/20' : 'bg-[#0a0a1a]/60 border border-[#1e1e5a]/40'}`}>
+                    <Folder className={`w-5 h-5 ${dragOverFolderId === folder.id ? 'text-indigo-400' : 'text-zinc-500 fill-zinc-500/20'}`} />
                   </div>
-                  <span className="font-medium text-slate-700 truncate text-sm" title={folder.name}>{folder.name}</span>
+                  <span className="font-medium text-zinc-200 truncate text-sm" title={folder.name}>{folder.name}</span>
                 </div>
-                <div className="col-span-3 md:col-span-2 text-right text-xs text-slate-400 font-medium">--</div>
-                <div className="col-span-3 md:col-span-2 hidden md:block text-right text-xs text-slate-400 font-medium">{folder.modifiedAt ? new Date(folder.modifiedAt).toLocaleDateString() : '--'}</div>
+                <div className="col-span-3 md:col-span-2 text-right text-xs text-zinc-500 font-medium">--</div>
+                <div className="col-span-3 md:col-span-2 hidden md:block text-right text-xs text-zinc-400 font-medium">{folder.modifiedAt ? new Date(folder.modifiedAt).toLocaleDateString() : '--'}</div>
                 <div className="col-span-3 md:col-span-1 flex justify-end shrink-0 relative">{renderContextMenu(folder)}</div>
               </div>
             ))}
@@ -434,20 +434,20 @@ export function FileExplorer({
                 <div
                   key={file.id}
                   onClick={() => setPreviewNode(file)}
-                  className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === file.id ? 'bg-blue-50/70' : 'hover:bg-slate-50'}`}
+                  className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === file.id ? 'bg-indigo-500/10' : 'hover:bg-[#1a1a40]'}`}
                   draggable={true}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", file.id);
                   }}
                 >
                   <div className="col-span-6 md:col-span-7 flex items-center gap-3 overflow-hidden">
-                    <div className="flex items-center justify-center p-1.5 bg-slate-50 rounded-lg shrink-0">
+                    <div className="flex items-center justify-center p-1.5 bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 rounded-lg shrink-0">
                       {icon && <span className="[&>svg]:w-5 [&>svg]:h-5">{icon}</span>}
                     </div>
-                    <span className="font-medium text-slate-700 truncate text-sm" title={file.name}>{file.name}</span>
+                    <span className="font-medium text-zinc-200 truncate text-sm" title={file.name}>{file.name}</span>
                   </div>
-                  <div className="col-span-3 md:col-span-2 text-right text-xs text-slate-500 font-medium">{formatSize(file.size || 0)}</div>
-                  <div className="col-span-3 md:col-span-2 hidden md:block text-right text-xs text-slate-400 font-medium">{file.modifiedAt ? new Date(file.modifiedAt).toLocaleDateString() : '--'}</div>
+                  <div className="col-span-3 md:col-span-2 text-right text-xs text-zinc-400 font-medium">{formatSize(file.size || 0)}</div>
+                  <div className="col-span-3 md:col-span-2 hidden md:block text-right text-xs text-zinc-400 font-medium">{file.modifiedAt ? new Date(file.modifiedAt).toLocaleDateString() : '--'}</div>
                   <div className="col-span-3 md:col-span-1 flex justify-end shrink-0 relative">{renderContextMenu(file)}</div>
                 </div>
               );
@@ -458,15 +458,15 @@ export function FileExplorer({
 
       {/* Google Drive-Style Preview Modal */}
       {previewNode && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] max-h-[90vh]">
+        <div className="fixed inset-0 z-50 bg-[#0a0a1a]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#141432] rounded-2xl w-full max-w-4xl shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] max-h-[90vh] ring-1 ring-white/5 border border-[#1e1e5a]/40">
             {/* Header & Toolbar */}
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 shrink-0">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#1e1e5a]/40 shrink-0">
               <div className="flex items-center gap-3 overflow-hidden">
                 <span className="text-3xl shrink-0"></span>
                 <div className="truncate">
-                  <h3 data-testid="file-name" className="text-xl font-bold text-slate-800 truncate">{previewNode.name}</h3>
-                  <p className="text-sm text-slate-500">{formatSize(previewNode.size || 0)}</p>
+                  <h3 data-testid="file-name" className="text-xl font-bold text-zinc-100 truncate">{previewNode.name}</h3>
+                  <p className="text-sm text-zinc-400">{formatSize(previewNode.size || 0)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0 ml-4">
@@ -481,7 +481,7 @@ export function FileExplorer({
                 </button>
                 <button
                   onClick={() => setPreviewNode(null)}
-                  className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors focus:outline-none"
+                  className="text-zinc-400 hover:text-zinc-200 p-2 rounded-full hover:bg-[#1e1e5a]/40 transition-colors focus:outline-none"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -491,19 +491,19 @@ export function FileExplorer({
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 overflow-y-auto bg-slate-50/50 rounded-xl border border-slate-200 flex flex-col relative min-h-[400px]">
+            <div className="flex-1 overflow-y-auto bg-[#0a0a1a]/40 rounded-xl border border-[#1e1e5a]/40 flex flex-col relative min-h-[400px]">
               {isFetchingPreview ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-                  <p className="text-slate-500 font-medium tracking-tight">Decrypting Secure Stream...</p>
+                  <p className="text-zinc-500 font-medium tracking-tight">Decrypting Secure Stream...</p>
                 </div>
               ) : previewError ? (
                 <div className="m-auto text-center p-8">
-                  <div className="w-24 h-24 bg-rose-50 text-rose-500 shadow-sm border border-rose-200 rounded-2xl mx-auto flex items-center justify-center mb-4">
+                  <div className="w-24 h-24 bg-rose-500/10 text-rose-500 shadow-sm border border-rose-500/20 rounded-2xl mx-auto flex items-center justify-center mb-4">
                     <span className="text-4xl"></span>
                   </div>
-                  <h4 className="text-lg font-bold text-slate-800 mb-2">Decryption Failed</h4>
-                  <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                  <h4 className="text-lg font-bold text-zinc-200 mb-2">Decryption Failed</h4>
+                  <p className="text-sm text-zinc-500 max-w-sm mx-auto">
                     Failed to decrypt the secure preview stream. The storage block may be incomplete or you are experiencing connectivity issues.
                   </p>
                 </div>
@@ -534,15 +534,15 @@ export function FileExplorer({
 
                   if (isAudio) {
                     return (
-                      <div className="w-full h-full p-8 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white rounded-xl">
-                        <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
-                          <div className="w-24 h-24 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                      <div className="w-full h-full p-8 flex items-center justify-center bg-gradient-to-br from-[#141432] to-[#0a0a1a] rounded-xl">
+                        <div className="w-full max-w-md bg-[#141432] border border-[#1e1e5a]/40 rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
+                          <div className="w-24 h-24 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mb-6 shadow-sm">
                             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                             </svg>
                           </div>
-                          <h4 className="font-bold text-slate-800 text-xl mb-1 truncate w-full">{previewNode.name}</h4>
-                          <p className="text-sm text-slate-500 mb-8 tracking-wide">Audio Stream Ready</p>
+                          <h4 className="font-bold text-zinc-100 text-xl mb-1 truncate w-full">{previewNode.name}</h4>
+                          <p className="text-sm text-zinc-500 mb-8 tracking-wide">Audio Stream Ready</p>
                           <audio src={previewUrl} controls className="w-full" onError={() => setPreviewError(true)} />
                         </div>
                       </div>
@@ -566,14 +566,14 @@ export function FileExplorer({
 
 
                   return (
-                    <div className="text-center m-auto p-12 bg-white rounded-2xl shadow-sm border border-slate-200 max-w-lg">
-                      <div className="w-20 h-20 bg-slate-50 text-slate-400 rounded-2xl mx-auto flex items-center justify-center mb-6 border border-slate-100 shadow-inner">
+                    <div className="text-center m-auto p-12 bg-[#141432] rounded-2xl shadow-sm border border-[#1e1e5a]/40 max-w-lg">
+                      <div className="w-20 h-20 bg-[#0a0a1a]/60 text-zinc-500 rounded-2xl mx-auto flex items-center justify-center mb-6 border border-[#1e1e5a]/40 shadow-inner">
                         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                       </div>
-                      <h4 className="text-xl font-bold text-slate-800 mb-3 tracking-tight">Preview Unavailable</h4>
-                      <p className="text-sm text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
+                      <h4 className="text-xl font-bold text-zinc-200 mb-3 tracking-tight">Preview Unavailable</h4>
+                      <p className="text-sm text-zinc-500 max-w-md mx-auto mb-8 leading-relaxed">
                         Preview Unavailable for this file extension. Please use the direct high-speed download process below.
                       </p>
                       <button
@@ -596,24 +596,24 @@ export function FileExplorer({
       
       {/* Download Confirmation Interceptor */}
       {downloadConfirmNode && (
-        <div className="fixed inset-0 z-[60] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out]">
+        <div className="fixed inset-0 z-[60] bg-[#0a0a1a]/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#141432] rounded-2xl w-full max-w-md shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] ring-1 ring-white/5 border border-[#1e1e5a]/40">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Confirm File Decryption</h3>
-              <p className="text-sm text-slate-500">
-                Are you sure you want to securely decrypt and download <br/><span className="font-semibold text-slate-700">{downloadConfirmNode.name}</span> from the pooled storage?
+              <h3 className="text-xl font-bold text-zinc-100 mb-2">Confirm File Decryption</h3>
+              <p className="text-sm text-zinc-400">
+                Are you sure you want to securely decrypt and download <br/><span className="font-semibold text-zinc-200">{downloadConfirmNode.name}</span> from the pooled storage?
               </p>
             </div>
             
             <div className="flex gap-3 w-full mt-2">
               <button
                 onClick={() => setDownloadConfirmNode(null)}
-                className="flex-1 px-4 py-2.5 rounded-lg font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-lg font-medium text-zinc-300 bg-[#1e1e5a]/40 hover:bg-[#1e1e5a]/60 transition-colors"
               >
                 Cancel
               </button>
@@ -634,56 +634,56 @@ export function FileExplorer({
       {/* Detail / Info Sidebar - Google Drive Style */}
       {infoNode && (
         <>
-          <div className="fixed inset-0 z-[60] bg-slate-950/20 backdrop-blur-sm transition-opacity" onClick={() => setInfoNode(null)}></div>
-          <div className="fixed inset-y-0 right-0 z-[70] w-full max-w-sm bg-white shadow-2xl border-l border-slate-200 transform transition-transform duration-200 ease-in-out translate-x-0 flex flex-col">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="font-medium text-slate-800 text-lg">Details</h3>
-              <button onClick={() => setInfoNode(null)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+          <div className="fixed inset-0 z-[60] bg-[#0a0a1a]/40 backdrop-blur-sm transition-opacity" onClick={() => setInfoNode(null)}></div>
+          <div className="fixed inset-y-0 right-0 z-[70] w-full max-w-sm bg-[#141432] shadow-2xl border-l border-[#1e1e5a]/40 transform transition-transform duration-200 ease-in-out translate-x-0 flex flex-col">
+            <div className="p-4 border-b border-[#1e1e5a]/40 flex items-center justify-between">
+              <h3 className="font-medium text-zinc-100 text-lg">Details</h3>
+              <button onClick={() => setInfoNode(null)} className="p-2 text-zinc-500 hover:bg-[#1e1e5a]/40 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="p-0 flex-1 overflow-y-auto">
-              <div className="flex flex-col items-center justify-center p-8 bg-slate-50 border-b border-slate-200">
+              <div className="flex flex-col items-center justify-center p-8 bg-[#0a0a1a]/40 border-b border-[#1e1e5a]/40">
                 <div className="w-16 h-16 flex items-center justify-center mb-4">
                   {getFileIconInfo(infoNode.name).icon}
                 </div>
-                <h4 className="font-medium text-slate-800 text-center break-all w-full">{infoNode.name}</h4>
+                <h4 className="font-medium text-zinc-200 text-center break-all w-full">{infoNode.name}</h4>
               </div>
 
               <div className="p-6 space-y-5">
-                <h5 className="font-medium text-slate-800 mb-2">Properties</h5>
+                <h5 className="font-medium text-zinc-200 mb-2">Properties</h5>
                 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Type</label>
-                  <div className="text-sm text-slate-800">{infoNode.type === 'folder' ? 'Folder' : (infoNode.mimeType || 'File')}</div>
+                  <label className="text-xs text-zinc-500 block mb-0.5">Type</label>
+                  <div className="text-sm text-zinc-300">{infoNode.type === 'folder' ? 'Folder' : (infoNode.mimeType || 'File')}</div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Size</label>
-                  <div className="text-sm text-slate-800">{infoNode.size ? formatSize(infoNode.size) : '—'}</div>
+                  <label className="text-xs text-zinc-500 block mb-0.5">Size</label>
+                  <div className="text-sm text-zinc-300">{infoNode.size ? formatSize(infoNode.size) : '—'}</div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Location</label>
-                  <div className="text-sm text-slate-800">{infoNode.path.replace(`/${infoNode.name}`, '') || 'My Drive'}</div>
+                  <label className="text-xs text-zinc-500 block mb-0.5">Location</label>
+                  <div className="text-sm text-zinc-300">{infoNode.path.replace(`/${infoNode.name}`, '') || 'My Drive'}</div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Owner</label>
-                  <div className="text-sm text-slate-800">me</div>
+                  <label className="text-xs text-zinc-500 block mb-0.5">Owner</label>
+                  <div className="text-sm text-zinc-300">me</div>
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Created</label>
-                  <div className="text-sm text-slate-800">
+                  <label className="text-xs text-zinc-500 block mb-0.5">Created</label>
+                  <div className="text-sm text-zinc-300">
                     {new Date(infoNode.createdAt).toLocaleString()}
                   </div>
                 </div>
                 
                 <div>
-                  <label className="text-xs text-slate-500 block mb-0.5">Modified</label>
-                  <div className="text-sm text-slate-800">
+                  <label className="text-xs text-zinc-500 block mb-0.5">Modified</label>
+                  <div className="text-sm text-zinc-300">
                     {new Date(infoNode.modifiedAt).toLocaleString()}
                   </div>
                 </div>
@@ -695,14 +695,14 @@ export function FileExplorer({
 
       {/* Rename Modal */}
       {renameNode && (
-        <div className="fixed inset-0 z-[60] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out]">
-            <h3 className="text-lg font-medium text-slate-800 mb-4">Rename</h3>
+        <div className="fixed inset-0 z-[60] bg-[#0a0a1a]/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#141432] rounded-xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] ring-1 ring-white/5 border border-[#1e1e5a]/40">
+            <h3 className="text-lg font-medium text-zinc-100 mb-4">Rename</h3>
             <input 
               type="text" 
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
-              className="w-full border-2 border-blue-500 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-0 mb-6"
+              className="w-full border border-[#1e1e5a]/60 bg-[#0a0a1a]/60 rounded-lg px-3 py-2 text-zinc-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-6"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -714,7 +714,7 @@ export function FileExplorer({
             <div className="flex justify-end gap-3 w-full">
               <button
                 onClick={() => setRenameNode(null)}
-                className="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                className="px-4 py-2 rounded-lg font-medium text-zinc-400 hover:bg-[#1e1e5a]/40 transition-colors"
               >
                 Cancel
               </button>

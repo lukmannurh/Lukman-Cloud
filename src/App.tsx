@@ -1174,6 +1174,9 @@ export default function App() {
                   accounts={accounts}
                   activeTransfers={activeTransfers}
                   vfsNodes={allFlattenedNodes}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  onNewFolderClick={() => setNewFolderModalOpen(true)}
+                  onSharedLinksClick={() => setCurrentView('vfs')}
                 />
               </div>
             </div>
