@@ -1,36 +1,121 @@
-/* Force fresh Vercel compilation - clearing any stale build cache */
+/* ============================================================
+   Lukman Cloud — Design System (Midnight Indigo)
+   ============================================================ */
+
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
-/* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
-/* ── Design Tokens ─────────────────────────────────────────────────────────── */
+/* ── Design Tokens ──────────────────────────────────────────  */
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  /* Base palette */
+  --color-base:    #0a0a1a;
+  --color-surface: #141432;
+  --color-border:  #1e1e5a;
+  --color-primary: #4f46e5;
+
+  /* Semantic aliases */
+  --color-background:         var(--color-base);
+  --color-foreground:         #e4e4e7;
+  --color-card:               var(--color-surface);
+  --color-card-foreground:    #f4f4f5;
+  --color-popover:            var(--color-surface);
+  --color-popover-foreground: #f4f4f5;
+  --color-primary-foreground: #ffffff;
+  --color-secondary:          #1f1f3d;
+  --color-secondary-foreground: #e4e4e7;
+  --color-muted:              #16163a;
+  --color-muted-foreground:   #71717a;
+  --color-accent:             #1a1a40;
+  --color-accent-foreground:  #f4f4f5;
+  --color-destructive:        #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-input:              var(--color-border);
+  --color-ring:               #4f46e5;
+  --color-surface-overlay:    rgba(20,20,50,0.5);
+
+  /* Border radius */
+  --radius:    1rem;
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 16px);
+
+  /* Typography */
+  --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-body);
+  --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+
+  /* Glow shadow */
+  --shadow-glow:    0 0 20px rgb(79 70 229 / 0.20);
+  --shadow-glow-lg: 0 0 40px rgb(79 70 229 / 0.30);
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Global Reset & Base Styles ────────────────────────────────────────────── */
+/* ── Base Reset ─────────────────────────────────────────────  */
+*, *::before, *::after { box-sizing: border-box; }
+
 html {
-  font-family: var(--font-sans);
+  color-scheme: dark;
+  font-family: var(--font-body);
   font-size: 16px;
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a; /* slate-900 */
+  background-color: var(--color-base);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   scrollbar-gutter: stable;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-base);
 }
 
-/* Selection */
-::selection { background-color: #bfdbfe; color: #1e3a8a; } /* blue-200 / blue-900 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
 
-/* A11Y Focus Trapping */
-*:focus-visible {
-  outline: 2px solid #4f46e5; /* indigo-600 */
+img, svg, video { display: block; max-width: 100%; }
+button { font: inherit; }
+
+/* Selection */
+::selection {
+  background: rgb(79 70 229 / 0.30);
+  color: #fff;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgb(30 30 90 / 0.6); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(79 70 229 / 0.6); }
+
+/* ── Utility Animations ─────────────────────────────────────  */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }

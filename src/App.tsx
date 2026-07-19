@@ -56,11 +56,11 @@ const Sidebar = ({
         />
       )}
       <div 
-        className={`bg-surface-muted border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between h-dvh text-slate-700 dark:text-slate-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
+        className={`bg-[#0a0a1a] border-r border-[#1e1e5a]/40 flex flex-col justify-between h-dvh text-zinc-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         ${isSidebarCollapsed ? 'md:w-16' : 'md:w-[240px]'} w-[240px]`}
       >
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between h-20">
+        <div className="p-4 border-b border-[#1e1e5a]/40 flex items-center justify-between h-20">
           <div className="flex items-center gap-2 overflow-hidden">
             {activeUser?.image ? (
               <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
@@ -100,7 +100,7 @@ const Sidebar = ({
           </div>
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="hidden md:flex p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white"
+            className="hidden md:flex p-1 hover:bg-[#1e1e5a]/60 rounded-md text-zinc-500 hover:text-zinc-200"
           >
             {isSidebarCollapsed ? (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +117,7 @@ const Sidebar = ({
         <nav className="flex-1 flex flex-col gap-2 p-3 relative">
           {/* Active Indicator Pill */}
           <div 
-            className="absolute left-3 right-3 h-[44px] bg-blue-500/10 border border-blue-500/20 rounded-lg transition-transform duration-200 ease-in-out pointer-events-none"
+            className="absolute left-3 right-3 h-[44px] bg-[#141432] border border-white/5 rounded-lg transition-transform duration-200 ease-in-out pointer-events-none"
             style={{ 
               top: '12px',
               transform: currentView === 'dashboard' ? 'translateY(0px)' : 
@@ -131,7 +131,7 @@ const Sidebar = ({
           <button 
             onClick={() => { setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'dashboard' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+              ${currentView === 'dashboard' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
             title="Dashboard"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,7 +143,7 @@ const Sidebar = ({
           <button 
             onClick={() => { setCurrentView('vfs'); setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'vfs' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+              ${currentView === 'vfs' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
             title="Virtual Storage"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,7 +155,7 @@ const Sidebar = ({
           <button 
             onClick={() => { setCurrentView('nodes'); setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'nodes' ? 'text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+              ${currentView === 'nodes' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
             title="Storage Nodes"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,30 +168,29 @@ const Sidebar = ({
         
         {/* Unlimited Storage Widget (Google Drive Style) */}
         {!isSidebarCollapsed && (
-          <div className="px-4 py-4 mt-auto border-t border-slate-800">
+          <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40">
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-300">
-                <div className="flex items-center gap-1.5 text-slate-400">
+              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+                <div className="flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                   </svg>
-                  <span>Storage</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-widest">Storage</span>
                 </div>
               </div>
-              {/* Minimalist horizontal progress bar */}
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
-                <div className="h-full bg-blue-500 rounded-full w-[2%] min-w-[4px]"></div>
+              <div className="w-full h-1.5 bg-[#1e1e5a]/60 rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-indigo-500 rounded-full w-[2%] min-w-[4px]"></div>
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-[10px] text-zinc-600 mt-0.5">
                 {formatSize(totalBytes)} of Unlimited used
               </div>
             </div>
           </div>
         )}
         
-        <div className="p-3 border-t border-slate-800">
+        <div className="p-3 border-t border-[#1e1e5a]/40">
           <button 
-            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 overflow-hidden group"
+            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-[#141432] hover:bg-[#1a1a40] text-zinc-400 hover:text-red-400 rounded-lg transition-colors font-medium border border-[#1e1e5a]/40 overflow-hidden group"
             onClick={async () => {
               try {
                 if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
@@ -1133,10 +1132,10 @@ export default function App() {
   }
   
   return (
-    <div className="flex flex-col min-h-dvh bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-dvh bg-[#0a0a1a] font-sans">
       
       {/* Mobile Header Topbar */}
-      <div className="md:hidden flex items-center h-14 bg-slate-900 border-b border-slate-800 px-4 shrink-0">
+      <div className="md:hidden flex items-center h-14 bg-[#0a0a1a] border-b border-[#1e1e5a]/40 px-4 shrink-0">
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 text-slate-400 hover:text-white focus:outline-none"
@@ -1166,7 +1165,7 @@ export default function App() {
           setAccounts={setAccounts}
           allFlattenedNodes={allFlattenedNodes}
         />
-        <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-white flex flex-col`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-[#0a0a1a] flex flex-col`}>
           <div className="w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8 py-4 md:py-6">
           {currentView === 'dashboard' && (
             <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
@@ -1182,7 +1181,7 @@ export default function App() {
 
           {currentView === 'vfs' && (
             <div className="flex flex-col gap-6">
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+              <h2 className="text-2xl font-semibold text-zinc-100 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 My Drive
               </h2>
               <div className="flex items-center gap-3 flex-wrap">
@@ -1227,7 +1226,7 @@ export default function App() {
                         <div className="relative shrink-0" ref={newMenuRef}>
                           <button
                             onClick={() => setIsNewMenuOpen(prev => !prev)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white pl-4 pr-5 py-2.5 rounded-full font-medium shadow-sm hover:shadow transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="bg-indigo-600 hover:bg-indigo-500 active:scale-[.99] text-white pl-4 pr-5 py-2.5 rounded-full font-medium shadow-[0_0_20px_rgba(79,70,229,0.25)] transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1236,29 +1235,29 @@ export default function App() {
                           </button>
                           
                           {isNewMenuOpen && (
-                            <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 py-2 animate-[scaleIn_0.1s_ease-out]">
+                            <div className="absolute top-full left-0 mt-2 w-56 bg-[#141432] rounded-xl shadow-2xl border border-[#1e1e5a]/60 overflow-hidden z-50 py-2 animate-[scaleIn_0.1s_ease-out]">
                               <button 
                                 onClick={() => {
                                   setNewFolderName('');
                                   setNewFolderModalOpen(true);
                                   setIsNewMenuOpen(false);
                                 }}
-                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-slate-50 transition-colors text-slate-700 font-medium"
+                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-[#1e1e5a]/40 transition-colors text-zinc-200 font-medium"
                               >
-                                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                                 </svg>
                                 New Folder
                               </button>
-                              <div className="h-px bg-slate-100 my-1 w-full" />
+                              <div className="h-px bg-[#1e1e5a]/40 my-1 w-full" />
                               <button 
                                 onClick={() => {
                                   fileInputRef.current?.click();
                                   setIsNewMenuOpen(false);
                                 }}
-                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-slate-50 transition-colors text-slate-700 font-medium"
+                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-[#1e1e5a]/40 transition-colors text-zinc-200 font-medium"
                               >
-                                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
                                 File Upload
@@ -1268,9 +1267,9 @@ export default function App() {
                                   folderInputRef.current?.click();
                                   setIsNewMenuOpen(false);
                                 }}
-                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-slate-50 transition-colors text-slate-700 font-medium"
+                                className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-[#1e1e5a]/40 transition-colors text-zinc-200 font-medium"
                               >
-                                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
                                 Folder Upload
@@ -1554,20 +1553,20 @@ export default function App() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#141432] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-[#1e1e5a]/60">
             <div className="p-6">
               <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete {deleteModalNode.type === 'folder' ? 'Folder' : 'File'}</h3>
-              <p className="text-sm text-slate-500">
-                Are you sure you want to delete <span className="font-semibold text-slate-700">{deleteModalNode.name}</span>? This action cannot be undone.
+              <h3 className="text-lg font-semibold text-zinc-100 mb-2">Delete {deleteModalNode.type === 'folder' ? 'Folder' : 'File'}</h3>
+              <p className="text-sm text-zinc-400">
+                Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteModalNode.name}</span>? This action cannot be undone.
               </p>
             </div>
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+            <div className="px-6 py-4 bg-[#0a0a1a]/40 border-t border-[#1e1e5a]/40 flex justify-end gap-3">
               <Button variant="default" onClick={() => setDeleteModalNode(null)}>Cancel</Button>
               <Button 
                 variant="primary" 
@@ -1607,15 +1606,15 @@ export default function App() {
 
       {/* Move Visual Picker Modal */}
       {moveModalNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 flex flex-col max-h-[80vh]">
-            <div className="p-6 border-b border-slate-100 shrink-0">
-              <h3 className="text-lg font-bold text-slate-800">Move {moveModalNode.name}</h3>
-              <p className="text-sm text-slate-500 mt-1">Select a destination folder.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#141432] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[#1e1e5a]/60 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-[#1e1e5a]/40 shrink-0">
+              <h3 className="text-lg font-semibold text-zinc-100">Move {moveModalNode.name}</h3>
+              <p className="text-sm text-zinc-400 mt-1">Select a destination folder.</p>
             </div>
-            <div className="overflow-y-auto p-2 bg-slate-50 flex-1">
+            <div className="overflow-y-auto p-2 bg-[#0a0a1a]/30 flex-1">
               {allFolders.filter(f => f.id !== moveModalNode.id).length === 0 ? (
-                <div className="text-center p-8 text-sm text-slate-500">No other folders available.</div>
+                <div className="text-center p-8 text-sm text-zinc-500">No other folders available.</div>
               ) : (
                 <div className="flex flex-col gap-1">
                   {allFolders
@@ -1637,14 +1636,14 @@ export default function App() {
                             }
                           }}
                           style={{ paddingLeft: `${depth * 1.5 + 0.75}rem`, paddingRight: '0.75rem', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}
-                          className="flex items-center gap-3 w-full text-left hover:bg-white rounded-lg border border-transparent hover:border-slate-200 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex items-center gap-3 w-full text-left hover:bg-[#141432]/60 rounded-lg border border-transparent hover:border-[#1e1e5a]/40 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <span className="text-2xl shrink-0 opacity-70">
                             {depth === 0 ? '' : ''}
                           </span>
                           <div className="truncate">
-                            <div className="font-semibold text-slate-700 text-sm truncate">{folder.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{folder.path}</div>
+                            <div className="font-medium text-zinc-200 text-sm truncate">{folder.name}</div>
+                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5 truncate">{folder.path}</div>
                           </div>
                         </button>
                       );
@@ -1652,7 +1651,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
+            <div className="px-6 py-4 border-t border-[#1e1e5a]/40 flex justify-end shrink-0">
               <Button variant="default" onClick={() => setMoveModalNode(null)}>Cancel</Button>
             </div>
           </div>
@@ -1786,9 +1785,9 @@ export default function App() {
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-[slideInUp_0.3s_ease-out]">
           <div className={`p-4 rounded-xl shadow-xl border flex items-start gap-3 max-w-sm w-full ${
-            toastMessage.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-            toastMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-            'bg-blue-50 border-blue-200 text-blue-800'
+            toastMessage.type === 'error' ? 'bg-[#141432] border-red-500/30 text-red-400' :
+            toastMessage.type === 'success' ? 'bg-[#141432] border-emerald-500/30 text-emerald-400' :
+            'bg-[#141432] border-indigo-500/30 text-indigo-400'
           }`}>
             <div className="shrink-0 mt-0.5">
               {toastMessage.type === 'error' && (

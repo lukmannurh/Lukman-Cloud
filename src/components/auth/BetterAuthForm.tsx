@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { supabase } from '../../lib/services/supabaseClient';
-import { Eye, EyeOff, CheckCircle2, Copy } from 'lucide-react';
-import logoAsset from '../../assets/logo.webp';
+import { Eye, EyeOff, CheckCircle2, Copy, Zap } from 'lucide-react';
 
 export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => void }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -221,135 +220,117 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] min-h-dvh bg-background text-foreground font-sans">
+    <div className="relative min-h-dvh bg-[#0a0a1a] text-zinc-300 flex items-center justify-center px-4 py-10 selection:bg-indigo-500/30">
       
-      {/* Left Side: Brand Panel */}
-      <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-slate-50 dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800">
-        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
-        
-        <div className="relative z-10 flex items-center gap-3">
-          <img src={logoAsset} alt="Lukman Cloud Logo" className="h-10 w-10 object-contain drop-shadow-md" />
-          <span className="font-bold text-xl tracking-tight text-foreground">Lukman Cloud</span>
-        </div>
-
-        <div className="relative z-10 max-w-lg mt-24 mb-auto">
-          <h1 className="text-5xl font-semibold tracking-tight text-foreground leading-[1.1] mb-6 font-['Inter_Tight']">
-            Simple cloud storage.<br/>Unlimited space.
-          </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Unify your personal cloud storage and digital drives into one secure, seamless interface. 
-          </p>
-        </div>
-
-        <div className="relative z-10">
-          <p className="text-sm font-medium text-muted-foreground/60">
-            Powered by modern web infrastructure.
-          </p>
-        </div>
+      {/* Ambient background glows */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-40 top-1/4 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl" />
+        <div className="absolute right-0 bottom-0 h-[28rem] w-[28rem] rounded-full bg-indigo-900/20 blur-3xl" />
       </div>
 
-      {/* Right Side: Auth Surface */}
-      <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 bg-surface relative">
-        <div className="w-full max-w-sm mx-auto animate-[fadeIn_0.4s_ease-out]">
-          
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <img src={logoAsset} alt="Lukman Cloud Logo" className="h-10 w-10 object-contain drop-shadow-md" />
-            <span className="font-bold text-xl tracking-tight text-foreground">Lukman Cloud</span>
-          </div>
+      <div className="relative w-full max-w-[440px] animate-[fadeIn_0.4s_ease-out]">
 
-          <div className="mb-10">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-              {showGuestModal ? 'Guest Access' : (isSignUp ? 'Create account' : 'Welcome back')}
-            </h2>
-            {!showGuestModal && (
-              <p className="text-sm text-muted-foreground">
-                {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
-                <button 
-                  onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
-                  className="font-medium text-primary hover:text-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
-                >
-                  {isSignUp ? 'Sign in' : 'Create an account'}
-                </button>
-              </p>
-            )}
+        {/* Brand Mark */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/40">
+            <div className="size-4 rounded-full bg-indigo-500 shadow-[0_0_18px_rgba(79,70,229,0.8)]" />
           </div>
+          <h1 className="text-2xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            {showGuestModal ? 'Guest Access Ready' : (isSignUp ? 'Create your account' : 'Sign in to Lukman Cloud')}
+          </h1>
+          {!showGuestModal && (
+            <p className="mt-1.5 text-sm text-zinc-500">
+              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+              <button
+                onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
+                className="text-indigo-400 hover:text-indigo-300 underline-offset-4 hover:underline transition-colors"
+              >
+                {isSignUp ? 'Sign in' : 'Create an account'}
+              </button>
+            </p>
+          )}
+        </div>
+
+        {/* Card */}
+        <div className="rounded-3xl bg-[#141432]/40 ring-1 ring-white/5 backdrop-blur-xl border border-[#1e1e5a]/40 p-7 space-y-5">
+
+          {/* Error / Success messages */}
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+              <span className="size-1.5 rounded-full bg-red-400 shrink-0" />
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              {success}
+            </div>
+          )}
 
           {showGuestModal ? (
-            <div className="space-y-6">
-              <div className="flex items-start gap-3 bg-primary/10 p-4 rounded-xl border border-primary/20 text-sm text-foreground/90 leading-relaxed mb-8">
-                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <p>You're in. We saved these credentials to your browser, but you can copy them below if you need them later.</p>
+            /* ── Guest Credentials Panel ── */
+            <div className="space-y-5">
+              <div className="flex items-start gap-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-4 text-sm text-zinc-300 leading-relaxed">
+                <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                <p>Your guest account is ready. Copy the credentials below if you need them later.</p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</label>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={guestCredentials.username}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl font-mono text-sm text-foreground focus:outline-none"
-                    />
-                    <button 
-                      onClick={() => copyToClipboard(guestCredentials.username)}
-                      className="p-3 bg-background border border-border rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      title="Copy Username"
-                    >
-                      <Copy className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</label>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={guestCredentials.password}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl font-mono text-sm text-foreground focus:outline-none"
-                    />
-                    <button 
-                      onClick={() => copyToClipboard(guestCredentials.password)}
-                      className="p-3 bg-background border border-border rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      title="Copy Password"
-                    >
-                      <Copy className="w-5 h-5" />
-                    </button>
-                  </div>
+              {/* Username */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Username</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={guestCredentials.username}
+                    className="w-full rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 px-4 py-3 text-sm text-zinc-100 font-mono focus:outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(guestCredentials.username)}
+                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-500 hover:text-zinc-200 transition-colors shrink-0"
+                    title="Copy Username"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              <div className="pt-4">
-                <button 
-                  onClick={handleGuestConfirm} 
-                  disabled={isGuestLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 rounded-lg shadow-sm flex items-center justify-center transition-colors disabled:opacity-70"
-                >
-                  {isGuestLoading ? 'Activating...' : 'Continue to Dashboard'}
-                </button>
+              {/* Password */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Password</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={guestCredentials.password}
+                    className="w-full rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 px-4 py-3 text-sm text-zinc-100 font-mono focus:outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(guestCredentials.password)}
+                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-500 hover:text-zinc-200 transition-colors shrink-0"
+                    title="Copy Password"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
+              <button
+                onClick={handleGuestConfirm}
+                disabled={isGuestLoading}
+                className="mt-2 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[.99] transition-all py-3 text-sm font-medium text-white ring-1 ring-indigo-500/50 shadow-[0_0_24px_rgba(79,70,229,0.25)] disabled:opacity-60"
+              >
+                {isGuestLoading ? 'Activating…' : 'Continue to Dashboard'}
+              </button>
             </div>
           ) : (
             <>
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm rounded-xl">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm rounded-xl">
-                    {success}
-                  </div>
-                )}
-                
+              {/* ── Main Form ── */}
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 {isSignUp && (
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
-                      Full Name
-                    </label>
+                  <div className="space-y-1.5">
+                    <label htmlFor="name" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Full Name</label>
                     <input
                       id="name"
                       name="name"
@@ -357,16 +338,14 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50"
+                      className="w-full rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all"
                       placeholder="John Doe"
                     />
                   </div>
                 )}
 
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
-                    Username
-                  </label>
+                <div className="space-y-1.5">
+                  <label htmlFor="username" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Username</label>
                   <input
                     id="username"
                     name="username"
@@ -377,15 +356,13 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                     title="Only alphanumeric characters and underscores are allowed"
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50"
+                    className="w-full rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all"
                     placeholder="cool_user_123"
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
-                    Password
-                  </label>
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Password</label>
                   <div className="relative">
                     <input
                       id="password"
@@ -395,88 +372,86 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="appearance-none block w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 placeholder:text-muted-foreground/50 pr-12"
+                      className="w-full rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 px-4 py-3 pr-11 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                      className="absolute inset-y-0 right-0 grid w-11 place-items-center text-zinc-500 hover:text-zinc-300 transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 rounded-lg shadow-sm flex items-center justify-center transition-colors disabled:opacity-70"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      isSignUp ? 'Create Account' : 'Sign In'
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-2 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[.99] transition-all py-3 text-sm font-medium text-white ring-1 ring-indigo-500/50 shadow-[0_0_24px_rgba(79,70,229,0.25)] disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  ) : (isSignUp ? 'Create Account' : 'Sign In')}
+                </button>
               </form>
 
-              <div className="mt-8">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="bg-white px-3 relative z-10 text-slate-400 text-xs">Or continue with</span>
-                  </div>
+              {/* Divider */}
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#1e1e5a]/40" />
                 </div>
-
-                <div className="mt-8 grid grid-cols-1 gap-4">
-                  <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-sm bg-background hover:bg-muted text-foreground font-medium border border-border transition-colors disabled:opacity-70"
-                    disabled={loading || googleLoading}
-                  >
-                    {googleLoading ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Connecting...
-                      </span>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                        </svg>
-                        Google
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleGuestAccess}
-                    className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-sm bg-background hover:bg-muted text-foreground font-medium border border-border transition-colors disabled:opacity-70"
-                    disabled={loading}
-                  >
-                    Guest Access
-                  </button>
+                <div className="relative flex justify-center">
+                  <span className="bg-[#141432]/0 px-3 text-[11px] uppercase tracking-widest text-zinc-500">or continue with</span>
                 </div>
+              </div>
+
+              {/* Social buttons */}
+              <div className="space-y-3">
+                {/* Google */}
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading || googleLoading}
+                  className="w-full rounded-xl bg-[#141432] hover:bg-[#1a1a40] transition-colors py-3 text-sm font-medium text-zinc-200 border border-[#1e1e5a]/60 flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                  {googleLoading ? (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  ) : (
+                    <svg className="size-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.5-.2-2.2H12v4.3h6.2c-.3 1.4-1.1 2.6-2.3 3.4v2.8h3.7C21.8 18.5 23 15.7 23 12.3z"/>
+                      <path fill="#34A853" d="M12 23c3.1 0 5.7-1 7.6-2.8l-3.7-2.8c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v2.9C3.7 20.5 7.5 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.6 13.8c-.2-.7-.4-1.4-.4-2.2s.1-1.5.4-2.2V6.5H1.8C1 8.1.5 10 .5 11.6c0 1.7.4 3.5 1.3 5l3.8-2.8z"/>
+                      <path fill="#EA4335" d="M12 4.6c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.5 0 3.7 2.5 1.8 6.5l3.8 2.9C6.5 6.6 9 4.6 12 4.6z"/>
+                    </svg>
+                  )}
+                  Continue with Google
+                </button>
+
+                {/* Guest */}
+                <button
+                  type="button"
+                  onClick={handleGuestAccess}
+                  disabled={loading}
+                  className="w-full rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors py-3 text-sm font-medium text-indigo-300 border border-indigo-500/30 flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <Zap className="w-4 h-4" />
+                  Instant Guest Access
+                </button>
               </div>
             </>
           )}
         </div>
+
+        <p className="mt-6 text-center text-[11px] text-zinc-600">
+          End-to-end encrypted · Unlimited private storage
+        </p>
       </div>
     </div>
   );

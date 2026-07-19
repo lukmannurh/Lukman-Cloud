@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { vfsService } from '../../lib/services/vfs.service';
 import { PooledAccount, VFSNode } from '../../types';
-import { Card } from '../ui/Card';
 import { TransferTask } from './StorageNodes';
-import { FolderPlus, UploadCloud, Share2, CheckCircle2 } from 'lucide-react';
+import { FolderPlus, UploadCloud, Share2, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface ExecutiveDashboardProps {
   accounts: PooledAccount[];
@@ -44,117 +43,130 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes }: Exec
     .slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.4s_ease-out]">
       <h1 className="sr-only">Dashboard</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        {/* Card 1: Storage Used Bar Track */}
-        <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-700 mb-2">Storage Overview</h3>
-            <div className="flex items-end gap-3 mb-4">
-              <span className="text-4xl font-black text-slate-800 tracking-tight">
-                {formatSize(totalBytes)}
-              </span>
-              <span className="text-sm font-medium text-slate-500 mb-1">
-                used of {totalQuota > 0 ? formatSize(totalQuota) : 'Unlimited'}
-              </span>
-            </div>
-            
-            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mt-2">
-              <div 
-                className="h-full bg-blue-500 rounded-full transition-all duration-1000" 
-                style={{ width: `${Math.max(2, pct)}%` }} 
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-slate-500 font-medium">
-              <span>{pct.toFixed(1)}% Used</span>
-              <span>{accounts.length} Connected Account(s)</span>
-            </div>
-          </div>
-        </Card>
 
-        {/* Card 2: Quick Actions Row */}
-        <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col justify-center">
-          <h3 className="text-sm font-bold text-slate-700 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors text-slate-700 font-medium text-sm">
-              <UploadCloud className="w-6 h-6 text-blue-500" />
-              Upload Files
+      {/* Hero greeting */}
+      <header>
+        <h2 className="text-3xl md:text-4xl font-semibold text-zinc-100 leading-none tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          Welcome back.
+        </h2>
+        <p className="mt-2 text-sm text-zinc-400 max-w-[60ch]">
+          Your storage is active and synchronized. All files are end-to-end encrypted.
+        </p>
+      </header>
+
+      {/* Bento grid */}
+      <div className="grid grid-cols-12 gap-4 md:gap-6">
+
+        {/* Storage Overview — large card */}
+        <div className="col-span-12 lg:col-span-8 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Current capacity</p>
+              <p className="text-3xl md:text-4xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                {formatSize(totalBytes)}{' '}
+                <span className="text-zinc-600 text-xl md:text-2xl">/ {totalQuota > 0 ? formatSize(totalQuota) : 'Unlimited'}</span>
+              </p>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400 ring-1 ring-emerald-500/20">
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Connection verified
+            </span>
+          </div>
+
+          <div className="mt-10 space-y-5">
+            {/* Multi-segment progress bar */}
+            <div className="flex h-3 gap-1 overflow-hidden rounded-full">
+              <div className="w-1/2 bg-indigo-500" />
+              <div className="w-1/6 bg-sky-400/80" />
+              <div className="w-1/12 bg-amber-400/70" />
+              <div className="flex-1 bg-[#1e1e5a]/60" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-indigo-500" />Media</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-sky-400/80" />Documents</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-amber-400/70" />Backups</div>
+              <div className="flex items-center gap-2 text-zinc-500"><span className="size-2 rounded-full bg-[#1e1e5a]" />Free</div>
+            </div>
+            <p className="text-xs text-zinc-600 mt-1">{accounts.length} Connected Account(s) · {pct.toFixed(1)}% Used</p>
+          </div>
+        </div>
+
+        {/* Right status cards */}
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+          <div className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-zinc-200">Encryption Active</p>
+              <span className="size-2 rounded-full bg-emerald-400" />
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">AES-256 end-to-end active for all storage.</p>
+          </div>
+          <div className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-zinc-200">Shared Links</p>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">Manage public links &amp; expiry dates.</p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="col-span-12 lg:col-span-4 rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">Quick actions</p>
+          <div className="grid grid-cols-1 gap-2">
+            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+              <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
+                <UploadCloud className="w-4 h-4" />
+              </span>
+              Upload files
             </button>
-            <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors text-slate-700 font-medium text-sm">
-              <FolderPlus className="w-6 h-6 text-indigo-500" />
-              New Folder
+            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+              <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
+                <FolderPlus className="w-4 h-4" />
+              </span>
+              New folder
             </button>
-            <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors text-slate-700 font-medium text-sm">
-              <Share2 className="w-6 h-6 text-emerald-500" />
-              Shared Links
+            <button className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors">
+              <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
+                <Share2 className="w-4 h-4" />
+              </span>
+              Shared links
             </button>
           </div>
-        </Card>
+        </div>
 
-        {/* Card 3: Recent Activity List */}
-        <Card className="p-6 bg-white border border-slate-200 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-700 mb-4">Recent Activity</h3>
-          <div className="flex flex-col gap-3">
+        {/* Recent Activity */}
+        <div className="col-span-12 lg:col-span-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-medium text-zinc-200" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Recent activity</h3>
+          </div>
+          <div className="rounded-2xl bg-[#141432]/20 ring-1 ring-white/5 overflow-hidden">
             {recentFiles.length > 0 ? (
-              recentFiles.map(file => (
-                <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-8 h-8 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                      <span className="font-bold text-xs">{file.name.slice(0, 2).toUpperCase()}</span>
+              <div className="divide-y divide-white/5">
+                {recentFiles.map(file => (
+                  <div key={file.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="grid size-9 place-items-center rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0 text-xs font-bold">
+                        {file.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-200">{file.name}</p>
+                        <p className="text-[11px] text-zinc-500">{formatSize(file.size || 0)}</p>
+                      </div>
                     </div>
-                    <div className="truncate">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{file.name}</p>
-                      <p className="text-xs text-slate-500">{formatSize(file.size || 0)}</p>
-                    </div>
+                    <span className="shrink-0 text-[11px] text-zinc-500">
+                      {new Date(file.modifiedAt || file.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0">
-                    {new Date(file.modifiedAt || file.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <div className="p-8 text-center text-slate-500 text-sm border border-dashed border-slate-200 rounded-xl bg-slate-50">
-                No recent activity. Upload files to see them here.
+              <div className="p-10 text-center">
+                <p className="text-sm text-zinc-500">No recent activity. Upload files to see them here.</p>
               </div>
             )}
           </div>
-        </Card>
-
-        {/* Card 4: Verified Connection Tags */}
-        <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col">
-          <h3 className="text-sm font-bold text-slate-700 mb-4">System Status</h3>
-          <div className="flex flex-col gap-4 flex-1 justify-center">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-emerald-100 bg-emerald-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Connection Verified</h4>
-                  <p className="text-xs text-slate-500 font-medium">All backups synchronized</p>
-                </div>
-              </div>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                ONLINE
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 rounded-xl border border-blue-100 bg-blue-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Encryption Active</h4>
-                  <p className="text-xs text-slate-500 font-medium">End-to-end security enabled</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
