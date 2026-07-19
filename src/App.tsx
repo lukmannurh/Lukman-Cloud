@@ -1475,7 +1475,7 @@ export default function App() {
           {currentView === 'nodes' && (
             <div className="flex flex-col gap-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Storage Nodes</h2>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Storage & backups</h2>
               </div>
               <div className="w-full">
                 <StorageNodes 

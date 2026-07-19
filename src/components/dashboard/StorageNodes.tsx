@@ -126,7 +126,7 @@ export function StorageNodes({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="w-3 h-3 rounded-full bg-purple-500"></span>
-                <span className="text-sm font-medium text-slate-700">System Fallbacks</span>
+                <span className="text-sm font-medium text-slate-700">Other Data</span>
               </div>
               <span className="text-sm text-slate-500">{formatSize(systemBytes)}</span>
             </div>
@@ -180,7 +180,7 @@ export function StorageNodes({
                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-1">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">storage servers reliability</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">System Reliability</h4>
                 <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   100% Operational / Optimal
@@ -190,7 +190,7 @@ export function StorageNodes({
                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-1">
                   <RefreshCw className="w-4 h-4" />
                 </div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Google Drive Sync process</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cloud Sync Status</h4>
                 <p className="text-sm font-bold text-slate-700">
                   {accounts.length > 0 ? (activeTransfers.length > 0 ? 'Active Mirroring Mode Enabled' : 'Active Mirroring Mode Enabled') : 'Idle / Standby'}
                 </p>
