@@ -1,3 +1,4 @@
+/* Force fresh Vercel compilation - clearing any stale build cache */
 @import "tailwindcss";
 
 /* ── Google Fonts ──────────────────────────────────────────────────────────── */
