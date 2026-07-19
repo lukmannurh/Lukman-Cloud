@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { VFSNode } from '../../types';
 import { Card } from '../ui/Card';
-import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X } from 'lucide-react';
+import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X, AlertTriangle } from 'lucide-react';
 import JSZip from 'jszip';
 import { DirectoryPickerModal } from './DirectoryPickerModal';
 import { supabase } from '../../lib/services/supabaseClient';
@@ -500,7 +500,7 @@ export function FileExplorer({
               ) : previewError ? (
                 <div className="m-auto text-center p-8">
                   <div className="w-24 h-24 bg-rose-500/10 text-rose-500 shadow-sm border border-rose-500/20 rounded-2xl mx-auto flex items-center justify-center mb-4">
-                    <span className="text-4xl"></span>
+                    <AlertTriangle className="w-8 h-8 text-rose-400" />
                   </div>
                   <h4 className="text-lg font-bold text-zinc-200 mb-2">Decryption Failed</h4>
                   <p className="text-sm text-zinc-500 max-w-sm mx-auto">

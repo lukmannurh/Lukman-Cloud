@@ -22,7 +22,7 @@ export function Breadcrumbs({
           <button
             onClick={() => onNavigate(item.id)}
             className={`text-lg transition-colors px-2 py-1 rounded-md ${
-              index === path.length - 1 ? 'text-slate-800 font-semibold' : 'text-slate-600 hover:bg-slate-100 font-medium'
+              index === path.length - 1 ? 'text-slate-200 font-semibold' : 'text-slate-400/80 hover:bg-[#1e1e5a]/40 font-medium'
             }`}
           >
             {item.name}

@@ -86,13 +86,13 @@ const Sidebar = ({
               </div>
             )}
 
-            <div className={`flex flex-col transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
-              <div className="flex items-center gap-2">
-                <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain hidden md:block" />
-                <span className="text-xl font-bold text-white tracking-tight whitespace-nowrap block">Lukman Cloud</span>
+            <div className={`flex flex-col transition-opacity duration-200 min-w-0 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0' : 'opacity-100'}`}>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain hidden md:block flex-shrink-0" />
+                <span className="text-xl font-bold text-white tracking-tight whitespace-nowrap block truncate">Lukman Cloud</span>
               </div>
-              <div className="flex gap-2 mt-1 items-center overflow-hidden">
-                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate" title={`@${activeUser?.username || 'guest'}`}>
+              <div className="flex gap-2 mt-1 items-center overflow-hidden flex-shrink-0">
+                <span className="inline-flex items-center text-slate-400 font-mono text-[10px] bg-slate-900/60 py-0.5 px-2 rounded-md border border-slate-800 truncate whitespace-nowrap" title={`@${activeUser?.username || 'guest'}`}>
                   @{activeUser?.username || 'guest'}
                 </span>
               </div>
@@ -1144,11 +1144,28 @@ export default function App() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div className="ml-3 font-bold text-white tracking-tight flex items-center gap-2 text-lg">
-          <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain" />
+        <div className="ml-3 font-bold text-white tracking-tight flex items-center gap-2 text-lg whitespace-nowrap truncate flex-shrink-0">
+          <img src={logoAsset} alt="Logo" className="w-6 h-6 object-contain flex-shrink-0" />
           Lukman Cloud
         </div>
       </div>
+
+      {/* Hidden File Inputs Hoisted for Dashboard Quick Actions */}
+      <input 
+        type="file" 
+        multiple 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={(e) => e.target.files && handleUploadFiles(Array.from(e.target.files))}
+      />
+      <input 
+        type="file" 
+        multiple 
+        {...({ webkitdirectory: "", directory: "" } as any)} 
+        className="hidden" 
+        ref={folderInputRef} 
+        onChange={(e) => e.target.files && handleUploadFiles(Array.from(e.target.files))}
+      />
 
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
@@ -1166,7 +1183,7 @@ export default function App() {
           allFlattenedNodes={allFlattenedNodes}
         />
         <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-[#0a0a1a] flex flex-col`}>
-          <div className="w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8 py-4 md:py-6">
+          <div className="w-full space-y-6 px-6 lg:px-8 py-4 md:py-6">
           {currentView === 'dashboard' && (
             <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
               <div className="w-full">
@@ -1188,24 +1205,7 @@ export default function App() {
                 My Drive
               </h2>
               <div className="flex items-center gap-3 flex-wrap">
-                {/* Hidden File Inputs */}
-                <input 
-                  type="file" 
-                  multiple 
-                  className="hidden" 
-                  ref={fileInputRef} 
-                  onChange={(e) => e.target.files && handleUploadFiles(Array.from(e.target.files))}
-                />
-                <input 
-                  type="file" 
-                  multiple 
-                  {...({ webkitdirectory: "", directory: "" } as any)} 
-                  className="hidden" 
-                  ref={folderInputRef} 
-                  onChange={(e) => e.target.files && handleUploadFiles(Array.from(e.target.files))}
-                />
-                
-
+                {/* Inputs hoisted above */}
               </div>
               
               {/* The sorting logic block */}
@@ -1223,7 +1223,7 @@ export default function App() {
                 });
 
                 return (
-                    <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto animate-[fadeIn_0.3s_ease-out]">
+                    <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
                       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3 w-full items-start md:items-center">
                         {/* + New Button Dropdown */}
                         <div className="relative shrink-0" ref={newMenuRef}>

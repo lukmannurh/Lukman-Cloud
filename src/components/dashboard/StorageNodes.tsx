@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PooledAccount, VFSNode } from '../../types';
 import { FileStack, ShieldCheck, RefreshCw } from 'lucide-react';
-import aetherNodeIcon from '../../assets/aether-node.svg';
+import logoAsset from '../../assets/logo.webp';
 import { supabase } from '../../lib/services/supabaseClient';
 
 export interface TransferTask {
@@ -92,7 +92,7 @@ export function StorageNodes({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="grid size-14 place-items-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/40">
-              <img src={aetherNodeIcon} alt="Storage" className="w-7 h-7 object-contain opacity-80" />
+              <img src={logoAsset} alt="Storage" className="w-7 h-7 object-contain opacity-80" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Lukman Cloud Storage</h2>
