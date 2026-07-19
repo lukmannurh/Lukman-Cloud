@@ -68,10 +68,12 @@ export function AnonymousShareView({ sharedNodeId, setDownloadProgress }: { shar
           const { data: childrenData, error: childrenErr } = await supabase
             .from('vfs_nodes')
             .select('*')
-            .eq('parent_id', vfsNode.id);
+            .eq('parent_id', vfsNode.id)
+            .limit(10000);
             
           if (!childrenErr && childrenData) {
-            setChildren(childrenData.map((d: any) => ({
+            const filteredChildren = childrenData.filter((d: any) => !d.name.startsWith('.'));
+            setChildren(filteredChildren.map((d: any) => ({
               id: d.id,
               name: d.name,
               type: d.is_folder ? 'folder' : 'file',

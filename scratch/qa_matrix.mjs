@@ -49,7 +49,7 @@ import fs from 'fs';
     // Run in parallel
     await Promise.all([
       (async () => {
-        await pageA.goto('http://localhost:5173', { waitUntil: 'load' });
+        await pageA.goto('https://lukman-cloud.vercel.app/', { waitUntil: 'load' });
         await pageA.waitForTimeout(1000);
         // Look for guest access button (text was changed to "Instant Guest Access")
         const guestBtn = pageA.getByRole('button', { name: /Instant Guest Access/i });
@@ -64,7 +64,7 @@ import fs from 'fs';
       })(),
 
       (async () => {
-        await pageB.goto('http://localhost:5173', { waitUntil: 'load' });
+        await pageB.goto('https://lukman-cloud.vercel.app/', { waitUntil: 'load' });
         await pageB.waitForTimeout(1000);
         // We will just attempt to interact with the auth form to check input boundaries
         const emailInput = pageB.locator('input[type="email"]');
@@ -85,7 +85,7 @@ import fs from 'fs';
       })(),
 
       (async () => {
-        await pageC.goto('http://localhost:5173', { waitUntil: 'load' });
+        await pageC.goto('https://lukman-cloud.vercel.app/', { waitUntil: 'load' });
         await pageC.waitForTimeout(1000);
         const guestBtn = pageC.getByRole('button', { name: /Instant Guest Access/i });
         if (await guestBtn.isVisible()) {
