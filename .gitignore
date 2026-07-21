@@ -79,8 +79,12 @@ design baru/
 # Testing & Screenshots Artifacts
 .artifacts/
 scratch/
+dist_api/
 *.png
 *.mjs
+*.cjs
+*.py
+null
 verify_vercel.mjs
 upload_test.mjs
 walkthrough.md

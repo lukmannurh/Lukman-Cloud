@@ -46,9 +46,9 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
     }
   });
 
-  const getPct = (val: number) => totalQuota > 0 ? (val / totalQuota) * 100 : 0;
+  const getPct = (val: number) => totalBytes > 0 ? (val / totalBytes) * 100 : 0;
   const freeBytes = Math.max(0, totalQuota - totalBytes);
-  const freePct = totalQuota > 0 ? (freeBytes / totalQuota) * 100 : (totalBytes === 0 ? 100 : 0);
+  const freePct = totalQuota > 0 ? (freeBytes / totalQuota) * 100 : 0;
   const pct = totalQuota > 0 ? (totalBytes / totalQuota) * 100 : 0;
   
   // Sort for recent activity
@@ -92,26 +92,36 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
 
           <div className="mt-auto pt-10 space-y-5">
             {/* Multi-segment progress bar */}
-            <div className="flex h-3 gap-1 overflow-hidden rounded-full">
+            <div className="flex h-3 gap-0.5 overflow-hidden rounded-full">
               {totalBytes === 0 ? (
                 <div className="w-full bg-[#1e1e5a]/60" />
               ) : (
                 <>
-                  {categories.images > 0 && <div style={{ width: `${getPct(categories.images)}%` }} className="bg-indigo-500" />}
-                  {categories.videos > 0 && <div style={{ width: `${getPct(categories.videos)}%` }} className="bg-sky-400/80" />}
-                  {categories.documents > 0 && <div style={{ width: `${getPct(categories.documents)}%` }} className="bg-emerald-400/80" />}
-                  {categories.audio > 0 && <div style={{ width: `${getPct(categories.audio)}%` }} className="bg-amber-400/70" />}
-                  {categories.other > 0 && <div style={{ width: `${getPct(categories.other)}%` }} className="bg-rose-400/70" />}
-                  <div style={{ width: `${freePct}%` }} className="bg-[#1e1e5a]/60 flex-1" />
+                  <div style={{ width: `${getPct(categories.images)}%` }} className="transition-all duration-700 bg-indigo-500" />
+                  <div style={{ width: `${getPct(categories.videos)}%` }} className="transition-all duration-700 bg-sky-400/80" />
+                  <div style={{ width: `${getPct(categories.documents)}%` }} className="transition-all duration-700 bg-emerald-400/80" />
+                  <div style={{ width: `${getPct(categories.audio)}%` }} className="transition-all duration-700 bg-amber-400/70" />
+                  <div style={{ width: `${getPct(categories.other)}%` }} className="transition-all duration-700 bg-rose-400/70" />
+                  {totalQuota > 0 && <div style={{ width: `${freePct}%` }} className="bg-[#1e1e5a]/60 flex-1" />}
                 </>
               )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-indigo-500" />Images</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-sky-400/80" />Videos</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-emerald-400/80" />Documents</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-amber-400/70" />Audio</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-rose-400/70" />Other</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+              {[
+                { label: 'Images', size: categories.images, color: 'bg-indigo-500' },
+                { label: 'Videos', size: categories.videos, color: 'bg-sky-400/80' },
+                { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
+                { label: 'Audio', size: categories.audio, color: 'bg-amber-400/70' },
+                { label: 'Other', size: categories.other, color: 'bg-rose-400/70' },
+              ].map(({ label, size, color }) => (
+                <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">
+                  <span className="flex items-center gap-2 text-zinc-400">
+                    <span className={`size-2 rounded-full ${color}`} />
+                    {label}
+                  </span>
+                  <span className="text-zinc-200">{formatSize(size)}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

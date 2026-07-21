@@ -199,61 +199,61 @@ const Sidebar = ({
             </div>
           </div>
         )}
+      </div>
 
-        {/* Custom Logout Modal */}
-        {showLogoutModal && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)} />
-            <div className="relative bg-[#0a0a1a] border border-[#1e1e5a] rounded-xl shadow-2xl p-6 w-full max-w-sm animate-[scaleIn_0.2s_ease-out]">
-              <h2 className="text-xl font-semibold text-zinc-100 mb-2">Sign Out</h2>
-              <p className="text-sm text-zinc-400 mb-6">Are you sure you want to sign out of your account?</p>
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setShowLogoutModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={async () => {
-                    setShowLogoutModal(false);
-                    try {
-                      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-                        localStorage.removeItem('dev_session_user');
-                        setDevSessionUser(null);
-                        setToastMessage(null);
-                        setIsUserAuthenticated(false);
-                        setAccounts([]);
-                        setCurrentView('auth');
-                        window.location.reload();
-                        return;
-                      }
+      {/* Custom Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)} />
+          <div className="relative bg-[#0a0a1a] border border-[#1e1e5a] rounded-xl shadow-2xl p-6 w-full max-w-sm animate-[scaleIn_0.2s_ease-out]">
+            <h2 className="text-xl font-semibold text-zinc-100 mb-2">Sign Out</h2>
+            <p className="text-sm text-zinc-400 mb-6">Are you sure you want to sign out of your account?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  setShowLogoutModal(false);
+                  try {
+                    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                      localStorage.removeItem('dev_session_user');
+                      setDevSessionUser(null);
                       setToastMessage(null);
-                      try {
-                        await authClient.signOut();
-                      } catch (e) {
-                        console.warn('[SignOut] Network failed but proceeding locally:', e);
-                      }
-                    } catch (e) {
-                      console.warn('[SignOut] Backend unreachable or sign out failed:', e);
-                    } finally {
                       setIsUserAuthenticated(false);
                       setAccounts([]);
                       setCurrentView('auth');
-                      if (import.meta.env.DEV) {
-                        window.location.reload();
-                      }
+                      window.location.reload();
+                      return;
                     }
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
+                    setToastMessage(null);
+                    try {
+                      await authClient.signOut();
+                    } catch (e) {
+                      console.warn('[SignOut] Network failed but proceeding locally:', e);
+                    }
+                  } catch (e) {
+                    console.warn('[SignOut] Backend unreachable or sign out failed:', e);
+                  } finally {
+                    setIsUserAuthenticated(false);
+                    setAccounts([]);
+                    setCurrentView('auth');
+                    if (import.meta.env.DEV) {
+                      window.location.reload();
+                    }
+                  }
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };
@@ -321,20 +321,17 @@ export default function App() {
         }
 
         try {
-          // Synchronize to public user table for foreign key constraints (vfs_nodes)
-          const { data: existingUser } = await supabase.from('user').select('id').eq('id', currentUser.id).single();
-          if (!existingUser) {
-            await supabase.from('user').insert({
-              id: currentUser.id,
-              name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
-              email: currentUser.email || `${currentUser.id}@guest.local`,
-              username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
-              image: currentUser.image || null,
-              emailVerified: true,
-              createdAt: currentUser.createdAt || new Date().toISOString(),
-              updatedAt: currentUser.updatedAt || new Date().toISOString()
-            });
-          }
+          // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
+          await supabase.from('user').upsert({
+            id: currentUser.id,
+            name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
+            email: currentUser.email || `${currentUser.id}@guest.local`,
+            username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
+            image: currentUser.image || null,
+            emailVerified: true,
+            createdAt: currentUser.createdAt || new Date().toISOString(),
+            updatedAt: currentUser.updatedAt || new Date().toISOString()
+          }, { onConflict: 'id' });
         } catch (e) {
           console.error('Auto-link failed', e);
         }
@@ -430,6 +427,7 @@ export default function App() {
     errorMessage?: string;
   }
   const [activeUploadsTracker, setActiveUploadsTracker] = useState<Record<string, ActiveUpload>>({});
+  const [isUploadMinimized, setIsUploadMinimized] = useState(false);
 
   interface DownloadProgressState {
     status: 'idle' | 'confirming' | 'decrypting' | 'success' | 'error';
@@ -1759,56 +1757,95 @@ export default function App() {
 
       {/* Floating Upload Progress Telemetry */}
       {Object.keys(activeUploadsTracker).length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 w-80 bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-2xl animate-[fadeIn_0.3s_ease-out] flex flex-col gap-4 max-h-64 overflow-y-auto custom-scrollbar">
-          {Object.values(activeUploadsTracker).map(upload => (
-            <div key={upload.id} className="border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
-              <div className="flex justify-between items-start mb-2">
-                <div className="truncate pr-4 flex-1">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    {upload.status === 'uploading' && 'Active Upload'}
-                    {upload.status === 'success' && 'Upload Complete'}
-                    {upload.status === 'error' && 'Upload Failed'}
-                  </div>
-                  <div className="text-sm font-semibold text-white truncate" title={upload.fileName}>
-                    {upload.fileName}
-                  </div>
-                </div>
-                {upload.status === 'error' && (
-                  <button 
-                    onClick={() => setActiveUploadsTracker(prev => {
-                      const next = { ...prev };
-                      delete next[upload.id];
-                      return next;
-                    })}
-                    className="text-slate-400 hover:text-white shrink-0 p-1 bg-slate-800 rounded-full focus:outline-none"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
+        isUploadMinimized ? (
+          <div className="fixed bottom-4 right-4 z-50 bg-slate-900 border border-indigo-500/30 p-2 rounded-full shadow-2xl animate-bounce flex items-center gap-3 pr-4 cursor-pointer hover:bg-slate-800 transition-colors"
+               onClick={() => setIsUploadMinimized(false)}>
+            <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+            <span className="text-sm font-bold text-indigo-400">
+              Uploading {Object.keys(activeUploadsTracker).length} items
+            </span>
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Maximize</span>
+          </div>
+        ) : (
+          <div className="fixed bottom-4 right-4 z-50 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl animate-[fadeIn_0.3s_ease-out] overflow-hidden flex flex-col">
+            <div className="bg-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
+              <h3 className="text-sm font-semibold text-white">
+                Uploading {Object.keys(activeUploadsTracker).length} items...
+              </h3>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setIsUploadMinimized(true)}
+                  className="text-slate-400 hover:text-white p-1 rounded-full focus:outline-none hover:bg-slate-700 transition-colors"
+                  title="Minimize"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => setActiveUploadsTracker({})}
+                  className="text-slate-400 hover:text-white p-1 rounded-full focus:outline-none hover:bg-slate-700 transition-colors"
+                  title="Close"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              
-              {upload.status === 'error' ? (
-                <div className="text-xs font-mono text-rose-400 bg-rose-500/10 p-2 rounded border border-rose-500/20 mt-2 break-words max-h-32 overflow-y-auto">
-                  {upload.errorMessage}
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 mt-3">
-                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                    <div 
-                      className={`h-full transition-all duration-200 ${upload.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
-                      style={{ width: `${Math.min(upload.progress, 100)}%` }}
-                    />
-                  </div>
-                  <span className={`text-xs font-bold w-9 text-right ${upload.status === 'success' ? 'text-emerald-400' : 'text-indigo-400'}`}>
-                    {Math.round(upload.progress)}%
-                  </span>
-                </div>
-              )}
             </div>
-          ))}
-        </div>
+            
+            <div className="p-4 flex flex-col gap-4 max-h-64 overflow-y-auto custom-scrollbar">
+              {Object.values(activeUploadsTracker).map(upload => (
+                <div key={upload.id} className="border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="truncate pr-4 flex-1">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        {upload.status === 'uploading' && 'Active Upload'}
+                        {upload.status === 'success' && 'Upload Complete'}
+                        {upload.status === 'error' && 'Upload Failed'}
+                      </div>
+                      <div className="text-sm font-semibold text-white truncate" title={upload.fileName}>
+                        {upload.fileName}
+                      </div>
+                    </div>
+                    {upload.status === 'error' && (
+                      <button 
+                        onClick={() => setActiveUploadsTracker(prev => {
+                          const next = { ...prev };
+                          delete next[upload.id];
+                          return next;
+                        })}
+                        className="text-slate-400 hover:text-white shrink-0 p-1 bg-slate-800 rounded-full focus:outline-none"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  
+                  {upload.status === 'error' ? (
+                    <div className="text-xs font-mono text-rose-400 bg-rose-500/10 p-2 rounded border border-rose-500/20 mt-2 break-words max-h-32 overflow-y-auto">
+                      {upload.errorMessage}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 mt-3">
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                        <div 
+                          className={`h-full transition-all duration-200 ${upload.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`}
+                          style={{ width: `${Math.min(upload.progress, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold w-9 text-right ${upload.status === 'success' ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                        {Math.round(upload.progress)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {/* Floating Download Progress Telemetry (Top-Right) */}
