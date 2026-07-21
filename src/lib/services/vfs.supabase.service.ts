@@ -41,6 +41,27 @@ class VFSService {
     return session.user.id;
   }
 
+  private filterByCategory(nodes: VFSNode[], category: string): VFSNode[] {
+    return nodes.filter(node => {
+      if (node.type === 'folder') return false;
+      const ext = node.name.split('.').pop()?.toLowerCase() || '';
+      switch (category.toLowerCase()) {
+        case 'images':
+          return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+        case 'videos':
+          return ['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
+        case 'documents':
+          return ['pdf', 'docx', 'txt', 'xlsx', 'csv'].includes(ext);
+        case 'audio':
+          return ['mp3', 'wav', 'ogg'].includes(ext);
+        case 'other':
+          return !['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov', 'pdf', 'docx', 'txt', 'xlsx', 'csv', 'mp3', 'wav', 'ogg'].includes(ext);
+        default:
+          return true;
+      }
+    });
+  }
+
   /**
    * Helper to map a database row to a VFSNode object
    */
@@ -62,7 +83,7 @@ class VFSService {
     };
   }
 
-  async loadRegistry(): Promise<VFSNode[]> {
+  async loadRegistry(category?: string): Promise<VFSNode[]> {
     if (import.meta.env.MODE === 'test') {
       if (this.memoryCache) return this.memoryCache;
       const data = await retrieveCredential(this.STORAGE_KEY as any);
@@ -97,7 +118,10 @@ class VFSService {
       return [];
     }
     
-    const nodes = data.map(this.mapRowToNode);
+    let nodes = data.map(this.mapRowToNode);
+    if (category) {
+      nodes = this.filterByCategory(nodes, category);
+    }
     
     // Reconstruct children arrays for memory-compatibility
     const nodeMap = new Map<string, VFSNode>();
@@ -113,7 +137,7 @@ class VFSService {
 
 
 
-  async getDirectoryContents(parentId: string): Promise<VFSNode[]> {
+  async getDirectoryContents(parentId: string, category?: string): Promise<VFSNode[]> {
     const userId = await this.getUserId();
     
     let query = supabase
@@ -130,7 +154,11 @@ class VFSService {
     const { data, error } = await query;
       
     if (error) throw error;
-    return data.map(row => this.mapRowToNode(row));
+    let nodes = data.map(row => this.mapRowToNode(row));
+    if (category) {
+      nodes = this.filterByCategory(nodes, category);
+    }
+    return nodes;
   }
 
   async getNode(id: string): Promise<VFSNode | undefined> {

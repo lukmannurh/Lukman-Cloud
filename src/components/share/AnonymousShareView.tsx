@@ -255,12 +255,12 @@ export function AnonymousShareView({ sharedNodeId, setDownloadProgress }: { shar
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">{child.name}</p>
-                  {child.type !== 'folder' && <p className="text-xs text-slate-500">{(child.size / 1024 / 1024).toFixed(2)} MB</p>}
+                  {child.type !== 'folder' && <p className="text-xs text-slate-400">{(child.size / 1024 / 1024).toFixed(2)} MB</p>}
                 </div>
               </a>
             ))}
             {children.length === 0 && (
-              <div className="col-span-full py-12 text-center text-slate-500">
+              <div className="col-span-full py-12 text-center text-slate-400">
                 This folder is empty.
               </div>
             )}
@@ -275,19 +275,19 @@ export function AnonymousShareView({ sharedNodeId, setDownloadProgress }: { shar
               {isImage && <img src={previewUrl} alt={node.name} className="max-h-[60vh] object-contain rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
               {isVideo && <video src={previewUrl} controls className="max-h-[60vh] rounded-lg shadow-lg" onError={() => setPreviewError(true)} />}
               {!isImage && !isVideo && (
-                <div className="text-slate-500 flex flex-col items-center">
+                <div className="text-slate-400 flex flex-col items-center">
                   <FileIcon className="w-16 h-16 mb-4 opacity-50" />
                   <p>Preview not available for this file type</p>
                 </div>
               )}
             </>
           ) : (
-            <div className="text-slate-500 flex flex-col items-center text-center p-4">
+            <div className="text-slate-400 flex flex-col items-center text-center p-4">
               <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-3">
                 {isImage ? <ImageIcon className="w-8 h-8 text-slate-400" /> : isVideo ? <VideoIcon className="w-8 h-8 text-slate-400" /> : <FileIcon className="w-8 h-8 text-slate-400" />}
               </div>
               <p className="text-slate-300 font-medium text-sm">{(!isImage && !isVideo) ? 'Preview Unavailable' : (previewError ? 'Preview Unavailable' : 'Generating preview...')}</p>
-              {(!isImage && !isVideo) && <p className="text-slate-500 text-xs mt-1">Use the download button to access this file</p>}
+              {(!isImage && !isVideo) && <p className="text-slate-400 text-xs mt-1">Use the download button to access this file</p>}
             </div>
           )}
         </div>
@@ -441,13 +441,13 @@ export function AnonymousShareView({ sharedNodeId, setDownloadProgress }: { shar
                 }
               }}
               disabled={downloadStatus === 'downloading'}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-400 text-white rounded-lg font-medium transition-colors"
             >
               <Download className="w-5 h-5" />
               {downloadStatus === 'downloading' ? 'Downloading chunks...' : downloadStatus === 'error' ? 'Download Failed - Retry' : 'Download File'}
             </button>
             <div className="text-center">
-              <p className="text-xs text-slate-500">Shared securely via Lukman Cloud</p>
+              <p className="text-xs text-slate-400">Shared securely via Lukman Cloud</p>
             </div>
           </div>
         </div>

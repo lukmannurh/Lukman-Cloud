@@ -81,11 +81,11 @@ export function UploadGateway({ onUpload, disabled = false, requiresAuth = false
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
           
           {requiresAuth ? (
-             <span className="text-sm font-medium text-slate-500 flex items-center gap-2">
+             <span className="text-sm font-medium text-slate-400 flex items-center gap-2">
                <span className="text-rose-500"></span> Read-only mode. Login to upload.
              </span>
           ) : (
-             <span className="text-sm text-slate-500">Drop files anywhere to upload</span>
+             <span className="text-sm text-slate-400">Drop files anywhere to upload</span>
           )}
         </div>
         
@@ -107,7 +107,7 @@ export function UploadGateway({ onUpload, disabled = false, requiresAuth = false
                </svg>
              </div>
              <h2 className="text-2xl font-bold text-slate-800">Drop files to upload</h2>
-             <p className="text-slate-500 mt-2">Release to securely encrypt and sync</p>
+             <p className="text-slate-400 mt-2">Release to securely encrypt and sync</p>
            </div>
         </div>
       )}

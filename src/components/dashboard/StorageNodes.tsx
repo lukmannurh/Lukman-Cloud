@@ -50,6 +50,7 @@ export function StorageNodes({
   let imageBytes = 0;
   let docBytes = 0;
   let videoBytes = 0;
+  let audioBytes = 0;
   let systemBytes = 0;
 
   (vfsNodes || []).forEach(node => {
@@ -62,17 +63,25 @@ export function StorageNodes({
         docBytes += size;
       } else if (['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext)) {
         videoBytes += size;
+      } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+        audioBytes += size;
       } else {
         systemBytes += size;
       }
     }
   });
 
-  const totalComputed = imageBytes + docBytes + videoBytes + systemBytes;
+  const totalComputed = imageBytes + docBytes + videoBytes + audioBytes + systemBytes;
   const imagePct = totalComputed > 0 ? (imageBytes / totalComputed) * 100 : 0;
   const docPct = totalComputed > 0 ? (docBytes / totalComputed) * 100 : 0;
   const videoPct = totalComputed > 0 ? (videoBytes / totalComputed) * 100 : 0;
+  const audioPct = totalComputed > 0 ? (audioBytes / totalComputed) * 100 : 0;
   const systemPct = totalComputed > 0 ? (systemBytes / totalComputed) * 100 : 0;
+  
+  const top10Files = (vfsNodes || [])
+    .filter(n => n.type === 'file')
+    .sort((a, b) => (b.size || 0) - (a.size || 0))
+    .slice(0, 10);
 
   return (
     <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.4s_ease-out]">
@@ -111,22 +120,25 @@ export function StorageNodes({
               {formatSize(totalComputed)}{' '}
               <span className="text-zinc-600 text-lg md:text-xl">/ {totalLimit > 0 ? formatSize(totalLimit) : 'Unlimited'}</span>
             </p>
-            <p className="text-[11px] text-zinc-500">Secure pool</p>
+            <p className="text-[11px] text-zinc-400">Secure pool</p>
           </div>
 
           <div className="flex h-3 gap-0.5 overflow-hidden rounded-full">
-            <div className="transition-all duration-700 bg-indigo-500" style={{ width: `${Math.max(1, imagePct)}%` }} />
-            <div className="transition-all duration-700 bg-sky-400/80" style={{ width: `${Math.max(1, docPct)}%` }} />
-            <div className="transition-all duration-700 bg-amber-400/70" style={{ width: `${Math.max(1, videoPct)}%` }} />
+            <div className="transition-all duration-700 bg-indigo-500" style={{ width: `${imagePct}%` }} />
+            <div className="transition-all duration-700 bg-sky-400/80" style={{ width: `${videoPct}%` }} />
+            <div className="transition-all duration-700 bg-emerald-400/80" style={{ width: `${docPct}%` }} />
+            <div className="transition-all duration-700 bg-amber-400/70" style={{ width: `${audioPct}%` }} />
+            <div className="transition-all duration-700 bg-rose-400/70" style={{ width: `${systemPct}%` }} />
             <div className="flex-1 bg-[#1e1e5a]/60" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             {[
               { label: 'Images', size: imageBytes, color: 'bg-indigo-500' },
-              { label: 'Documents', size: docBytes, color: 'bg-sky-400/80' },
-              { label: 'Videos', size: videoBytes, color: 'bg-amber-400/70' },
-              { label: 'Other Data', size: systemBytes, color: 'bg-zinc-500/70' },
+              { label: 'Videos', size: videoBytes, color: 'bg-sky-400/80' },
+              { label: 'Documents', size: docBytes, color: 'bg-emerald-400/80' },
+              { label: 'Audio', size: audioBytes, color: 'bg-amber-400/70' },
+              { label: 'Other Data', size: systemBytes, color: 'bg-rose-400/70' },
             ].map(({ label, size, color }) => (
               <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">
                 <span className="flex items-center gap-2 text-zinc-400">
@@ -172,10 +184,10 @@ export function StorageNodes({
           <div key={label} className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-5">
             <div className="flex items-center gap-3">
               <div className={`grid size-9 place-items-center rounded-lg ${iconBg}`}>{icon}</div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{label}</p>
             </div>
             <p className="mt-3 text-2xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{value}</p>
-            <p className="text-xs text-zinc-500">{sub}</p>
+            <p className="text-xs text-zinc-400">{sub}</p>
           </div>
         ))}
       </section>
@@ -185,7 +197,7 @@ export function StorageNodes({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
             <h3 className="text-lg font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Connected accounts</h3>
-            <p className="text-sm text-zinc-500">Add a cloud account to expand your storage pool.</p>
+            <p className="text-sm text-zinc-400">Add a cloud account to expand your storage pool.</p>
           </div>
           <button
             onClick={onAddAccount}
@@ -202,7 +214,7 @@ export function StorageNodes({
           {accounts.length === 0 ? (
             <button
               onClick={onAddAccount}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1e1e5a] px-4 py-6 text-sm text-zinc-500 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1e1e5a] px-4 py-6 text-sm text-zinc-400 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
             >
               <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
@@ -220,7 +232,7 @@ export function StorageNodes({
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-zinc-100">{acc.email}</p>
-                      <p className="text-[11px] text-zinc-500">{formatSize(acc.usedQuota)} / {acc.totalQuota > 0 ? formatSize(acc.totalQuota) : 'Unlimited'}</p>
+                      <p className="text-[11px] text-zinc-400">{formatSize(acc.usedQuota)} / {acc.totalQuota > 0 ? formatSize(acc.totalQuota) : 'Unlimited'}</p>
                     </div>
                   </div>
                   <span className="text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer">Manage</span>
@@ -231,6 +243,32 @@ export function StorageNodes({
         </div>
       </section>
 
+      {/* Top 10 Largest Files */}
+      {top10Files.length > 0 && (
+        <section className="rounded-3xl bg-[#141432]/20 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 md:p-8">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Top 10 Largest Files</h3>
+            <p className="text-sm text-zinc-400">The most space-consuming files across your storage.</p>
+          </div>
+          <div className="space-y-2">
+            {top10Files.map((file, index) => (
+              <div key={file.id} className="flex flex-wrap items-center justify-between gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-6 text-center text-xs font-bold text-zinc-400 shrink-0">#{index + 1}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-zinc-200" title={file.name}>{file.name}</p>
+                    <p className="text-[11px] text-zinc-400">{file.path.replace(`/${file.name}`, '').replace(/\//g, ' > ') || 'Root'}</p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className="text-sm font-semibold text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded-md">{formatSize(file.size || 0)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Active Transfers */}
       {activeTransfers.length > 0 && (
         <section className="rounded-2xl bg-[#141432]/20 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
@@ -240,11 +278,11 @@ export function StorageNodes({
               <div key={tx.id} className="bg-[#0a0a1a]/50 p-4 border border-[#1e1e5a]/40 rounded-xl">
                 <div className="flex justify-between text-xs font-medium text-zinc-300 mb-1.5 truncate">
                   <span className="truncate max-w-[220px]">{tx.name}</span>
-                  <span className="text-zinc-500 shrink-0 ml-2">
+                  <span className="text-zinc-400 shrink-0 ml-2">
                     {tx.progress !== undefined ? `${Math.round(tx.progress)}%` : '…'}
                   </span>
                 </div>
-                <div className="text-[10px] text-zinc-500 mb-2.5">{tx.status}</div>
+                <div className="text-[10px] text-zinc-400 mb-2.5">{tx.status}</div>
                 {tx.progress !== undefined && (
                   <div className="w-full h-1.5 bg-[#1e1e5a] rounded-full overflow-hidden">
                     <div

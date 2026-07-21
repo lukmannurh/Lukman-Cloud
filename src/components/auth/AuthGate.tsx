@@ -212,7 +212,7 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
             disabled={cooldown > 0 || isSending}
             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border transition-all duration-200
               ${cooldown > 0 || isSending
-                ? 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed'
+                ? 'bg-slate-800/60 border-slate-700 text-slate-400 cursor-not-allowed'
                 : 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95'
               }`}
           >
@@ -267,7 +267,7 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
               className={`w-full py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-200
                 ${canSubmit
                   ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/30 active:scale-95'
-                  : 'bg-slate-800/60 text-slate-500 cursor-not-allowed border border-slate-700'
+                  : 'bg-slate-800/60 text-slate-400 cursor-not-allowed border border-slate-700'
                 }`}
             >
               Authenticate

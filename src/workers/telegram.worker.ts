@@ -426,20 +426,33 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
 
     // 6. Send the document via raw SendMedia RPC
     let result;
-    try {
-      result = await client!.invoke(
-        new Api.messages.SendMedia({
-          peer,
-          media,
-          message: `Uploaded via Lukman Cloud: ${pristineName}`,
-          randomId: fileId, // Reuse fileId as deduplication key
-        })
-      );
-    } catch (sendErr: any) {
-      if (sendErr.message?.includes('FLOOD_WAIT')) {
-        throw new Error(`FloodWaitError: ${sendErr.message}`);
+    let sendSuccess = false;
+    let sendRetries = 5;
+    while (!sendSuccess && sendRetries > 0) {
+      try {
+        result = await client!.invoke(
+          new Api.messages.SendMedia({
+            peer,
+            media,
+            message: `Uploaded via Lukman Cloud: ${pristineName}`,
+            randomId: fileId, // Reuse fileId as deduplication key
+          })
+        );
+        sendSuccess = true;
+      } catch (sendErr: any) {
+        const errMsg = sendErr.message || '';
+        if (errMsg.includes('FLOOD_WAIT_')) {
+          const waitSeconds = parseInt(errMsg.split('FLOOD_WAIT_')[1]) || 5;
+          console.warn(`[Telegram Worker] Hit FLOOD_WAIT_${waitSeconds} on SendMedia. Pausing...`);
+          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+        } else {
+          throw sendErr;
+        }
       }
-      throw sendErr;
+      sendRetries--;
+    }
+    if (!sendSuccess) {
+      throw new Error('Failed to send media after multiple FLOOD_WAIT retries.');
     }
 
     // 7. Extract message ID — GramJS returns Updates; find the Message inside

@@ -21,6 +21,8 @@ import { UploadGateway } from './components/dashboard/UploadGateway';
 import { AnonymousShareView } from './components/share/AnonymousShareView';
 
 import { VFSNode, AppConfig, PooledAccount, isGoogleDriveRef, isTelegramRef, GoogleDriveRef, TelegramRef } from './types';
+import * as Select from '@radix-ui/react-select';
+import { ChevronDown, Check } from 'lucide-react';
 
 const Sidebar = ({
   activeUser,
@@ -39,7 +41,7 @@ const Sidebar = ({
 
   const totalBytes = allFlattenedNodes.reduce((sum: number, n: any) => sum + (n.size || 0), 0);
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0.00 GB';
+    if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -71,7 +73,7 @@ const Sidebar = ({
           </div>
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="hidden md:flex p-1 hover:bg-[#1e1e5a]/60 rounded-md text-zinc-500 hover:text-zinc-200"
+            className="hidden md:flex p-1 hover:bg-[#1e1e5a]/60 rounded-md text-zinc-400 hover:text-zinc-200"
           >
             {isSidebarCollapsed ? (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,7 +170,7 @@ const Sidebar = ({
               )}
               <div className="flex flex-col overflow-hidden flex-1">
                 <span className="text-sm font-semibold text-zinc-200 truncate">{activeUser?.name || 'User'}</span>
-                <span className="text-[10px] text-zinc-500 truncate" title={`@${activeUser?.username || 'guest'}`}>@{activeUser?.username || 'guest'}</span>
+                <span className="text-[10px] text-zinc-400 truncate" title={`@${activeUser?.username || 'guest'}`}>@{activeUser?.username || 'guest'}</span>
               </div>
               <button 
                 onClick={async () => {
@@ -1110,7 +1112,7 @@ export default function App() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">Drop files to upload</h2>
-                <p className="text-slate-500 mt-2">Files will be uploaded to {breadcrumbs[breadcrumbs.length - 1]?.name || 'current folder'}</p>
+                <p className="text-slate-400 mt-2">Files will be uploaded to {breadcrumbs[breadcrumbs.length - 1]?.name || 'current folder'}</p>
               </div>
             </div>
           )}
@@ -1152,7 +1154,7 @@ export default function App() {
       <div className="md:hidden flex items-center h-14 bg-[#0a0a1a] border-b border-[#1e1e5a]/40 px-4 shrink-0">
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 text-slate-400 hover:text-white focus:outline-none"
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white focus:outline-none"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -1348,7 +1350,7 @@ export default function App() {
                           {isSearchFocused && searchQuery.trim() !== '' && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-[#141432] rounded-xl shadow-xl border border-[#1e1e5a]/40 overflow-hidden z-50 max-h-96 overflow-y-auto">
                               {searchResults.length === 0 ? (
-                                <div className="p-4 text-center text-sm text-zinc-500">No results found for "{searchQuery}"</div>
+                                <div className="p-4 text-center text-sm text-zinc-400">No results found for "{searchQuery}"</div>
                               ) : (
                                 <div className="py-2">
                                   {searchResults.map((result, index) => (
@@ -1376,12 +1378,12 @@ export default function App() {
                                         {result.type === 'folder' ? (
                                           <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
                                         ) : (
-                                          <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                          <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                         )}
                                       </div>
                                       <div className="flex flex-col min-w-0">
                                         <span className="text-sm font-medium text-zinc-200 truncate">{result.name}</span>
-                                        <span className="text-[11px] text-zinc-500 truncate">
+                                        <span className="text-[11px] text-zinc-400 truncate">
                                           Cloud Root {result.path.replace(`/${result.name}`, '').replace(/\//g, ' > ')}
                                         </span>
                                       </div>
@@ -1395,15 +1397,32 @@ export default function App() {
 
                         {/* Filter & View Actions */}
                         <div className="flex items-center gap-2 shrink-0">
-                          <select 
-                            value={sortKey}
-                            onChange={(e) => setSortKey(e.target.value as any)}
-                            className="block bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 py-2.5 pl-3 pr-8 outline-none cursor-pointer"
-                          >
-                            <option>Alphabetical</option>
-                            <option>Last Modified</option>
-                            <option>File Size</option>
-                          </select>
+                          <Select.Root value={sortKey} onValueChange={(val) => setSortKey(val as any)}>
+                            <Select.Trigger className="inline-flex items-center justify-between min-w-[140px] bg-[#141432] border border-[#1e1e5a]/60 text-zinc-300 text-sm rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-[#1a1a40] focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-1">
+                              <Select.Value />
+                              <Select.Icon>
+                                <ChevronDown className="w-4 h-4 text-zinc-400" />
+                              </Select.Icon>
+                            </Select.Trigger>
+                            <Select.Portal>
+                              <Select.Content className="overflow-hidden bg-[#141432] rounded-xl shadow-2xl border border-[#1e1e5a]/60 z-[100]">
+                                <Select.Viewport className="p-2">
+                                  {['Alphabetical', 'Last Modified', 'File Size'].map((option) => (
+                                    <Select.Item
+                                      key={option}
+                                      value={option}
+                                      className="relative flex items-center px-8 py-2 text-sm text-zinc-200 rounded-lg cursor-pointer hover:bg-[#1e1e5a]/40 focus:bg-[#1e1e5a]/40 focus:outline-none select-none data-[highlighted]:bg-[#1e1e5a]/40"
+                                    >
+                                      <Select.ItemText>{option}</Select.ItemText>
+                                      <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
+                                        <Check className="w-4 h-4 text-indigo-400" />
+                                      </Select.ItemIndicator>
+                                    </Select.Item>
+                                  ))}
+                                </Select.Viewport>
+                              </Select.Content>
+                            </Select.Portal>
+                          </Select.Root>
                           <button 
                             onClick={() => setSortDirection(d => d === 'asc' ? 'desc' : 'asc')}
                             className="p-2.5 bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-300 rounded-lg shadow-sm hover:bg-[#1e1e5a]/40 transition-colors"
@@ -1417,13 +1436,13 @@ export default function App() {
                           <div className="flex bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 rounded-lg p-1 ml-2">
                             <button 
                               onClick={() => setIsGridView(true)}
-                              className={`p-1.5 rounded transition-colors ${isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                              className={`p-1.5 rounded transition-colors ${isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-400 hover:text-zinc-300'}`}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                             </button>
                             <button 
                               onClick={() => setIsGridView(false)}
-                              className={`p-1.5 rounded transition-colors ${!isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                              className={`p-1.5 rounded transition-colors ${!isGridView ? 'bg-[#1e1e5a]/60 text-zinc-200 shadow-sm' : 'text-zinc-400 hover:text-zinc-300'}`}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                             </button>
@@ -1642,7 +1661,7 @@ export default function App() {
             </div>
             <div className="overflow-y-auto p-2 bg-[#0a0a1a]/30 flex-1">
               {allFolders.filter(f => f.id !== moveModalNode.id).length === 0 ? (
-                <div className="text-center p-8 text-sm text-zinc-500">No other folders available.</div>
+                <div className="text-center p-8 text-sm text-zinc-400">No other folders available.</div>
               ) : (
                 <div className="flex flex-col gap-1">
                   {allFolders
@@ -1671,7 +1690,7 @@ export default function App() {
                           </span>
                           <div className="truncate">
                             <div className="font-medium text-zinc-200 text-sm truncate">{folder.name}</div>
-                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5 truncate">{folder.path}</div>
+                            <div className="text-[10px] text-zinc-400 font-mono mt-0.5 truncate">{folder.path}</div>
                           </div>
                         </button>
                       );

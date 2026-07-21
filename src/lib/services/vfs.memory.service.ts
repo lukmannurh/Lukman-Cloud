@@ -10,18 +10,41 @@ class VFSService {
   private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
 
+  private filterByCategory(nodes: VFSNode[], category: string): VFSNode[] {
+    return nodes.filter(node => {
+      if (node.type === 'folder') return false;
+      const ext = node.name.split('.').pop()?.toLowerCase() || '';
+      switch (category.toLowerCase()) {
+        case 'images':
+          return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+        case 'videos':
+          return ['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
+        case 'documents':
+          return ['pdf', 'docx', 'txt', 'xlsx', 'csv'].includes(ext);
+        case 'audio':
+          return ['mp3', 'wav', 'ogg'].includes(ext);
+        case 'other':
+          return !['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov', 'pdf', 'docx', 'txt', 'xlsx', 'csv', 'mp3', 'wav', 'ogg'].includes(ext);
+        default:
+          return true;
+      }
+    });
+  }
+
   /**
    * Initialize and load the VFS registry from the encrypted storage.
    */
-  async loadRegistry(): Promise<VFSNode[]> {
-    if (this.memoryCache) return this.memoryCache;
+  async loadRegistry(category?: string): Promise<VFSNode[]> {
+    if (this.memoryCache) {
+      return category ? this.filterByCategory(this.memoryCache, category) : this.memoryCache;
+    }
 
     const data = await retrieveCredential(this.STORAGE_KEY as any);
     if (data) {
       try {
         const nodes: VFSNode[] = JSON.parse(data);
         this.memoryCache = nodes;
-        return nodes;
+        return category ? this.filterByCategory(nodes, category) : nodes;
       } catch (e) {
         console.error('[VFSService] Failed to parse VFS registry', e);
       }
@@ -41,7 +64,7 @@ class VFSService {
     
     this.memoryCache = [rootNode];
     await this.saveRegistry();
-    return this.memoryCache;
+    return category ? this.filterByCategory(this.memoryCache, category) : this.memoryCache;
   }
 
   /**
@@ -52,9 +75,13 @@ class VFSService {
     await storeCredential(this.STORAGE_KEY as any, JSON.stringify(this.memoryCache));
   }
 
-  async getDirectoryContents(parentId: string = 'root'): Promise<VFSNode[]> {
-    const nodes = await this.loadRegistry();
-    return nodes.filter(n => n.parentId === parentId);
+  async getDirectoryContents(parentId: string = 'root', category?: string): Promise<VFSNode[]> {
+    const nodes = await this.loadRegistry(); // memoryCache is populated now
+    let filtered = this.memoryCache!.filter(n => n.parentId === parentId);
+    if (category) {
+      filtered = this.filterByCategory(filtered, category);
+    }
+    return filtered;
   }
 
   async getNode(id: string): Promise<VFSNode | undefined> {

@@ -31,12 +31,24 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
   };
 
   let totalBytes = 0;
+  const categories = { images: 0, videos: 0, documents: 0, audio: 0, other: 0 };
+  
   localNodes.forEach(node => {
     if (node.type === 'file') {
-      totalBytes += node.size || 0;
+      const size = node.size || 0;
+      totalBytes += size;
+      const mime = node.mimeType || '';
+      if (mime.startsWith('image/')) categories.images += size;
+      else if (mime.startsWith('video/')) categories.videos += size;
+      else if (mime.startsWith('audio/')) categories.audio += size;
+      else if (mime.includes('pdf') || mime.includes('document') || mime.includes('text/')) categories.documents += size;
+      else categories.other += size;
     }
   });
 
+  const getPct = (val: number) => totalQuota > 0 ? (val / totalQuota) * 100 : 0;
+  const freeBytes = Math.max(0, totalQuota - totalBytes);
+  const freePct = totalQuota > 0 ? (freeBytes / totalQuota) * 100 : (totalBytes === 0 ? 100 : 0);
   const pct = totalQuota > 0 ? (totalBytes / totalQuota) * 100 : 0;
   
   // Sort for recent activity
@@ -60,13 +72,13 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
       </header>
 
       {/* Bento grid */}
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
+      <div className="grid grid-cols-12 gap-4 md:gap-6 auto-rows-[1fr]">
 
         {/* Storage Overview — large card */}
-        <div className="col-span-12 lg:col-span-8 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 md:p-8">
+        <div className="col-span-12 lg:col-span-8 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 md:p-8 flex flex-col h-full">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Current capacity</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">Current capacity</p>
               <p className="text-3xl md:text-4xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {formatSize(totalBytes)}{' '}
                 <span className="text-zinc-600 text-xl md:text-2xl">/ {totalQuota > 0 ? formatSize(totalQuota) : 'Unlimited'}</span>
@@ -78,44 +90,38 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
             </span>
           </div>
 
-          <div className="mt-10 space-y-5">
+          <div className="mt-auto pt-10 space-y-5">
             {/* Multi-segment progress bar */}
             <div className="flex h-3 gap-1 overflow-hidden rounded-full">
-              <div className="w-1/2 bg-indigo-500" />
-              <div className="w-1/6 bg-sky-400/80" />
-              <div className="w-1/12 bg-amber-400/70" />
-              <div className="flex-1 bg-[#1e1e5a]/60" />
+              {totalBytes === 0 ? (
+                <div className="w-full bg-[#1e1e5a]/60" />
+              ) : (
+                <>
+                  {categories.images > 0 && <div style={{ width: `${getPct(categories.images)}%` }} className="bg-indigo-500" />}
+                  {categories.videos > 0 && <div style={{ width: `${getPct(categories.videos)}%` }} className="bg-sky-400/80" />}
+                  {categories.documents > 0 && <div style={{ width: `${getPct(categories.documents)}%` }} className="bg-emerald-400/80" />}
+                  {categories.audio > 0 && <div style={{ width: `${getPct(categories.audio)}%` }} className="bg-amber-400/70" />}
+                  {categories.other > 0 && <div style={{ width: `${getPct(categories.other)}%` }} className="bg-rose-400/70" />}
+                  <div style={{ width: `${freePct}%` }} className="bg-[#1e1e5a]/60 flex-1" />
+                </>
+              )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-indigo-500" />Media</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-sky-400/80" />Documents</div>
-              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-amber-400/70" />Backups</div>
-              <div className="flex items-center gap-2 text-zinc-500"><span className="size-2 rounded-full bg-[#1e1e5a]" />Free</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs">
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-indigo-500" />Images</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-sky-400/80" />Videos</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-emerald-400/80" />Documents</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-amber-400/70" />Audio</div>
+              <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-rose-400/70" />Other</div>
             </div>
             <p className="text-xs text-zinc-600 mt-1">{accounts.length} Connected Account(s) · {pct.toFixed(1)}% Used</p>
           </div>
         </div>
 
-        {/* Right status cards */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-          <div className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-zinc-200">Encryption Active</p>
-              <span className="size-2 rounded-full bg-emerald-400" />
-            </div>
-            <p className="mt-1 text-xs text-zinc-500">AES-256 end-to-end active for all storage.</p>
-          </div>
-          <div className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-zinc-200">Shared Links</p>
-            </div>
-            <p className="mt-1 text-xs text-zinc-500">Manage public links &amp; expiry dates.</p>
-          </div>
-        </div>
+        {/* Empty spot to replace Right status cards, maybe just rely on auto-rows? */}
 
         {/* Quick Actions */}
-        <div className="col-span-12 lg:col-span-4 rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">Quick actions</p>
+        <div className="col-span-12 lg:col-span-4 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 flex flex-col h-full">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-4">Quick actions</p>
           <div className="grid grid-cols-1 gap-2">
             <button onClick={onUploadClick} className="flex items-center gap-3 rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-4 py-3 text-sm text-zinc-200 hover:border-indigo-500/40 transition-colors w-full text-left">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400">
@@ -139,7 +145,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
         </div>
 
         {/* Recent Activity */}
-        <div className="col-span-12 lg:col-span-8">
+        <div className="col-span-12 lg:col-span-8 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-medium text-zinc-200" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Recent activity</h3>
           </div>
@@ -154,10 +160,10 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-zinc-200">{file.name}</p>
-                        <p className="text-[11px] text-zinc-500">{formatSize(file.size || 0)}</p>
+                        <p className="text-[11px] text-zinc-400">{formatSize(file.size || 0)}</p>
                       </div>
                     </div>
-                    <span className="shrink-0 text-[11px] text-zinc-500">
+                    <span className="shrink-0 text-[11px] text-zinc-400">
                       {new Date(file.modifiedAt || file.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -165,7 +171,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
               </div>
             ) : (
               <div className="p-10 text-center">
-                <p className="text-sm text-zinc-500">No recent activity. Upload files to see them here.</p>
+                <p className="text-sm text-zinc-400">No recent activity. Upload files to see them here.</p>
               </div>
             )}
           </div>

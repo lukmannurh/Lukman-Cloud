@@ -291,7 +291,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
             {showGuestModal ? 'Guest Access Ready' : (isSignUp ? 'Create your account' : 'Sign in to Lukman Cloud')}
           </h1>
           {!showGuestModal && (
-            <p className="mt-1.5 text-sm text-zinc-500">
+            <p className="mt-1.5 text-sm text-zinc-400">
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               <button
                 onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
@@ -330,7 +330,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
 
               {/* Username */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Username</label>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400">Username</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -340,7 +340,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                   />
                   <button
                     onClick={() => copyToClipboard(guestCredentials.username)}
-                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-500 hover:text-zinc-200 transition-colors shrink-0"
+                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-400 hover:text-zinc-200 transition-colors shrink-0"
                     title="Copy Username"
                   >
                     <Copy className="w-4 h-4" />
@@ -350,7 +350,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
 
               {/* Password */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Password</label>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400">Password</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -360,7 +360,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                   />
                   <button
                     onClick={() => copyToClipboard(guestCredentials.password)}
-                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-500 hover:text-zinc-200 transition-colors shrink-0"
+                    className="grid size-11 place-items-center rounded-xl bg-[#0a0a1a]/60 border border-[#1e1e5a]/60 text-zinc-400 hover:text-zinc-200 transition-colors shrink-0"
                     title="Copy Password"
                   >
                     <Copy className="w-4 h-4" />
@@ -389,7 +389,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
               <form className="space-y-4" onSubmit={handleSubmit}>
                 {isSignUp && (
                   <div className="space-y-1.5">
-                    <label htmlFor="name" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Full Name</label>
+                    <label htmlFor="name" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400">Full Name</label>
                     <input
                       id="name"
                       name="name"
@@ -404,7 +404,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 )}
 
                 <div className="space-y-1.5">
-                  <label htmlFor="username" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Username</label>
+                  <label htmlFor="username" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400">Username</label>
                   <input
                     id="username"
                     name="username"
@@ -421,7 +421,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="password" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Password</label>
+                  <label htmlFor="password" className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400">Password</label>
                   <div className="relative">
                     <input
                       id="password"
@@ -437,7 +437,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 grid w-11 place-items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="absolute inset-y-0 right-0 grid w-11 place-items-center text-zinc-400 hover:text-zinc-300 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -464,7 +464,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                   <div className="w-full border-t border-[#1e1e5a]/40" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#141432]/0 px-3 text-[11px] uppercase tracking-widest text-zinc-500">or continue with</span>
+                  <span className="bg-[#141432]/0 px-3 text-[11px] uppercase tracking-widest text-zinc-400">or continue with</span>
                 </div>
               </div>
 
@@ -493,15 +493,14 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
                   Continue with Google
                 </button>
 
-                {/* Guest */}
                 <button
                   type="button"
                   onClick={handleGuestAccess}
                   disabled={loading}
-                  className="w-full rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors py-3 text-sm font-medium text-indigo-300 border border-indigo-500/30 flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="w-full rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors py-3 text-sm font-medium text-indigo-300 border border-indigo-500/30 flex items-center justify-center gap-2 disabled:opacity-60 min-h-[44px]"
                 >
                   <Zap className="w-4 h-4" />
-                  Instant Guest Access
+                  Continue as guest
                 </button>
               </div>
             </>
