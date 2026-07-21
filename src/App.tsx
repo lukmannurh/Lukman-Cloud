@@ -21,6 +21,7 @@ import { UploadGateway } from './components/dashboard/UploadGateway';
 import { AnonymousShareView } from './components/share/AnonymousShareView';
 
 import { VFSNode, AppConfig, PooledAccount, isGoogleDriveRef, isTelegramRef, GoogleDriveRef, TelegramRef } from './types';
+import { calculateTotalStorage } from './lib/file-categories';
 import * as Select from '@radix-ui/react-select';
 import { ChevronDown, Check } from 'lucide-react';
 
@@ -40,7 +41,7 @@ const Sidebar = ({
 }: any) => {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const totalBytes = allFlattenedNodes.reduce((sum: number, n: any) => sum + (n.size || 0), 0);
+  const totalBytes = calculateTotalStorage(allFlattenedNodes);
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -104,8 +105,8 @@ const Sidebar = ({
           
           <button 
             onClick={() => { setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'dashboard' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
+            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'dashboard' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Dashboard"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,8 +117,8 @@ const Sidebar = ({
           
           <button 
             onClick={() => { setCurrentView('vfs'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'vfs' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
+            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'vfs' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Virtual Storage"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -128,8 +129,8 @@ const Sidebar = ({
           
           <button 
             onClick={() => { setCurrentView('nodes'); setIsMobileMenuOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium overflow-hidden group relative z-10
-              ${currentView === 'nodes' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50'}`}
+            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
+              ${currentView === 'nodes' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Storage Nodes"
           >
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +143,7 @@ const Sidebar = ({
         
         {/* Unlimited Storage Widget (Google Drive Style) */}
         {!isSidebarCollapsed && (
-          <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40 flex flex-col gap-4">
+          <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40 flex flex-col gap-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             
             {/* User Profile Widget - Moved to bottom */}
             <div className="flex items-center gap-3 bg-[#1e1e5a]/20 p-2.5 rounded-xl border border-[#1e1e5a]/40 shrink-0 relative group">

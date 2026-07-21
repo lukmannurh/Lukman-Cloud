@@ -31,16 +31,8 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  let totalBytes = 0;
-  
-  localNodes.forEach(node => {
-    if (node.type === 'file') {
-      const size = node.size || 0;
-      totalBytes += size;
-    }
-  });
-
   const categories = calculateStorageBreakdown(localNodes);
+  const totalBytes = categories.total;
 
   const getPct = (val: number) => totalBytes > 0 ? (val / totalBytes) * 100 : 0;
   const freeBytes = Math.max(0, totalQuota - totalBytes);
@@ -101,19 +93,21 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
                 </>
               )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full mt-4">
               {[
                 { label: 'Images', size: categories.images, color: 'bg-indigo-500' },
                 { label: 'Videos', size: categories.videos, color: 'bg-sky-400/80' },
                 { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
                 { label: 'Other', size: categories.other, color: 'bg-rose-400/70' },
               ].map(({ label, size, color }) => (
-                <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">
-                  <span className="flex items-center gap-2 text-zinc-400">
-                    <span className={`size-2 rounded-full ${color}`} />
+                <div key={label} className="flex flex-col gap-1 p-2.5 bg-[#0a0a1a]/60 rounded-xl border border-[#1e1e5a]/40">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                    <span className={`w-2 h-2 rounded-full ${color}`} />
                     {label}
-                  </span>
-                  <span className="text-zinc-200">{formatSize(size)}</span>
+                  </div>
+                  <div className="text-sm font-semibold text-zinc-100 whitespace-nowrap">
+                    {formatSize(size)}
+                  </div>
                 </div>
               ))}
             </div>

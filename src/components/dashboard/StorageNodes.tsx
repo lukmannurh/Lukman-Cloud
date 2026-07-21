@@ -109,19 +109,21 @@ export function StorageNodes({
             <div className="flex-1 bg-[#1e1e5a]/60" />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full mt-4">
             {[
               { label: 'Images', size: categories.images, color: 'bg-indigo-500' },
               { label: 'Videos', size: categories.videos, color: 'bg-sky-400/80' },
               { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
-              { label: 'Other Data', size: categories.other, color: 'bg-rose-400/70' },
+              { label: 'Other', size: categories.other, color: 'bg-rose-400/70' },
             ].map(({ label, size, color }) => (
-              <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">
-                <span className="flex items-center gap-2 text-zinc-400">
-                  <span className={`size-2 rounded-full ${color}`} />
+              <div key={label} className="flex flex-col gap-1 p-2.5 bg-[#0a0a1a]/60 rounded-xl border border-[#1e1e5a]/40">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                  <span className={`w-2 h-2 rounded-full ${color}`} />
                   {label}
-                </span>
-                <span className="text-zinc-200">{formatSize(size)}</span>
+                </div>
+                <div className="text-sm font-semibold text-zinc-100 whitespace-nowrap">
+                  {formatSize(size)}
+                </div>
               </div>
             ))}
           </div>

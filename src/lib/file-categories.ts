@@ -52,3 +52,8 @@ export function calculateStorageBreakdown(nodes: VFSNode[]) {
 
   return breakdown;
 }
+
+export function calculateTotalStorage(nodes: VFSNode[]) {
+  return calculateStorageBreakdown(nodes).total;
+}
+
