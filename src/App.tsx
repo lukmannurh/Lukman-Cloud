@@ -39,7 +39,7 @@ const Sidebar = ({
   allFlattenedNodes = []
 }: any) => {
 
-  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const totalBytes = allFlattenedNodes.reduce((sum: number, n: any) => sum + (n.size || 0), 0);
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
