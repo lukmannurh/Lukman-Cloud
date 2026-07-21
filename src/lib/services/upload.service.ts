@@ -11,6 +11,65 @@
 import { GoogleDriveRef, TelegramRef, TelegramChunk, PooledAccount } from '../../types';
 import { supabase } from './supabaseClient';
 
+const IDB_STORE_NAME = 'upload_manifests';
+const IDB_NAME = 'LukmanCloud_Uploads';
+
+async function initUploadDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = (e: any) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+        db.createObjectStore(IDB_STORE_NAME);
+      }
+    };
+    req.onsuccess = (e: any) => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getManifest(sha256: string): Promise<TelegramChunk[]> {
+  try {
+    const db = await initUploadDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE_NAME, 'readonly');
+      const req = tx.objectStore(IDB_STORE_NAME).get(sha256);
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function saveManifestChunk(sha256: string, chunk: TelegramChunk): Promise<void> {
+  try {
+    const db = await initUploadDB();
+    const existing = await getManifest(sha256);
+    existing.push(chunk);
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+      const req = tx.objectStore(IDB_STORE_NAME).put(existing, sha256);
+      req.onsuccess = () => resolve();
+      req.onerror = () => resolve();
+    });
+  } catch (e) {
+    console.warn('[UploadService] Failed to save manifest chunk', e);
+  }
+}
+
+async function clearManifest(sha256: string): Promise<void> {
+  try {
+    const db = await initUploadDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+      const req = tx.objectStore(IDB_STORE_NAME).delete(sha256);
+      req.onsuccess = () => resolve();
+      req.onerror = () => resolve();
+    });
+  } catch (e) {}
+}
+
 const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3';
 
 /**
@@ -176,17 +235,31 @@ export class UploadService {
     // 2. Setup Chunks — 1.5 GB safely under Telegram's 2 GB limit
     const CHUNK_SIZE = 1.5 * 1024 * 1024 * 1024;
     const totalParts = Math.ceil(file.size / CHUNK_SIZE) || 1;
-    const chunks: TelegramChunk[] = [];
+    let chunks: TelegramChunk[] = [];
+
+    // Check IndexedDB for existing manifest if we have a hash
+    if (sha256Hex) {
+      const existingChunks = await getManifest(sha256Hex);
+      if (existingChunks && existingChunks.length > 0) {
+        console.info(`[UploadService] Found resumable manifest for ${file.name} with ${existingChunks.length} completed chunks.`);
+        chunks = [...existingChunks];
+      }
+    }
 
     if (onProgress) onProgress(0, '');
 
-    let loadedBytes = 0;
+    let loadedBytes = chunks.reduce((acc, c) => acc + c.chunkSize, 0);
     let lastTime = Date.now();
     let lastLoaded = 0;
 
     // 3. Upload Chunks Sequentially
     let currentWorkerIndex = 0;
     for (let i = 0; i < totalParts; i++) {
+      // Skip if already in manifest
+      if (chunks.some(c => c.partIndex === i)) {
+        continue;
+      }
+
       const activeWorker = workers[currentWorkerIndex];
       currentWorkerIndex = (currentWorkerIndex + 1) % workers.length;
       
@@ -238,14 +311,26 @@ export class UploadService {
         });
       });
 
-      chunks.push({
+      const chunkData = {
         partIndex: i,
         messageId: messageId,
         chunkSize: chunkBlob.size
-      });
+      };
+      
+      chunks.push(chunkData);
+      
+      // Save chunk progress to IndexedDB manifest
+      if (sha256Hex && messageId !== 0) {
+        await saveManifestChunk(sha256Hex, chunkData);
+      }
     }
 
     if (onProgress) onProgress(1.0);
+
+    // Clear manifest once entirely finished
+    if (sha256Hex && chunks.length === totalParts) {
+      await clearManifest(sha256Hex);
+    }
 
     // 4. Return the TelegramRef structure enforcing INV-01 and INV-02
     return {

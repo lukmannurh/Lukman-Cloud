@@ -382,14 +382,18 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
             const waitSeconds = parseInt(errMsg.split('FLOOD_WAIT_')[1]) || 5;
             console.warn(`[Telegram Worker] Hit FLOOD_WAIT_${waitSeconds}. Pausing chunk stream...`);
             await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+          } else if (errMsg.includes('TIMEOUT') || errMsg.includes('Network') || errMsg.includes('connection')) {
+            const backoff = Math.pow(2, 6 - chunkRetries) * 1000;
+            console.warn(`[Telegram Worker] Chunk upload timeout/network error. Retrying in ${backoff}ms... (${chunkRetries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, backoff));
+            chunkRetries--;
           } else {
             throw err;
           }
         }
-        chunkRetries--;
       }
       if (!chunkSuccess) {
-        throw new Error('Failed to upload chunk after multiple FLOOD_WAIT retries.');
+        throw new Error('Failed to upload chunk after multiple FLOOD_WAIT or TIMEOUT retries.');
       }
 
       // Forward real-time progress to Main Thread (plain primitives only — no BigInt)
@@ -445,14 +449,18 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
           const waitSeconds = parseInt(errMsg.split('FLOOD_WAIT_')[1]) || 5;
           console.warn(`[Telegram Worker] Hit FLOOD_WAIT_${waitSeconds} on SendMedia. Pausing...`);
           await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+        } else if (errMsg.includes('TIMEOUT') || errMsg.includes('Network') || errMsg.includes('connection')) {
+          const backoff = Math.pow(2, 6 - sendRetries) * 1000;
+          console.warn(`[Telegram Worker] SendMedia timeout/network error. Retrying in ${backoff}ms... (${sendRetries} retries left)`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
+          sendRetries--;
         } else {
           throw sendErr;
         }
       }
-      sendRetries--;
     }
     if (!sendSuccess) {
-      throw new Error('Failed to send media after multiple FLOOD_WAIT retries.');
+      throw new Error('Failed to send media after multiple FLOOD_WAIT or TIMEOUT retries.');
     }
 
     // 7. Extract message ID — GramJS returns Updates; find the Message inside

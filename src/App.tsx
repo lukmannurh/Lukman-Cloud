@@ -61,7 +61,7 @@ const Sidebar = ({
       )}
       <div 
         className={`bg-[#0a0a1a] border-r border-[#1e1e5a]/40 flex flex-col justify-between h-dvh text-zinc-300 fixed left-0 top-0 z-50 transition-all duration-200 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 pb-[env(safe-area-inset-bottom)]
         ${isSidebarCollapsed ? 'md:w-16' : 'md:w-[240px]'} w-[240px]`}
       >
         <div className="p-4 border-b border-[#1e1e5a]/40 flex items-center justify-between h-20">
@@ -469,16 +469,18 @@ export default function App() {
 
   // Task 5: Inject active upload refresh disruption life guards
   useEffect(() => {
-    const hasActiveUploads = activeTransfers.some(t => t.status.toLowerCase().includes('upload') || t.status === 'Routing...');
+    const pendingUploads = Object.values(activeUploadsTracker).filter(u => u.status === 'uploading');
+    const hasActiveUploads = pendingUploads.length > 0;
+    
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasActiveUploads) {
         e.preventDefault();
-        e.returnValue = "Upload in progress! Refreshing or closing this tab will permanently cancel the current transfer. Are you sure?";
+        e.returnValue = "Upload in progress. Leaving will pause or cancel your upload.";
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [activeTransfers]);
+  }, [activeUploadsTracker]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

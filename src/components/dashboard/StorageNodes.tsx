@@ -116,12 +116,12 @@ export function StorageNodes({
               { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
               { label: 'Other', size: categories.other, color: 'bg-rose-400/70' },
             ].map(({ label, size, color }) => (
-              <div key={label} className="flex flex-col gap-1 p-2.5 bg-[#0a0a1a]/60 rounded-xl border border-[#1e1e5a]/40">
+              <div key={label} className="flex flex-col gap-1 p-2.5 bg-[#0a0a1a]/50 rounded-xl border border-[#1e1e5a]/40 whitespace-nowrap">
                 <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
-                  <span className={`w-2 h-2 rounded-full ${color}`} />
+                  <span className={`shrink-0 w-2 h-2 rounded-full ${color}`} />
                   {label}
                 </div>
-                <div className="text-sm font-semibold text-zinc-100 whitespace-nowrap">
+                <div className="text-sm font-semibold text-zinc-100">
                   {formatSize(size)}
                 </div>
               </div>
