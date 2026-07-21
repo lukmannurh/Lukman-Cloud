@@ -173,8 +173,8 @@ export class UploadService {
       console.warn(`[UploadService] File exceeds 500MB threshold (${(file.size / 1024 / 1024).toFixed(2)} MB). Bypassing main-thread SHA-256 to prevent memory exhaustion.`);
     }
 
-    // 2. Setup Chunks — 1.9 GB safely under Telegram's 2 GB limit
-    const CHUNK_SIZE = 1.9 * 1024 * 1024 * 1024;
+    // 2. Setup Chunks — 1.5 GB safely under Telegram's 2 GB limit
+    const CHUNK_SIZE = 1.5 * 1024 * 1024 * 1024;
     const totalParts = Math.ceil(file.size / CHUNK_SIZE) || 1;
     const chunks: TelegramChunk[] = [];
 

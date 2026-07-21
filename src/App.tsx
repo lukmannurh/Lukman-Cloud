@@ -142,7 +142,7 @@ const Sidebar = ({
           <div className="px-4 py-4 mt-auto border-t border-[#1e1e5a]/40 flex flex-col gap-4">
             
             {/* User Profile Widget - Moved to bottom */}
-            <div className="flex items-center gap-3 bg-[#1e1e5a]/20 p-2.5 rounded-xl border border-[#1e1e5a]/40 shrink-0">
+            <div className="flex items-center gap-3 bg-[#1e1e5a]/20 p-2.5 rounded-xl border border-[#1e1e5a]/40 shrink-0 relative group">
               {activeUser?.image ? (
                 <div className="relative w-8 h-8 shrink-0 rounded-md overflow-hidden bg-slate-800 flex items-center justify-center">
                   <img 
@@ -166,10 +166,46 @@ const Sidebar = ({
                   {(activeUser?.name || activeUser?.username || 'L').charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex flex-col overflow-hidden flex-1">
                 <span className="text-sm font-semibold text-zinc-200 truncate">{activeUser?.name || 'User'}</span>
                 <span className="text-[10px] text-zinc-500 truncate" title={`@${activeUser?.username || 'guest'}`}>@{activeUser?.username || 'guest'}</span>
               </div>
+              <button 
+                onClick={async () => {
+                  if (!window.confirm('Sign out?')) return;
+                  try {
+                    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                      localStorage.removeItem('dev_session_user');
+                      setDevSessionUser(null);
+                      setToastMessage(null);
+                      setIsUserAuthenticated(false);
+                      setAccounts([]);
+                      setCurrentView('auth');
+                      window.location.reload();
+                      return;
+                    }
+                    setToastMessage(null); // Purge global toasts on sign out
+                    try {
+                      await authClient.signOut();
+                    } catch (e) {
+                      console.warn('[SignOut] Network failed but proceeding locally:', e);
+                    }
+                  } catch (e) {
+                    console.warn('[SignOut] Backend unreachable or sign out failed:', e);
+                  } finally {
+                    setIsUserAuthenticated(false);
+                    setAccounts([]);
+                    setCurrentView('auth');
+                    if (import.meta.env.DEV) {
+                      window.location.reload();
+                    }
+                  }
+                }}
+                className="p-1.5 rounded-md text-zinc-400 hover:text-red-400 hover:bg-[#1a1a40] transition-colors shrink-0"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
@@ -189,45 +225,6 @@ const Sidebar = ({
             </div>
           </div>
         )}
-        
-        <div className="p-3 border-t border-[#1e1e5a]/40">
-          <button 
-            className="flex w-full items-center justify-center gap-2 px-3 py-2 bg-[#141432] hover:bg-[#1a1a40] text-zinc-400 hover:text-red-400 rounded-lg transition-colors font-medium border border-[#1e1e5a]/40 overflow-hidden group"
-            onClick={async () => {
-              try {
-                if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-                  localStorage.removeItem('dev_session_user');
-                  setDevSessionUser(null);
-                  setToastMessage(null);
-                  setIsUserAuthenticated(false);
-                  setAccounts([]);
-                  setCurrentView('auth');
-                  window.location.reload();
-                  return;
-                }
-                setToastMessage(null); // Purge global toasts on sign out
-                try {
-                  await authClient.signOut();
-                } catch (e) {
-                  console.warn('[SignOut] Network failed but proceeding locally:', e);
-                }
-              } catch (e) {
-                console.warn('[SignOut] Backend unreachable or sign out failed:', e);
-              } finally {
-                setIsUserAuthenticated(false);
-                setAccounts([]);
-                setCurrentView('auth');
-                if (import.meta.env.DEV) {
-                  window.location.reload();
-                }
-              }
-            }}
-            title="Sign Out"
-          >
-            <LogOut className="w-5 h-5 shrink-0 text-rose-400 group-hover:text-rose-300 transition-colors" />
-            <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'md:opacity-0 md:w-0 hidden md:inline' : 'opacity-100'}`}>Sign Out</span>
-          </button>
-        </div>
       </div>
     </>
   );
@@ -691,13 +688,25 @@ export default function App() {
       return currentId;
     };
 
-    for (const file of files) {
-      const txId = crypto.randomUUID();
-      setActiveTransfers(prev => [...prev, { id: txId, name: file.name, status: 'Routing...', progress: 0 }]);
-      setActiveUploadsTracker(prev => ({
-        ...prev,
-        [txId]: { id: txId, fileName: file.name, progress: 0, status: 'uploading' }
-      }));
+    const pendingTransfers = files.map(file => ({ file, txId: crypto.randomUUID() }));
+    
+    setActiveTransfers(prev => [
+      ...prev,
+      ...pendingTransfers.map(p => ({ id: p.txId, name: p.file.name, status: 'Pending...', progress: 0 }))
+    ]);
+    setActiveUploadsTracker(prev => {
+      const newTracker = { ...prev };
+      pendingTransfers.forEach(p => {
+        newTracker[p.txId] = { id: p.txId, fileName: p.file.name, progress: 0, status: 'uploading' };
+      });
+      return newTracker;
+    });
+
+    let queueIndex = 0;
+    const processNext = async (): Promise<void> => {
+      if (queueIndex >= pendingTransfers.length) return;
+      const currentIndex = queueIndex++;
+      const { file, txId } = pendingTransfers[currentIndex];
 
       try {
         // ── PRIMARY: Telegram Unlimited Storage ─────────────────────────────
@@ -789,7 +798,16 @@ export default function App() {
         setToastMessage({ title: 'Upload Failed', message: `Failed to upload ${file.name}: ${err.message}`, type: 'error' });
         setTimeout(() => setToastMessage(null), 4000);
       }
+      
+      await processNext();
+    };
+
+    const CONCURRENCY_LIMIT = 3;
+    const uploadWorkers = [];
+    for (let i = 0; i < CONCURRENCY_LIMIT; i++) {
+      uploadWorkers.push(processNext());
     }
+    await Promise.all(uploadWorkers);
   };
 
   const handleGetFileUrl = async (fileNode: VFSNode, isNativeStream = false): Promise<string> => {

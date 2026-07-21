@@ -363,14 +363,34 @@ async function handleUploadFile(file: File, channelId: string, requestId: string
       // Slice natively in the browser — never loads the whole file into memory
       const chunkBuffer = Buffer.from(await file.slice(start, end).arrayBuffer());
 
-      await client!.invoke(
-        new Api.upload.SaveBigFilePart({
-          fileId,
-          filePart: i,
-          fileTotalParts: totalParts,
-          bytes: chunkBuffer,
-        })
-      );
+      let chunkSuccess = false;
+      let chunkRetries = 5;
+      while (!chunkSuccess && chunkRetries > 0) {
+        try {
+          await client!.invoke(
+            new Api.upload.SaveBigFilePart({
+              fileId,
+              filePart: i,
+              fileTotalParts: totalParts,
+              bytes: chunkBuffer,
+            })
+          );
+          chunkSuccess = true;
+        } catch (err: any) {
+          const errMsg = err.message || '';
+          if (errMsg.includes('FLOOD_WAIT_')) {
+            const waitSeconds = parseInt(errMsg.split('FLOOD_WAIT_')[1]) || 5;
+            console.warn(`[Telegram Worker] Hit FLOOD_WAIT_${waitSeconds}. Pausing chunk stream...`);
+            await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+          } else {
+            throw err;
+          }
+        }
+        chunkRetries--;
+      }
+      if (!chunkSuccess) {
+        throw new Error('Failed to upload chunk after multiple FLOOD_WAIT retries.');
+      }
 
       // Forward real-time progress to Main Thread (plain primitives only — no BigInt)
       const current = end;

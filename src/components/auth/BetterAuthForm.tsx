@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { supabase } from '../../lib/services/supabaseClient';
-import { Eye, EyeOff, CheckCircle2, Copy, Zap } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, Copy, Zap, AlertTriangle } from 'lucide-react';
 import logoAsset from '../../assets/logo.webp';
 
 export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => void }) {
@@ -273,7 +273,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
           {/* Error / Success messages */}
           {error && (
             <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
-              <span className="size-1.5 rounded-full bg-red-400 shrink-0" />
+              <AlertTriangle className="size-4 shrink-0" />
               {error}
             </div>
           )}
