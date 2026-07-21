@@ -10,13 +10,17 @@ class VFSService {
   private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
   
-  /**
-   * Retrieves the authenticated user ID from the Better Auth session token.
-   * Blocks access completely if the session context is missing.
-   */
   private async getUserId(): Promise<string> {
-    // DEV BYPASS: Allow reading from the global mock session injected by App.tsx
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && (window as any).__MOCK_SESSION_ID__) {
+    // Check for transient Guest session first (works in production Vercel)
+    const stored = localStorage.getItem('dev_session_user');
+    if (stored) {
+      try {
+        const guestUser = JSON.parse(stored);
+        if (guestUser && guestUser.id) return guestUser.id;
+      } catch (e) {}
+    }
+
+    if ((window as any).__MOCK_SESSION_ID__) {
       return (window as any).__MOCK_SESSION_ID__;
     }
 
@@ -79,16 +83,7 @@ class VFSService {
     }
 
     const userId = await this.getUserId();
-    
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && userId.startsWith('dev-')) {
-       const existingStr = localStorage.getItem(`mock_vfs_${userId}`);
-       if (existingStr) {
-         return JSON.parse(existingStr);
-       } else {
-         return [];
-       }
-    }
-    
+
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
     const { data, error } = await supabase
       .from('vfs_nodes')
@@ -120,12 +115,6 @@ class VFSService {
 
   async getDirectoryContents(parentId: string): Promise<VFSNode[]> {
     const userId = await this.getUserId();
-    
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && userId.startsWith('dev-')) {
-       const existingStr = localStorage.getItem(`mock_vfs_${userId}`) || '[]';
-       const existingNodes: VFSNode[] = JSON.parse(existingStr);
-       return existingNodes.filter(n => n.parentId === parentId);
-    }
     
     let query = supabase
       .from('vfs_nodes')
@@ -173,12 +162,6 @@ class VFSService {
   async getAllFolders(): Promise<VFSNode[]> {
     const userId = await this.getUserId();
     
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && userId.startsWith('dev-')) {
-       const existingStr = localStorage.getItem(`mock_vfs_${userId}`) || '[]';
-       const existingNodes: VFSNode[] = JSON.parse(existingStr);
-       return existingNodes.filter(n => n.type === 'folder');
-    }
-    
     const { data, error } = await supabase
       .from('vfs_nodes')
       .select('*')
@@ -195,26 +178,6 @@ class VFSService {
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${name}` : `${parent.path}/${name}`;
-    
-    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock' && userId.startsWith('dev-')) {
-       // Bypassing Supabase INSERT for folder creation
-       const newNode: VFSNode = {
-         id: `mock-folder-${Date.now()}`,
-         name,
-         type: 'folder',
-         size: 0,
-         path,
-         createdAt: new Date().toISOString(),
-         modifiedAt: new Date().toISOString(),
-         parentId: parentId,
-         children: []
-       };
-       const existingStr = localStorage.getItem(`mock_vfs_${userId}`) || '[]';
-       const existingNodes = JSON.parse(existingStr);
-       existingNodes.push(newNode);
-       localStorage.setItem(`mock_vfs_${userId}`, JSON.stringify(existingNodes));
-       return newNode;
-    }
     
     // Boundary check to prevent 409 Conflict
     let fetchQuery = supabase

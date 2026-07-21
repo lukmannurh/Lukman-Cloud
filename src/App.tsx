@@ -265,10 +265,8 @@ export default function App() {
     // Check dev mock bypass first
     const checkMockBypass = () => {
       try {
-        if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-          const stored = localStorage.getItem('dev_session_user');
-          if (stored) return JSON.parse(stored);
-        }
+        const stored = localStorage.getItem('dev_session_user');
+        if (stored) return JSON.parse(stored);
       } catch {
         return null;
       }
@@ -292,22 +290,18 @@ export default function App() {
         }
 
         try {
-          if (!mockUser) {
-            // Synchronize to public user table for foreign key constraints (vfs_nodes)
-            // This resolves the 400 Bad Request error for all users
-            await supabase.from('user').upsert({
-              id: currentUser.id,
-              name: currentUser.name || currentUser.email?.split('@')[0] || 'Unknown User',
-              email: currentUser.email,
-              username: currentUser.username || currentUser.email?.split('@')[0] || `user_${Date.now()}`,
-              image: currentUser.image || null,
-              emailVerified: true,
-              createdAt: currentUser.createdAt || new Date().toISOString(),
-              updatedAt: currentUser.updatedAt || new Date().toISOString()
-            });
-
-
-          }
+          // Synchronize to public user table for foreign key constraints (vfs_nodes)
+          // This resolves the 400 Bad Request error for all users
+          await supabase.from('user').upsert({
+            id: currentUser.id,
+            name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
+            email: currentUser.email || `${currentUser.id}@guest.local`,
+            username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
+            image: currentUser.image || null,
+            emailVerified: true,
+            createdAt: currentUser.createdAt || new Date().toISOString(),
+            updatedAt: currentUser.updatedAt || new Date().toISOString()
+          });
         } catch (e) {
           console.error('Auto-link failed', e);
         }
@@ -1544,9 +1538,16 @@ export default function App() {
                 autoFocus
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
-                    await vfsService.createFolder(newFolderName.trim(), currentFolderId);
-                    loadDirectory(currentFolderId);
-                    setNewFolderModalOpen(false);
+                    try {
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      await loadDirectory(currentFolderId);
+                      setNewFolderModalOpen(false);
+                      setNewFolderName('');
+                    } catch (err: any) {
+                      console.error('Folder creation failed:', err);
+                      setToastMessage({ title: 'Error', message: err.message || 'Failed to create folder', type: 'error' });
+                      setTimeout(() => setToastMessage(null), 4000);
+                    }
                   }
                 }}
               />
@@ -1558,9 +1559,16 @@ export default function App() {
                 disabled={!newFolderName.trim()}
                 onClick={async () => {
                   if (newFolderName.trim()) {
-                    await vfsService.createFolder(newFolderName.trim(), currentFolderId);
-                    loadDirectory(currentFolderId);
-                    setNewFolderModalOpen(false);
+                    try {
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      await loadDirectory(currentFolderId);
+                      setNewFolderModalOpen(false);
+                      setNewFolderName('');
+                    } catch (err: any) {
+                      console.error('Folder creation failed:', err);
+                      setToastMessage({ title: 'Error', message: err.message || 'Failed to create folder', type: 'error' });
+                      setTimeout(() => setToastMessage(null), 4000);
+                    }
                   }
                 }}
               >

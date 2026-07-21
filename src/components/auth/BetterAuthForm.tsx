@@ -148,9 +148,39 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
     try {
       const generatedUsername = `guest_lukman_${crypto.randomUUID()}`;
       const generatedPassword = Math.random().toString(36).slice(-10) + "X1!";
-
+      
       setGuestCredentials({ username: generatedUsername, password: generatedPassword, id: `dev-guest-${Date.now()}` });
-      setShowGuestModal(true);
+      
+      // No interstitial, sign up immediately and navigate
+      await (async () => {
+        const normalizedUsername = generatedUsername.toLowerCase();
+        const dummyEmail = `${normalizedUsername}@lukman.cloud`;
+        if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+          const LOCAL_DB_KEY = 'lukman_cloud_mock_users_db';
+          const users = JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]');
+          const newUser = {
+            id: `dev-guest-${Date.now()}`,
+            username: generatedUsername,
+            name: `Guest User`,
+            email: dummyEmail,
+            password: generatedPassword,
+            telegram_channel_id: "MOCK_CH_9922"
+          };
+          users.push(newUser);
+          localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
+          onDevBypass?.(newUser);
+          return;
+        }
+
+        const { error: guestError } = await authClient.signUp.email({
+          email: dummyEmail,
+          password: generatedPassword,
+          name: `Guest User`,
+          username: generatedUsername,
+        });
+
+        if (guestError) throw new Error(guestError.message);
+      })();
       setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Guest generation error');
@@ -238,7 +268,13 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
   };
 
   return (
-    <div className="relative min-h-dvh bg-[#0a0a1a] text-zinc-300 flex items-center justify-center px-4 py-10 selection:bg-indigo-500/30">
+    <div className="relative min-h-dvh bg-surface-1 text-zinc-300 flex items-center justify-center md:flex-row flex-col selection:bg-accent/30">
+      {/* Two column layout */}
+      <div className="hidden md:flex md:w-[60%] flex-col items-center justify-center p-12 text-center h-full">
+        <h2 className="text-display font-bold text-zinc-100 mb-6">your files, one place</h2>
+        <p className="text-h2 text-zinc-400">Secure and scalable cloud storage for your folders.</p>
+      </div>
+      <div className="w-full md:w-[40%] flex items-center justify-center p-4">
       
       {/* Ambient background glows */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -268,7 +304,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         </div>
 
         {/* Card */}
-        <div className="rounded-3xl bg-[#141432]/40 ring-1 ring-white/5 backdrop-blur-xl border border-[#1e1e5a]/40 p-7 space-y-5">
+        <div className="rounded-3xl bg-surface-2 ring-1 ring-border-subtle backdrop-blur-xl border border-border-strong p-7 space-y-5 w-full max-w-[440px]">
 
           {/* Error / Success messages */}
           {error && (
@@ -475,6 +511,7 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
         <p className="mt-6 text-center text-[11px] text-zinc-600">
           End-to-end encrypted · Unlimited private storage
         </p>
+      </div>
       </div>
     </div>
   );

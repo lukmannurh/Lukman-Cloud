@@ -11,28 +11,41 @@
 @theme {
   /* Base palette */
   --color-base:    #0a0a1a;
-  --color-surface: #141432;
-  --color-border:  #1e1e5a;
-  --color-primary: #4f46e5;
+  --color-surface-1: var(--color-base);
+  --color-surface-2: #141432;
+  --color-surface-3: #1e1e5a;
+  --color-border-subtle: #1e1e5a;
+  --color-border-strong: #2e2e7a;
+  --color-accent: #4f46e5;
+  --color-accent-foreground: #ffffff;
 
-  /* Semantic aliases */
+  /* Typography Scale */
+  --text-display: 32px;
+  --text-display--line-height: 40px;
+  --text-display--letter-spacing: -1%;
+  
+  --text-h1: 24px;
+  --text-h2: 18px;
+  --text-body: 14px;
+  --text-caption: 12px;
+
+  /* Semantic aliases (Legacy for fallback) */
   --color-background:         var(--color-base);
   --color-foreground:         #e4e4e7;
-  --color-card:               var(--color-surface);
+  --color-card:               var(--color-surface-2);
   --color-card-foreground:    #f4f4f5;
-  --color-popover:            var(--color-surface);
+  --color-popover:            var(--color-surface-3);
   --color-popover-foreground: #f4f4f5;
-  --color-primary-foreground: #ffffff;
+  --color-primary:            var(--color-accent);
+  --color-primary-foreground: var(--color-accent-foreground);
   --color-secondary:          #1f1f3d;
   --color-secondary-foreground: #e4e4e7;
   --color-muted:              #16163a;
   --color-muted-foreground:   #71717a;
-  --color-accent:             #1a1a40;
-  --color-accent-foreground:  #f4f4f5;
   --color-destructive:        #ef4444;
   --color-destructive-foreground: #ffffff;
-  --color-input:              var(--color-border);
-  --color-ring:               #4f46e5;
+  --color-input:              var(--color-border-subtle);
+  --color-ring:               var(--color-accent);
   --color-surface-overlay:    rgba(20,20,50,0.5);
 
   /* Border radius */
@@ -43,7 +56,7 @@
   --radius-xl: calc(var(--radius) + 8px);
   --radius-2xl: calc(var(--radius) + 16px);
 
-  /* Typography */
+  /* Typography Fonts */
   --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body:    "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans:    var(--font-body);
@@ -56,6 +69,17 @@
   /* Easing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Typography Utility Classes */
+@utility text-display {
+  font-size: 32px;
+  line-height: 40px;
+  letter-spacing: -0.01em;
+}
+@utility text-h1 { font-size: 24px; }
+@utility text-h2 { font-size: 18px; }
+@utility text-body { font-size: 14px; }
+@utility text-caption { font-size: 12px; }
 
 /* ── Base Reset ─────────────────────────────────────────────  */
 *, *::before, *::after { box-sizing: border-box; }
