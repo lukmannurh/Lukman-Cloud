@@ -3,6 +3,7 @@ import { PooledAccount, VFSNode } from '../../types';
 import { FileStack, ShieldCheck, RefreshCw } from 'lucide-react';
 import logoAsset from '../../assets/logo.webp';
 import { supabase } from '../../lib/services/supabaseClient';
+import { calculateStorageBreakdown } from '../../lib/file-categories';
 
 export interface TransferTask {
   id: string;
@@ -47,36 +48,13 @@ export function StorageNodes({
 
   const aggregatePercent = (totalLimit > 0 && !hasUnlimited) ? Math.min(100, Math.round((totalUsage / totalLimit) * 100)) : 0;
 
-  let imageBytes = 0;
-  let docBytes = 0;
-  let videoBytes = 0;
-  let audioBytes = 0;
-  let systemBytes = 0;
+  const categories = calculateStorageBreakdown(vfsNodes || []);
+  const totalComputed = categories.total;
 
-  (vfsNodes || []).forEach(node => {
-    if (node.type === 'file') {
-      const ext = node.name.split('.').pop()?.toLowerCase() || '';
-      const size = node.size || 0;
-      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
-        imageBytes += size;
-      } else if (['pdf', 'docx', 'txt', 'xlsx', 'csv'].includes(ext)) {
-        docBytes += size;
-      } else if (['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext)) {
-        videoBytes += size;
-      } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
-        audioBytes += size;
-      } else {
-        systemBytes += size;
-      }
-    }
-  });
-
-  const totalComputed = imageBytes + docBytes + videoBytes + audioBytes + systemBytes;
-  const imagePct = totalComputed > 0 ? (imageBytes / totalComputed) * 100 : 0;
-  const docPct = totalComputed > 0 ? (docBytes / totalComputed) * 100 : 0;
-  const videoPct = totalComputed > 0 ? (videoBytes / totalComputed) * 100 : 0;
-  const audioPct = totalComputed > 0 ? (audioBytes / totalComputed) * 100 : 0;
-  const systemPct = totalComputed > 0 ? (systemBytes / totalComputed) * 100 : 0;
+  const imagePct = totalComputed > 0 ? (categories.images / totalComputed) * 100 : 0;
+  const docPct = totalComputed > 0 ? (categories.documents / totalComputed) * 100 : 0;
+  const videoPct = totalComputed > 0 ? (categories.videos / totalComputed) * 100 : 0;
+  const systemPct = totalComputed > 0 ? (categories.other / totalComputed) * 100 : 0;
   
   const top10Files = (vfsNodes || [])
     .filter(n => n.type === 'file')
@@ -127,18 +105,16 @@ export function StorageNodes({
             <div className="transition-all duration-700 bg-indigo-500" style={{ width: `${imagePct}%` }} />
             <div className="transition-all duration-700 bg-sky-400/80" style={{ width: `${videoPct}%` }} />
             <div className="transition-all duration-700 bg-emerald-400/80" style={{ width: `${docPct}%` }} />
-            <div className="transition-all duration-700 bg-amber-400/70" style={{ width: `${audioPct}%` }} />
             <div className="transition-all duration-700 bg-rose-400/70" style={{ width: `${systemPct}%` }} />
             <div className="flex-1 bg-[#1e1e5a]/60" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             {[
-              { label: 'Images', size: imageBytes, color: 'bg-indigo-500' },
-              { label: 'Videos', size: videoBytes, color: 'bg-sky-400/80' },
-              { label: 'Documents', size: docBytes, color: 'bg-emerald-400/80' },
-              { label: 'Audio', size: audioBytes, color: 'bg-amber-400/70' },
-              { label: 'Other Data', size: systemBytes, color: 'bg-rose-400/70' },
+              { label: 'Images', size: categories.images, color: 'bg-indigo-500' },
+              { label: 'Videos', size: categories.videos, color: 'bg-sky-400/80' },
+              { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
+              { label: 'Other Data', size: categories.other, color: 'bg-rose-400/70' },
             ].map(({ label, size, color }) => (
               <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">
                 <span className="flex items-center gap-2 text-zinc-400">

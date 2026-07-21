@@ -3,6 +3,7 @@ import { vfsService } from '../../lib/services/vfs.service';
 import { PooledAccount, VFSNode } from '../../types';
 import { TransferTask } from './StorageNodes';
 import { FolderPlus, UploadCloud, Share2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { calculateStorageBreakdown } from '../../lib/file-categories';
 
 interface ExecutiveDashboardProps {
   accounts: PooledAccount[];
@@ -31,20 +32,15 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
   };
 
   let totalBytes = 0;
-  const categories = { images: 0, videos: 0, documents: 0, audio: 0, other: 0 };
   
   localNodes.forEach(node => {
     if (node.type === 'file') {
       const size = node.size || 0;
       totalBytes += size;
-      const mime = node.mimeType || '';
-      if (mime.startsWith('image/')) categories.images += size;
-      else if (mime.startsWith('video/')) categories.videos += size;
-      else if (mime.startsWith('audio/')) categories.audio += size;
-      else if (mime.includes('pdf') || mime.includes('document') || mime.includes('text/')) categories.documents += size;
-      else categories.other += size;
     }
   });
+
+  const categories = calculateStorageBreakdown(localNodes);
 
   const getPct = (val: number) => totalBytes > 0 ? (val / totalBytes) * 100 : 0;
   const freeBytes = Math.max(0, totalQuota - totalBytes);
@@ -100,7 +96,6 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
                   <div style={{ width: `${getPct(categories.images)}%` }} className="transition-all duration-700 bg-indigo-500" />
                   <div style={{ width: `${getPct(categories.videos)}%` }} className="transition-all duration-700 bg-sky-400/80" />
                   <div style={{ width: `${getPct(categories.documents)}%` }} className="transition-all duration-700 bg-emerald-400/80" />
-                  <div style={{ width: `${getPct(categories.audio)}%` }} className="transition-all duration-700 bg-amber-400/70" />
                   <div style={{ width: `${getPct(categories.other)}%` }} className="transition-all duration-700 bg-rose-400/70" />
                   {totalQuota > 0 && <div style={{ width: `${freePct}%` }} className="bg-[#1e1e5a]/60 flex-1" />}
                 </>
@@ -111,7 +106,6 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
                 { label: 'Images', size: categories.images, color: 'bg-indigo-500' },
                 { label: 'Videos', size: categories.videos, color: 'bg-sky-400/80' },
                 { label: 'Documents', size: categories.documents, color: 'bg-emerald-400/80' },
-                { label: 'Audio', size: categories.audio, color: 'bg-amber-400/70' },
                 { label: 'Other', size: categories.other, color: 'bg-rose-400/70' },
               ].map(({ label, size, color }) => (
                 <div key={label} className="flex items-center justify-between rounded-lg bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 px-3 py-2">

@@ -42,20 +42,22 @@ class VFSService {
   }
 
   private filterByCategory(nodes: VFSNode[], category: string): VFSNode[] {
+    const CATEGORY_IMAGES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+    const CATEGORY_VIDEOS = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'ogg'];
+    const CATEGORY_DOCUMENTS = ['pdf', 'docx', 'txt', 'xlsx', 'csv', 'pptx', 'ipynb'];
+
     return nodes.filter(node => {
       if (node.type === 'folder') return false;
       const ext = node.name.split('.').pop()?.toLowerCase() || '';
       switch (category.toLowerCase()) {
         case 'images':
-          return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+          return CATEGORY_IMAGES.includes(ext);
         case 'videos':
-          return ['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
+          return CATEGORY_VIDEOS.includes(ext);
         case 'documents':
-          return ['pdf', 'docx', 'txt', 'xlsx', 'csv'].includes(ext);
-        case 'audio':
-          return ['mp3', 'wav', 'ogg'].includes(ext);
+          return CATEGORY_DOCUMENTS.includes(ext);
         case 'other':
-          return !['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov', 'pdf', 'docx', 'txt', 'xlsx', 'csv', 'mp3', 'wav', 'ogg'].includes(ext);
+          return !CATEGORY_IMAGES.includes(ext) && !CATEGORY_VIDEOS.includes(ext) && !CATEGORY_DOCUMENTS.includes(ext);
         default:
           return true;
       }
@@ -129,6 +131,26 @@ class VFSService {
     nodes.forEach(n => {
       if (n.type === 'folder') {
         n.children = nodes.filter(child => child.parentId === n.id).map(child => child.id);
+      }
+    });
+    
+    // Add recursive folder size calculation
+    const calculateSize = (nodeId: string): number => {
+      const node = nodeMap.get(nodeId);
+      if (!node) return 0;
+      if (node.type === 'file') return node.size || 0;
+      let total = 0;
+      if (node.children) {
+        node.children.forEach(childId => {
+          total += calculateSize(childId);
+        });
+      }
+      return total;
+    };
+
+    nodes.forEach(n => {
+      if (n.type === 'folder') {
+        n.size = calculateSize(n.id);
       }
     });
     

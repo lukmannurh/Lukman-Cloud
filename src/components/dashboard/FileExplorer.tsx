@@ -11,13 +11,10 @@ const getFileIconInfo = (filename: string) => {
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
     return { icon: <ImageIcon className="w-8 h-8 text-emerald-500" />, borderColor: 'border-emerald-200' };
   }
-  if (['mp4', 'webm', 'ogg', 'mkv'].includes(ext)) {
+  if (['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'].includes(ext)) {
     return { icon: <VideoIcon className="w-8 h-8 text-cyan-500" />, borderColor: 'border-cyan-200' };
   }
-  if (['mp3', 'wav'].includes(ext)) {
-    return { icon: <FileAudio className="w-8 h-8 text-cyan-500" />, borderColor: 'border-cyan-200' };
-  }
-  if (['pdf', 'docx', 'txt'].includes(ext)) {
+  if (['pdf', 'docx', 'txt', 'xlsx', 'csv', 'pptx', 'ipynb'].includes(ext)) {
     return { icon: <FileText className="w-8 h-8 text-rose-500" />, borderColor: 'border-rose-200' };
   }
   if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
@@ -439,7 +436,7 @@ export function FileExplorer({
                   </div>
                   <span className="font-medium text-zinc-200 truncate text-sm" title={folder.name}>{folder.name}</span>
                 </div>
-                <div className="col-span-3 md:col-span-2 text-right text-xs text-zinc-400 font-medium">--</div>
+                <div className="col-span-3 md:col-span-2 text-right text-xs text-zinc-400 font-medium">{folder.size ? formatSize(folder.size) : '--'}</div>
                 <div className="col-span-3 md:col-span-2 hidden md:block text-right text-xs text-zinc-400 font-medium">{folder.modifiedAt ? new Date(folder.modifiedAt).toLocaleDateString() : '--'}</div>
                 <div className="col-span-3 md:col-span-1 flex justify-end shrink-0 relative">{renderContextMenu(folder)}</div>
               </div>
@@ -529,7 +526,6 @@ export function FileExplorer({
                   const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
                   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
                   const isVideo = ['mp4', 'webm', 'ogg', 'mkv'].includes(ext);
-                  const isAudio = ['mp3', 'wav', 'ogg'].includes(ext);
                   const isPdf = ext === 'pdf';
                   const isArchive = ['zip', 'rar', 'tar', 'gz'].includes(ext);
 
@@ -545,23 +541,6 @@ export function FileExplorer({
                     return (
                       <div className="w-full h-full p-4 flex items-center justify-center bg-black rounded-xl overflow-hidden">
                         <video src={previewUrl} controls className="w-full max-h-[65vh] rounded-lg shadow-sm" onError={() => setPreviewError(true)} />
-                      </div>
-                    );
-                  }
-
-                  if (isAudio) {
-                    return (
-                      <div className="w-full h-full p-8 flex items-center justify-center bg-gradient-to-br from-[#141432] to-[#0a0a1a] rounded-xl">
-                        <div className="w-full max-w-md bg-[#141432] border border-[#1e1e5a]/40 rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
-                          <div className="w-24 h-24 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                            </svg>
-                          </div>
-                          <h4 className="font-bold text-zinc-100 text-xl mb-1 truncate w-full">{previewNode.name}</h4>
-                          <p className="text-sm text-zinc-400 mb-8 tracking-wide">Audio Stream Ready</p>
-                          <audio src={previewUrl} controls className="w-full" onError={() => setPreviewError(true)} />
-                        </div>
                       </div>
                     );
                   }
