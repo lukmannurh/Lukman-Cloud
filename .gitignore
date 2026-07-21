@@ -75,3 +75,12 @@ signup_timeout.png
 
 # Design Specs
 design baru/
+
+# Testing & Screenshots Artifacts
+.artifacts/
+scratch/
+*.png
+*.mjs
+verify_vercel.mjs
+upload_test.mjs
+walkthrough.md

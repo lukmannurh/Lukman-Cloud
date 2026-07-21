@@ -192,56 +192,7 @@ export function StorageNodes({
         ))}
       </section>
 
-      {/* Connected accounts */}
-      <section className="rounded-3xl bg-[#141432]/20 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 md:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Connected accounts</h3>
-            <p className="text-sm text-zinc-400">Add a cloud account to expand your storage pool.</p>
-          </div>
-          <button
-            onClick={onAddAccount}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#1e1e5a]/60 bg-[#141432]/60 px-3.5 py-2 text-xs font-medium text-zinc-200 hover:bg-[#141432] transition-colors"
-          >
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add account
-          </button>
-        </div>
 
-        <div className="space-y-3">
-          {accounts.length === 0 ? (
-            <button
-              onClick={onAddAccount}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1e1e5a] px-4 py-6 text-sm text-zinc-400 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
-            >
-              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-              </svg>
-              Link a storage account
-            </button>
-          ) : (
-            accounts.map(acc => {
-              const pct = acc.totalQuota > 0 ? Math.min(100, Math.round((acc.usedQuota / acc.totalQuota) * 100)) : 0;
-              return (
-                <div key={acc.id} className="flex items-center justify-between rounded-2xl bg-[#0a0a1a]/50 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="grid size-10 place-items-center rounded-xl bg-white/5 ring-1 ring-white/10 text-zinc-200 text-xs font-semibold">
-                      {acc.email.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-100">{acc.email}</p>
-                      <p className="text-[11px] text-zinc-400">{formatSize(acc.usedQuota)} / {acc.totalQuota > 0 ? formatSize(acc.totalQuota) : 'Unlimited'}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer">Manage</span>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
 
       {/* Top 10 Largest Files */}
       {top10Files.length > 0 && (

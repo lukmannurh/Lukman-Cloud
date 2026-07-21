@@ -151,36 +151,8 @@ export function BetterAuthForm({ onDevBypass }: { onDevBypass?: (user: any) => v
       
       setGuestCredentials({ username: generatedUsername, password: generatedPassword, id: `dev-guest-${Date.now()}` });
       
-      // No interstitial, sign up immediately and navigate
-      await (async () => {
-        const normalizedUsername = generatedUsername.toLowerCase();
-        const dummyEmail = `${normalizedUsername}@lukman.cloud`;
-        if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-          const LOCAL_DB_KEY = 'lukman_cloud_mock_users_db';
-          const users = JSON.parse(localStorage.getItem(LOCAL_DB_KEY) || '[]');
-          const newUser = {
-            id: `dev-guest-${Date.now()}`,
-            username: generatedUsername,
-            name: `Guest User`,
-            email: dummyEmail,
-            password: generatedPassword,
-            telegram_channel_id: "MOCK_CH_9922"
-          };
-          users.push(newUser);
-          localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(users));
-          onDevBypass?.(newUser);
-          return;
-        }
-
-        const { error: guestError } = await authClient.signUp.email({
-          email: dummyEmail,
-          password: generatedPassword,
-          name: `Guest User`,
-          username: generatedUsername,
-        });
-
-        if (guestError) throw new Error(guestError.message);
-      })();
+      // Present credential modal without auto-navigating
+      setShowGuestModal(true);
       setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Guest generation error');

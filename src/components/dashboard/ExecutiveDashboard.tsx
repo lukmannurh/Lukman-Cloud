@@ -113,7 +113,6 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
               <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-amber-400/70" />Audio</div>
               <div className="flex items-center gap-2 text-zinc-400"><span className="size-2 rounded-full bg-rose-400/70" />Other</div>
             </div>
-            <p className="text-xs text-zinc-600 mt-1">{accounts.length} Connected Account(s) · {pct.toFixed(1)}% Used</p>
           </div>
         </div>
 

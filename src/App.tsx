@@ -39,6 +39,7 @@ const Sidebar = ({
   allFlattenedNodes = []
 }: any) => {
 
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const totalBytes = allFlattenedNodes.reduce((sum: number, n: any) => sum + (n.size || 0), 0);
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -173,36 +174,7 @@ const Sidebar = ({
                 <span className="text-[10px] text-zinc-400 truncate" title={`@${activeUser?.username || 'guest'}`}>@{activeUser?.username || 'guest'}</span>
               </div>
               <button 
-                onClick={async () => {
-                  if (!window.confirm('Sign out?')) return;
-                  try {
-                    if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
-                      localStorage.removeItem('dev_session_user');
-                      setDevSessionUser(null);
-                      setToastMessage(null);
-                      setIsUserAuthenticated(false);
-                      setAccounts([]);
-                      setCurrentView('auth');
-                      window.location.reload();
-                      return;
-                    }
-                    setToastMessage(null); // Purge global toasts on sign out
-                    try {
-                      await authClient.signOut();
-                    } catch (e) {
-                      console.warn('[SignOut] Network failed but proceeding locally:', e);
-                    }
-                  } catch (e) {
-                    console.warn('[SignOut] Backend unreachable or sign out failed:', e);
-                  } finally {
-                    setIsUserAuthenticated(false);
-                    setAccounts([]);
-                    setCurrentView('auth');
-                    if (import.meta.env.DEV) {
-                      window.location.reload();
-                    }
-                  }
-                }}
+                onClick={() => setShowLogoutModal(true)}
                 className="p-1.5 rounded-md text-zinc-400 hover:text-red-400 hover:bg-[#1a1a40] transition-colors shrink-0"
                 title="Sign Out"
               >
@@ -223,6 +195,60 @@ const Sidebar = ({
               </div>
               <div className="text-[10px] text-zinc-600 mt-0.5">
                 {formatSize(totalBytes)} of Unlimited used
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Logout Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)} />
+            <div className="relative bg-[#0a0a1a] border border-[#1e1e5a] rounded-xl shadow-2xl p-6 w-full max-w-sm animate-[scaleIn_0.2s_ease-out]">
+              <h2 className="text-xl font-semibold text-zinc-100 mb-2">Sign Out</h2>
+              <p className="text-sm text-zinc-400 mb-6">Are you sure you want to sign out of your account?</p>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    setShowLogoutModal(false);
+                    try {
+                      if (import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock') {
+                        localStorage.removeItem('dev_session_user');
+                        setDevSessionUser(null);
+                        setToastMessage(null);
+                        setIsUserAuthenticated(false);
+                        setAccounts([]);
+                        setCurrentView('auth');
+                        window.location.reload();
+                        return;
+                      }
+                      setToastMessage(null);
+                      try {
+                        await authClient.signOut();
+                      } catch (e) {
+                        console.warn('[SignOut] Network failed but proceeding locally:', e);
+                      }
+                    } catch (e) {
+                      console.warn('[SignOut] Backend unreachable or sign out failed:', e);
+                    } finally {
+                      setIsUserAuthenticated(false);
+                      setAccounts([]);
+                      setCurrentView('auth');
+                      if (import.meta.env.DEV) {
+                        window.location.reload();
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors"
+                >
+                  Sign Out
+                </button>
               </div>
             </div>
           </div>
@@ -264,6 +290,9 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
 
+    // Supabase Keep-Alive Ping
+    supabase.from('user').select('id').limit(1).then().catch();
+
     // Check dev mock bypass first
     const checkMockBypass = () => {
       try {
@@ -293,17 +322,19 @@ export default function App() {
 
         try {
           // Synchronize to public user table for foreign key constraints (vfs_nodes)
-          // This resolves the 400 Bad Request error for all users
-          await supabase.from('user').upsert({
-            id: currentUser.id,
-            name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
-            email: currentUser.email || `${currentUser.id}@guest.local`,
-            username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
-            image: currentUser.image || null,
-            emailVerified: true,
-            createdAt: currentUser.createdAt || new Date().toISOString(),
-            updatedAt: currentUser.updatedAt || new Date().toISOString()
-          });
+          const { data: existingUser } = await supabase.from('user').select('id').eq('id', currentUser.id).single();
+          if (!existingUser) {
+            await supabase.from('user').insert({
+              id: currentUser.id,
+              name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
+              email: currentUser.email || `${currentUser.id}@guest.local`,
+              username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
+              image: currentUser.image || null,
+              emailVerified: true,
+              createdAt: currentUser.createdAt || new Date().toISOString(),
+              updatedAt: currentUser.updatedAt || new Date().toISOString()
+            });
+          }
         } catch (e) {
           console.error('Auto-link failed', e);
         }
@@ -993,25 +1024,36 @@ export default function App() {
 
 
   const progressWidget = downloadProgress.status !== 'idle' ? (
-    <div className="fixed top-4 right-4 z-[9999] shadow-2xl rounded-xl border border-slate-800 bg-slate-950/90 backdrop-blur-md p-4 w-80 animate-[slideInRight_0.3s_ease-out]">
-      <div className="flex justify-between items-center mb-2">
+    <div className={`fixed bottom-6 right-6 z-[9999] shadow-2xl rounded-xl border border-slate-700 bg-slate-900 overflow-hidden transition-all duration-300 ${downloadProgress.isMinimized ? 'w-64 h-12' : 'w-80 h-32'}`}>
+      <div className="flex justify-between items-center bg-slate-800 px-4 py-3 cursor-pointer" onClick={() => setDownloadProgress(prev => ({ ...prev, isMinimized: !prev.isMinimized }))}>
         <h3 className="text-sm font-semibold text-white truncate pr-2" title={downloadProgress.fileName || 'file'}>
-          {downloadProgress.status === 'success' ? 'Download Complete' :
-           downloadProgress.status === 'error' ? 'Download Failed' : 
-           `Downloading ${downloadProgress.fileName || 'file'}...`}
+          {downloadProgress.status === 'success' ? 'Transfer Complete' :
+           downloadProgress.status === 'error' ? 'Transfer Failed' : 
+           `Transferring ${downloadProgress.fileName || 'file'}...`}
         </h3>
-        <span className="text-xs font-mono text-blue-400 font-bold">
-          {downloadProgress.status === 'success' ? '100%' : `${Math.round(downloadProgress.progress)}%`}
-        </span>
+        <div className="flex items-center gap-2 text-slate-400">
+          <svg className={`w-4 h-4 transition-transform ${downloadProgress.isMinimized ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
-      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-        <div 
-          className={`h-1.5 rounded-full transition-all duration-200 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
-          style={{ width: `${downloadProgress.status === 'success' ? 100 : Math.round(downloadProgress.progress)}%` }}
-        ></div>
-      </div>
-      {downloadProgress.errorMessage && (
-        <p className="mt-2 text-xs text-red-400 break-words">{downloadProgress.errorMessage}</p>
+      {!downloadProgress.isMinimized && (
+        <div className="p-4 bg-slate-900">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-mono text-blue-400 font-bold">
+              {downloadProgress.status === 'success' ? '100%' : `${Math.round(downloadProgress.progress)}%`}
+            </span>
+          </div>
+          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-200 ${downloadProgress.status === 'error' ? 'bg-red-500' : downloadProgress.status === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`}
+              style={{ width: `${downloadProgress.status === 'success' ? 100 : Math.round(downloadProgress.progress)}%` }}
+            ></div>
+          </div>
+          {downloadProgress.errorMessage && (
+            <p className="mt-2 text-xs text-red-400 break-words line-clamp-2">{downloadProgress.errorMessage}</p>
+          )}
+        </div>
       )}
     </div>
   ) : null;
@@ -1447,6 +1489,16 @@ export default function App() {
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                             </button>
                           </div>
+                          
+                          <button 
+                            onClick={() => loadDirectory(currentFolderId)}
+                            className="p-1.5 ml-2 bg-[#0a0a1a]/60 border border-[#1e1e5a]/40 text-zinc-400 rounded-lg shadow-sm hover:bg-[#1e1e5a]/40 hover:text-zinc-300 transition-colors"
+                            title="Refresh Storage"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                       
