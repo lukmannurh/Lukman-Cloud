@@ -42,9 +42,17 @@ const Sidebar = ({
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const totalBytes = calculateTotalStorage(allFlattenedNodes);
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+  const formatSize = (bytes: number | string | undefined | null) => {
+    if (bytes === undefined || bytes === null) return '0 B';
+    bytes = Number(bytes);
+    if (isNaN(bytes) || bytes === 0) return '0 B';
     const k = 1024;
+    
+    // Explicit dynamic MB to GB formatting rule
+    if (bytes >= 1000 * 1024 * 1024) {
+      return parseFloat((bytes / Math.pow(1024, 3)).toFixed(2)) + ' GB';
+    }
+
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];

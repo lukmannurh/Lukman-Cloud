@@ -57,7 +57,7 @@ export function FileExplorer({
 }: FileExplorerProps) {
   
   const [menuAlignment, setMenuAlignment] = useState<'top' | 'bottom'>('bottom');
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [activeMenuNodeId, setActiveMenuNodeId] = useState<string | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [previewNode, setPreviewNode] = useState<VFSNode | null>(null);
   const [infoNode, setInfoNode] = useState<VFSNode | null>(null);
@@ -97,7 +97,7 @@ export function FileExplorer({
   }, [initialPreviewNodeId, nodes]);
 
   useEffect(() => {
-    const handleClickOutside = () => setActiveMenuId(null);
+    const handleClickOutside = () => setActiveMenuNodeId(null);
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -237,11 +237,17 @@ export function FileExplorer({
   }
 
   const folders = nodes.filter(e => e.type === 'folder');
-  const files = nodes.filter(e => e.type === 'file');
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+  const formatSize = (bytes: number | string | undefined | null) => {
+    if (bytes === undefined || bytes === null) return '0 B';
+    bytes = Number(bytes);
+    if (isNaN(bytes) || bytes === 0) return '0 B';
     const k = 1024;
+    
+    // Explicit dynamic MB to GB formatting rule
+    if (bytes >= 1000 * 1024 * 1024) {
+      return parseFloat((bytes / Math.pow(1024, 3)).toFixed(2)) + ' GB';
+    }
+
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
@@ -254,8 +260,8 @@ export function FileExplorer({
     return (
       <div className="relative">
         <DropdownMenu.Root
-          open={activeMenuId === node.id}
-          onOpenChange={(isOpen) => setActiveMenuId(isOpen ? node.id : null)}
+          open={activeMenuNodeId === node.id}
+          onOpenChange={(isOpen) => setActiveMenuNodeId(isOpen ? node.id : null)}
         >
           <DropdownMenu.Trigger asChild>
             <button
