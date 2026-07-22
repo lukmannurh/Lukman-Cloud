@@ -94,11 +94,7 @@ export function FileExplorer({
     }
   }, [initialPreviewNodeId, nodes]);
 
-  useEffect(() => {
-    const handleClickOutside = () => setActiveMenuNodeId(null);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+
 
   useEffect(() => {
     if (!previewNode) {
@@ -280,6 +276,8 @@ export function FileExplorer({
               align="end" 
               sideOffset={5}
               collisionPadding={16}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerDownOutside={() => setActiveMenuNodeId(null)}
               className="z-[9999] bg-slate-900 border border-slate-800 shadow-2xl rounded-xl p-1 min-w-[160px]"
             >
               <DropdownMenu.Item 

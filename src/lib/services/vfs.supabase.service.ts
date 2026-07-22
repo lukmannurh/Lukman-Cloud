@@ -11,20 +11,30 @@ class VFSService {
   private readonly STORAGE_KEY = 'vfs_registry';
   
   private async getUserId(): Promise<string> {
-    // 1. Try real Supabase auth session first (with retry for async init)
+    // 1. Try authoritative Supabase auth (getUser validates JWT server-side)
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!error && user?.id) {
+        return user.id;
+      }
+    } catch (e) {
+      // getUser() failed, try getSession() as fallback
+    }
+
+    // 2. Fallback: try getSession() with brief retry for async init
     let retries = 0;
-    while (retries < 15) {
+    while (retries < 5) {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (!error && session?.user?.id) {
           return session.user.id;
         }
       } catch (e) {}
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 200));
       retries++;
     }
 
-    // 2. Check for transient Guest session (works in production Vercel)
+    // 3. Check for transient Guest session (works in production Vercel)
     const stored = localStorage.getItem('dev_session_user');
     if (stored) {
       try {
