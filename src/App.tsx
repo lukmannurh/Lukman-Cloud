@@ -421,6 +421,11 @@ export default function App() {
 
   // VFS Explorer State
   const [currentFolderId, setCurrentFolderId] = useState<string>('root');
+  const activeFolderIdRef = useRef<string>('root');
+  
+  useEffect(() => {
+    activeFolderIdRef.current = currentFolderId;
+  }, [currentFolderId]);
   const [vfsNodes, setVfsNodes] = useState<VFSNode[]>([]);
   const [loadingFolder, setLoadingFolder] = useState<boolean>(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ id: 'root', name: 'My Drive' }]);
@@ -776,14 +781,16 @@ export default function App() {
         );
 
         try {
-          const parentId = currentFolderId || null;
-          console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId, size: file.size });
+          const baseFolderId = activeFolderIdRef.current === 'root' ? null : activeFolderIdRef.current;
+          const targetParentId = await ensurePathExists(file.webkitRelativePath, baseFolderId);
+          
+          console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId: targetParentId, size: file.size });
           const newFileNode = await vfsService.addFile({
             id: crypto.randomUUID(),
             name: file.name,
             type: 'file',
             path: '',
-            parentId: parentId,
+            parentId: targetParentId,
             size: file.size,
             mimeType: file.type || 'application/octet-stream',
             createdAt: new Date().toISOString(),
@@ -797,10 +804,11 @@ export default function App() {
             rawRef: tgRef as TelegramRef,
             telegramChannelId: (tgRef as TelegramRef).channelId
           });
+          
           console.log('[VFS Persistence] Insert success! Refreshing directory...');
           
-          // Force-refresh VFS registry so new files appear instantly in UI
-          await loadDirectory(currentFolderId);
+          // Refresh directory to show the newly added file if we are in the target directory, or just load active
+          await loadDirectory(activeFolderIdRef.current);
         } catch (err: any) {
           console.error('[VFS Persistence ERROR] Failed to record metadata in Supabase:', err);
           alert(`Failed to save ${file.name} to database: ${err.message}`);
