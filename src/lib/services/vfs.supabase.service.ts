@@ -114,6 +114,11 @@ class VFSService {
     }
 
     const userId = await this.getUserId(overrideUserId);
+    
+    // Explicitly wake up Supabase Session to attach JWT for RLS
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[VFS Auth Check] Active Session Token Present (loadRegistry):', !!session?.access_token);
+    
     console.log('[VFS READ] Querying nodes (loadRegistry) for user_id:', userId);
 
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
@@ -171,8 +176,13 @@ class VFSService {
 
 
 
-  async getDirectoryContents(parentId: string, category?: string, overrideUserId?: string): Promise<VFSNode[]> {
+  async getDirectoryContents(parentId: string | null, category?: string, overrideUserId?: string): Promise<VFSNode[]> {
     const userId = await this.getUserId(overrideUserId);
+    
+    // Explicitly wake up Supabase Session to attach JWT for RLS
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[VFS Auth Check] Active Session Token Present (getDirectoryContents):', !!session?.access_token);
+    
     console.log('[VFS READ] Querying nodes (getDirectoryContents) for user_id:', userId, 'parentId:', parentId);
     
     let query = supabase
@@ -180,7 +190,7 @@ class VFSService {
       .select('*')
       .eq('user_id', userId);
       
-    if (parentId === 'root') {
+    if (parentId === 'root' || parentId === null || parentId === undefined) {
       query = query.is('parent_id', null);
     } else {
       query = query.eq('parent_id', parentId);
@@ -199,8 +209,8 @@ class VFSService {
     return nodes;
   }
 
-  async getNode(id: string): Promise<VFSNode | undefined> {
-    if (id === 'root') {
+  async getNode(id: string | null): Promise<VFSNode | undefined> {
+    if (id === 'root' || id === null) {
       return {
         id: 'root',
         name: 'Root',
@@ -228,8 +238,12 @@ class VFSService {
     return data ? this.mapRowToNode(data) : undefined;
   }
 
-  async getAllFolders(): Promise<VFSNode[]> {
-    const userId = await this.getUserId();
+  async getAllFolders(overrideUserId?: string): Promise<VFSNode[]> {
+    const userId = await this.getUserId(overrideUserId);
+    
+    // Explicitly wake up Supabase Session to attach JWT for RLS
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[VFS Auth Check] Active Session Token Present (getAllFolders):', !!session?.access_token);
     
     const { data, error } = await supabase
       .from('vfs_nodes')
@@ -244,8 +258,13 @@ class VFSService {
     return data.map(this.mapRowToNode);
   }
 
-  async createFolder(name: string, parentId: string, overrideUserId?: string): Promise<VFSNode> {
+  async createFolder(name: string, parentId: string | null, overrideUserId?: string): Promise<VFSNode> {
     const userId = await this.getUserId(overrideUserId);
+    
+    // Explicitly wake up Supabase Session to attach JWT for RLS
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[VFS Auth Check] Active Session Token Present (createFolder):', !!session?.access_token);
+    
     const parent = await this.getNode(parentId);
     if (!parent) throw new Error('Parent not found');
     
@@ -260,7 +279,7 @@ class VFSService {
       .eq('name', name)
       .eq('is_folder', true);
       
-    if (parentId === 'root') fetchQuery = fetchQuery.is('parent_id', null);
+    if (parentId === 'root' || parentId === null) fetchQuery = fetchQuery.is('parent_id', null);
     else fetchQuery = fetchQuery.eq('parent_id', parentId);
     
     const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
@@ -305,7 +324,12 @@ class VFSService {
 
   async addFile(fileNode: Omit<VFSNode, 'children'>, overrideUserId?: string): Promise<VFSNode> {
     const userId = await this.getUserId(overrideUserId);
-    const parent = await this.getNode(fileNode.parentId || 'root');
+    
+    // Explicitly wake up Supabase Session to attach JWT for RLS
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[VFS Auth Check] Active Session Token Present (addFile):', !!session?.access_token);
+    
+    const parent = await this.getNode(fileNode.parentId);
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;

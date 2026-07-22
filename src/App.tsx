@@ -736,10 +736,10 @@ export default function App() {
 
       let currentId = rootFolderId;
       for (const part of parts) {
-        const folders = await vfsService.getAllFolders();
+        const folders = await vfsService.getAllFolders(activeUser?.id);
         let existing = folders.find(f => f.parentId === currentId && f.name === part);
         if (!existing) {
-          existing = await vfsService.createFolder(part, currentId);
+          existing = await vfsService.createFolder(part, currentId, activeUser?.id);
         }
         currentId = existing.id;
       }
