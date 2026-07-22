@@ -781,8 +781,9 @@ export default function App() {
         );
 
         try {
-          const baseFolderId = activeFolderIdRef.current === 'root' ? null : activeFolderIdRef.current;
-          const targetParentId = await ensurePathExists(file.webkitRelativePath, baseFolderId);
+          // Dynamically evaluate parent_id at the moment of insertion
+          const activeTargetFolderId = activeFolderIdRef.current === 'root' ? null : activeFolderIdRef.current;
+          const targetParentId = await ensurePathExists(file.webkitRelativePath, activeTargetFolderId as any);
           
           console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId: targetParentId, size: file.size });
           const newFileNode = await vfsService.addFile({
@@ -808,7 +809,7 @@ export default function App() {
           console.log('[VFS Persistence] Insert success! Refreshing directory...');
           
           // Refresh directory to show the newly added file if we are in the target directory, or just load active
-          await loadDirectory(activeFolderIdRef.current);
+          await loadDirectory(targetParentId || 'root');
         } catch (err: any) {
           console.error('[VFS Persistence ERROR] Failed to record metadata in Supabase:', err);
           alert(`Failed to save ${file.name} to database: ${err.message}`);
