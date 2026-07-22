@@ -453,7 +453,10 @@ class VFSService {
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase moveNode error:', error);
+      throw error;
+    }
     
     // We also should recursively update paths for children if it's a folder, 
     // but for now we update the parent reference which is the main foreign key.
@@ -507,7 +510,10 @@ class VFSService {
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase renameNode error:', error);
+      throw error;
+    }
     return this.mapRowToNode(data);
   }
 }
