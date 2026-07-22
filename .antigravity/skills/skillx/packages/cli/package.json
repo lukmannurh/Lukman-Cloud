@@ -1,0 +1,40 @@
+{
+  "name": "skillx-sh",
+  "version": "0.3.0",
+  "description": "The Only Skill That Your AI Agent Needs.",
+  "type": "module",
+  "bin": {
+    "skillx": "./bin/skillx.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "conf": "^13.0.0",
+    "ora": "^8.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "ai",
+    "skills",
+    "agent",
+    "marketplace",
+    "claude"
+  ]
+}

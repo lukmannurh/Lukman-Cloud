@@ -1764,7 +1764,7 @@ export default function App() {
       )}
 
       {/* Floating Upload Progress Telemetry */}
-      {Object.keys(activeUploadsTracker).length > 0 && (
+      {Object.values(activeUploadsTracker).filter(u => u.status === 'uploading' || u.status === 'queued').length > 0 && (
         isUploadMinimized ? (
           <div className="fixed bottom-4 right-4 z-50 bg-slate-900 border border-indigo-500/30 p-2 rounded-full shadow-2xl animate-bounce flex items-center gap-3 pr-4 cursor-pointer hover:bg-slate-800 transition-colors"
                onClick={() => setIsUploadMinimized(false)}>

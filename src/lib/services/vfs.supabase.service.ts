@@ -138,7 +138,7 @@ class VFSService {
     const calculateSize = (nodeId: string): number => {
       const node = nodeMap.get(nodeId);
       if (!node) return 0;
-      if (node.type === 'file') return node.size || 0;
+      if (node.type === 'file') return Number(node.size) || 0;
       let total = 0;
       if (node.children) {
         node.children.forEach(childId => {

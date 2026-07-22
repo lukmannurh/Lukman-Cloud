@@ -1,0 +1,5 @@
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+ADMIN_SECRET=your_admin_secret
+TURNSTILE_SECRET=your_turnstile_secret
+BETTER_AUTH_SECRET=your_better_auth_secret

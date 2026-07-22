@@ -37,7 +37,7 @@ export function calculateStorageBreakdown(nodes: VFSNode[]) {
 
   nodes.forEach(node => {
     if (node.type === 'file') {
-      const size = node.size || 0;
+      const size = Number(node.size) || 0;
       breakdown.total += size;
       const category = getFileCategory(node.name, node.mimeType);
       

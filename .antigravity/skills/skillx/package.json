@@ -1,0 +1,27 @@
+{
+  "name": "skillx",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "typecheck": "pnpm --filter web typecheck",
+    "deploy": "pnpm --filter web deploy",
+    "seed": "node scripts/seed-skills.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}

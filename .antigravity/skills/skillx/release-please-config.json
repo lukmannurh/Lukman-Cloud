@@ -1,0 +1,10 @@
+{
+  "packages": {
+    "packages/cli": {
+      "release-type": "node",
+      "package-name": "skillx-sh",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true
+    }
+  }
+}

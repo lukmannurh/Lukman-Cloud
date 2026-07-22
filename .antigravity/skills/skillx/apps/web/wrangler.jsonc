@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "skillx-web",
+  "compatibility_date": "2026-02-05",
+  "main": "./workers/app.ts",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  // Custom domains configured via Cloudflare dashboard (skillx.sh, www.skillx.sh)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "skillx-db",
+      "database_id": "cc79aa75-f43d-47c3-b1f8-b0317a547144",
+      "migrations_dir": "drizzle/migrations"
+    }
+  ],
+  "vectorize": [
+    {
+      "binding": "VECTORIZE",
+      "index_name": "skillx-skills"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "3d4594dc42124efdad7aba2da677ffac"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "skillx-assets"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "ENVIRONMENT": "production"
+  }
+}

@@ -1,0 +1,39 @@
+.DS_Store
+node_modules/
+*.tsbuildinfo
+dist/
+
+# Environment
+.env
+.env.local
+.dev.vars*
+!.dev.vars.example
+!.env.example
+credentials.md
+
+# React Router
+.react-router/
+build/
+
+# Cloudflare
+.mf
+.wrangler
+worker-configuration.d.ts
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Scraper & seed data
+scripts/scrape-progress.json
+scripts/scraped-skills.json
+scripts/.fetch-progress.json
+scripts/.fetch-all-progress.json
+scripts/.seed-progress.json
+scripts/.content-fetch-progress.json
+scripts/seed-data.json
+scripts/seed-batches/
+
+# OS
+Thumbs.db
