@@ -280,7 +280,7 @@ export function FileExplorer({
               align="end" 
               sideOffset={5}
               collisionPadding={16}
-              className="w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[9999] text-sm font-medium animate-[scaleIn_0.1s_ease-out]"
+              className="w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[9999] text-sm font-medium data-[state=open]:animate-[scaleIn_0.1s_ease-out]"
             >
               <DropdownMenu.Item 
                 onClick={(e) => { e.stopPropagation(); setDownloadConfirmNode(node); }}
