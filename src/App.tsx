@@ -1805,7 +1805,9 @@ export default function App() {
             </div>
             
             <div className="p-4 flex flex-col gap-4 max-h-64 overflow-y-auto custom-scrollbar">
-              {Object.values(activeUploadsTracker).map(upload => (
+              {Object.values(activeUploadsTracker)
+                .filter(u => u.status === 'uploading' || u.status === 'queued' || u.status === 'error')
+                .map(upload => (
                 <div key={upload.id} className="border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
                   <div className="flex justify-between items-start mb-2">
                     <div className="truncate pr-4 flex-1">

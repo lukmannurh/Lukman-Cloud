@@ -251,7 +251,10 @@ export function FileExplorer({
     const isRoot = node.id === 'root' || node.name === 'Root';
     return (
       <div className="relative">
-        <DropdownMenu.Root>
+        <DropdownMenu.Root
+          open={activeMenuId === node.id}
+          onOpenChange={(isOpen) => setActiveMenuId(isOpen ? node.id : null)}
+        >
           <DropdownMenu.Trigger asChild>
             <button
               data-testid={`context-menu-${node.name}`}
