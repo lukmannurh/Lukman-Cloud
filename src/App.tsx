@@ -606,7 +606,7 @@ export default function App() {
     setLoadingFolder(true);
     try {
       // Crawl the entire global VFS registry for the dashboard metrics
-      const globalRegistry = await vfsService.loadRegistry();
+      const globalRegistry = await vfsService.loadRegistry(undefined, activeUser?.id);
       setAllFlattenedNodes(globalRegistry);
       
       // Filter for the specific VFS viewport
@@ -813,7 +813,7 @@ export default function App() {
             },
             rawRef: tgRef as TelegramRef,
             telegramChannelId: (tgRef as TelegramRef).channelId
-          });
+          }, activeUser?.id);
           
           console.log('[VFS Persistence] Insert success! Refreshing directory...');
           

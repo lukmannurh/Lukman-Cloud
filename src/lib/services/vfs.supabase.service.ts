@@ -10,7 +10,9 @@ class VFSService {
   private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
   
-  private async getUserId(): Promise<string> {
+  private async getUserId(overrideUserId?: string): Promise<string> {
+    if (overrideUserId) return overrideUserId;
+
     // 1. Try authoritative Supabase auth (getUser validates JWT server-side)
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -94,19 +96,16 @@ class VFSService {
     };
   }
 
-  async loadRegistry(category?: string): Promise<VFSNode[]> {
+  async loadRegistry(category?: string, overrideUserId?: string): Promise<VFSNode[]> {
     if (import.meta.env.MODE === 'test') {
       if (this.memoryCache) return this.memoryCache;
       const data = await retrieveCredential(this.STORAGE_KEY as any);
       if (data) {
-        try {
-          const nodes = JSON.parse(data);
-          this.memoryCache = nodes;
-          return nodes;
-        } catch (e) {}
+        this.memoryCache = JSON.parse(data);
+        return this.memoryCache!;
       }
       const rootNode: VFSNode = {
-        id: 'root', name: 'Root', type: 'folder', path: '/', parentId: null, children: [],
+        id: 'root', name: 'Root', type: 'folder', path: '/', parentId: null, size: 0,
         createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString()
       };
       this.memoryCache = [rootNode];
@@ -114,7 +113,8 @@ class VFSService {
       return this.memoryCache;
     }
 
-    const userId = await this.getUserId();
+    const userId = await this.getUserId(overrideUserId);
+    console.log('[VFS READ] Querying nodes (loadRegistry) for user_id:', userId);
 
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
     const { data, error } = await supabase
@@ -171,8 +171,9 @@ class VFSService {
 
 
 
-  async getDirectoryContents(parentId: string, category?: string): Promise<VFSNode[]> {
-    const userId = await this.getUserId();
+  async getDirectoryContents(parentId: string, category?: string, overrideUserId?: string): Promise<VFSNode[]> {
+    const userId = await this.getUserId(overrideUserId);
+    console.log('[VFS READ] Querying nodes (getDirectoryContents) for user_id:', userId, 'parentId:', parentId);
     
     let query = supabase
       .from('vfs_nodes')
@@ -243,12 +244,13 @@ class VFSService {
     return data.map(this.mapRowToNode);
   }
 
-  async createFolder(name: string, parentId: string): Promise<VFSNode> {
-    const userId = await this.getUserId();
+  async createFolder(name: string, parentId: string, overrideUserId?: string): Promise<VFSNode> {
+    const userId = await this.getUserId(overrideUserId);
     const parent = await this.getNode(parentId);
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${name}` : `${parent.path}/${name}`;
+    console.log('[VFS WRITE] Inserting folder with user_id:', userId, 'name:', name);
     
     // Boundary check to prevent 409 Conflict
     let fetchQuery = supabase
@@ -301,12 +303,13 @@ class VFSService {
     return this.mapRowToNode(data);
   }
 
-  async addFile(fileNode: Omit<VFSNode, 'children'>): Promise<VFSNode> {
-    const userId = await this.getUserId();
+  async addFile(fileNode: Omit<VFSNode, 'children'>, overrideUserId?: string): Promise<VFSNode> {
+    const userId = await this.getUserId(overrideUserId);
     const parent = await this.getNode(fileNode.parentId || 'root');
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
+    console.log('[VFS WRITE] Inserting file node with user_id:', userId, 'name:', fileNode.name);
     
     // Boundary check to prevent 409 Conflict
     let fetchQuery = supabase
