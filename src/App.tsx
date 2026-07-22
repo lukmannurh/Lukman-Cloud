@@ -775,30 +775,36 @@ export default function App() {
           }
         );
 
-        const targetParentId = await ensurePathExists(file.webkitRelativePath, currentFolderId);
-
-        const newFileNode = await vfsService.addFile({
-          id: crypto.randomUUID(),
-          name: file.name,
-          type: 'file',
-          path: '',
-          parentId: targetParentId,
-          size: file.size,
-          mimeType: file.type || 'application/octet-stream',
-          createdAt: new Date().toISOString(),
-          modifiedAt: new Date().toISOString(),
-          storageRef: { 
-            provider: 'telegram', 
-            channel_id: (tgRef as TelegramRef).channelId,
-            message_id: (tgRef as TelegramRef).chunks[0]?.messageId,
-            fileId: (tgRef as TelegramRef).channelId
-          },
-          rawRef: tgRef as TelegramRef,
-          telegramChannelId: (tgRef as TelegramRef).channelId
-        });
-
-        // Force-refresh VFS registry so new files appear instantly in UI
-        await loadDirectory(currentFolderId);
+        try {
+          const parentId = currentFolderId || null;
+          console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId, size: file.size });
+          const newFileNode = await vfsService.addFile({
+            id: crypto.randomUUID(),
+            name: file.name,
+            type: 'file',
+            path: '',
+            parentId: parentId,
+            size: file.size,
+            mimeType: file.type || 'application/octet-stream',
+            createdAt: new Date().toISOString(),
+            modifiedAt: new Date().toISOString(),
+            storageRef: { 
+              provider: 'telegram', 
+              channel_id: (tgRef as TelegramRef).channelId,
+              message_id: (tgRef as TelegramRef).chunks[0]?.messageId,
+              fileId: (tgRef as TelegramRef).channelId
+            },
+            rawRef: tgRef as TelegramRef,
+            telegramChannelId: (tgRef as TelegramRef).channelId
+          });
+          console.log('[VFS Persistence] Insert success! Refreshing directory...');
+          
+          // Force-refresh VFS registry so new files appear instantly in UI
+          await loadDirectory(currentFolderId);
+        } catch (err: any) {
+          console.error('[VFS Persistence ERROR] Failed to record metadata in Supabase:', err);
+          alert(`Failed to save ${file.name} to database: ${err.message}`);
+        }
 
         // ── SECONDARY: Google Drive Mirror (if toggle is ON) ─────────────────
         if (gdriveMirrorEnabled && accounts.length > 0) {
