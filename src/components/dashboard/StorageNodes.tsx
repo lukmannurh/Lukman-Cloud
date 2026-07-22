@@ -17,13 +17,15 @@ interface StorageNodesProps {
   vfsNodes: VFSNode[];
   onAddAccount: () => void;
   activeTransfers: TransferTask[];
+  onNavigateToFile?: (parentId: string, fileId: string) => void;
 }
 
 export function StorageNodes({
   accounts,
   vfsNodes,
   onAddAccount,
-  activeTransfers
+  activeTransfers,
+  onNavigateToFile
 }: StorageNodesProps) {
   // Secure configurations are now globally hardcoded.
 
@@ -181,7 +183,10 @@ export function StorageNodes({
           </div>
           <div className="space-y-2">
             {top10Files.map((file, index) => (
-              <div key={file.id} className="flex flex-wrap items-center justify-between gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors">
+              <div key={file.id} 
+                className="flex flex-wrap items-center justify-between gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+                onClick={() => onNavigateToFile?.(file.parentId || 'root', file.id)}
+              >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   <div className="w-6 text-center text-xs font-bold text-zinc-400 shrink-0">#{index + 1}</div>
                   <div className="min-w-0 flex-1">

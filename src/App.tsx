@@ -458,6 +458,14 @@ export default function App() {
   const [sortKey, setSortKey] = useState<'Alphabetical' | 'Last Modified' | 'File Size'>('Alphabetical');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+
+  const handleNavigateToFile = (parentId: string, fileId: string) => {
+    setCurrentView('vfs');
+    setCurrentFolderId(parentId);
+    setHighlightedNodeId(fileId);
+    setTimeout(() => setHighlightedNodeId(null), 3000);
+  };
+
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isGridView, setIsGridView] = useState(true);
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
@@ -799,20 +807,15 @@ export default function App() {
           }
         }
 
-        setActiveTransfers(prev => prev.map(t =>
-          t.id === txId ? { ...t, status: 'Complete', progress: 100 } : t
-        ));
-        setActiveUploadsTracker(prev => ({
-          ...prev,
-          [txId]: { ...prev[txId], status: 'success', progress: 100 }
-        }));
-        setTimeout(() => {
-          setActiveUploadsTracker(prev => {
-            const allSuccess = Object.values(prev).every(u => u.status === 'success');
-            return allSuccess ? {} : prev;
-          });
-        }, 4000);
-        setTimeout(() => setActiveTransfers(prev => prev.filter(t => t.id !== txId)), 3000);
+        // Progressive Instant Insertion:
+        // Immediately remove completed items from active queues so the total upload count decrements 
+        // in real-time, and the completed file appears instantly via the loadDirectory() call above.
+        setActiveTransfers(prev => prev.filter(t => t.id !== txId));
+        setActiveUploadsTracker(prev => {
+          const next = { ...prev };
+          next[txId] = { ...next[txId], status: 'success', progress: 100 };
+          return next;
+        });
 
       } catch (err: any) {
         console.error('[Upload] Telegram process failed:', err);
@@ -1253,6 +1256,7 @@ export default function App() {
                   onUploadClick={() => fileInputRef.current?.click()}
                   onNewFolderClick={() => setNewFolderModalOpen(true)}
                   onSharedLinksClick={() => setCurrentView('vfs')}
+                  onNavigateToFile={handleNavigateToFile}
                 />
               </div>
             </div>
@@ -1566,6 +1570,7 @@ export default function App() {
                 <StorageNodes 
                   accounts={accounts}
                   vfsNodes={allFlattenedNodes}
+                  onNavigateToFile={handleNavigateToFile}
                   onAddAccount={() => {
                     initiateGoogleLogin(
                       async (data) => {
@@ -1765,7 +1770,7 @@ export default function App() {
                onClick={() => setIsUploadMinimized(false)}>
             <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
             <span className="text-sm font-bold text-indigo-400">
-              Uploading {Object.keys(activeUploadsTracker).length} items
+              Uploading {Object.values(activeUploadsTracker).filter(u => u.status === 'uploading').length} items
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Maximize</span>
           </div>
@@ -1773,7 +1778,7 @@ export default function App() {
           <div className="fixed bottom-4 right-4 z-50 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl animate-[fadeIn_0.3s_ease-out] overflow-hidden flex flex-col">
             <div className="bg-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
               <h3 className="text-sm font-semibold text-white">
-                Uploading {Object.keys(activeUploadsTracker).length} items...
+                Uploading {Object.values(activeUploadsTracker).filter(u => u.status === 'uploading').length} items...
               </h3>
               <div className="flex items-center gap-1">
                 <button 
@@ -1785,15 +1790,17 @@ export default function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                   </svg>
                 </button>
-                <button 
-                  onClick={() => setActiveUploadsTracker({})}
-                  className="text-slate-400 hover:text-white p-1 rounded-full focus:outline-none hover:bg-slate-700 transition-colors"
-                  title="Close"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {!Object.values(activeUploadsTracker).some(u => u.status === 'uploading') && (
+                  <button 
+                    onClick={() => setActiveUploadsTracker({})}
+                    className="text-slate-400 hover:text-white p-1 rounded-full focus:outline-none hover:bg-slate-700 transition-colors"
+                    title="Close"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
             

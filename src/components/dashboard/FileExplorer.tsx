@@ -5,6 +5,7 @@ import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, D
 import { DirectoryPickerModal } from './DirectoryPickerModal';
 import { supabase } from '../../lib/services/supabaseClient';
 import { Skeleton } from '../ui/Skeleton';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 const getFileIconInfo = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -250,87 +251,87 @@ export function FileExplorer({
     const isRoot = node.id === 'root' || node.name === 'Root';
     return (
       <div className="relative">
-        <button
-          data-testid={`context-menu-${node.name}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            const rect = e.currentTarget.getBoundingClientRect();
-            if (window.innerHeight - rect.bottom < 300) {
-              setMenuAlignment('top');
-            } else {
-              setMenuAlignment('bottom');
-            }
-            setActiveMenuId(activeMenuId === node.id ? null : node.id);
-          }}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors"
-        >
-          <span className="sr-only">Menu</span>
-          ⋮
-        </button>
-        {activeMenuId === node.id && (
-          <div className={`absolute right-0 ${menuAlignment === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[60] text-sm font-medium`}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setDownloadConfirmNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 hover:text-indigo-400 transition-colors flex items-center gap-2"
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              data-testid={`context-menu-${node.name}`}
+              onClick={(e) => { e.stopPropagation(); }}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors outline-none"
             >
-              <Download className="w-4 h-4" /> Download
+              <span className="sr-only">Menu</span>
+              ⋮
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'copy' }); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content 
+              side="bottom"
+              align="end" 
+              sideOffset={5}
+              collisionPadding={16}
+              className="w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[9999] text-sm font-medium animate-[scaleIn_0.1s_ease-out]"
             >
-              <Copy className="w-4 h-4" /> Make a copy
-            </button>
-            {!isRoot && (
-              <>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setPickerModalNode({ node, type: 'move' }); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2"
-                >
-                  <Folder className="w-4 h-4" /> Move to
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setRenameInput(node.name); setRenameNode(node); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
-                >
-                  <Edit2 className="w-4 h-4" /> Rename
-                </button>
-              </>
-            )}
-            <button 
-              onClick={async (e) => { 
-                e.stopPropagation(); 
-                setActiveMenuId(null); 
-                try {
-                  await supabase.from('vfs_nodes').update({ is_shared: true }).eq('id', node.id);
-                } catch(err) {
-                  console.error('Failed to update share status', err);
-                }
-                const link = window.location.origin + '/share/' + btoa(node.id);
-                navigator.clipboard.writeText(link);
-                setToastMessage('Secure Share Link Copied to Clipboard');
-                setTimeout(() => setToastMessage(null), 3000);
-              }}
-              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2"
-            >
-              <Link className="w-4 h-4" /> Share link
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setInfoNode(node); }}
-              className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
-            >
-              <Info className="w-4 h-4" /> Details
-            </button>
-            {!isRoot && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); setDeleteNode(node); }}
-                className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-400 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40"
+              <DropdownMenu.Item 
+                onClick={(e) => { e.stopPropagation(); setDownloadConfirmNode(node); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 hover:text-indigo-400 transition-colors flex items-center gap-2 cursor-pointer outline-none"
               >
-                <X className="w-4 h-4" /> Delete
-              </button>
-            )}
-          </div>
-        )}
+                <Download className="w-4 h-4" /> Download
+              </DropdownMenu.Item>
+              <DropdownMenu.Item 
+                onClick={(e) => { e.stopPropagation(); setPickerModalNode({ node, type: 'copy' }); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40 cursor-pointer outline-none"
+              >
+                <Copy className="w-4 h-4" /> Make a copy
+              </DropdownMenu.Item>
+              {!isRoot && (
+                <>
+                  <DropdownMenu.Item 
+                    onClick={(e) => { e.stopPropagation(); setPickerModalNode({ node, type: 'move' }); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 cursor-pointer outline-none"
+                  >
+                    <Folder className="w-4 h-4" /> Move to
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item 
+                    onClick={(e) => { e.stopPropagation(); setRenameInput(node.name); setRenameNode(node); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40 cursor-pointer outline-none"
+                  >
+                    <Edit2 className="w-4 h-4" /> Rename
+                  </DropdownMenu.Item>
+                </>
+              )}
+              <DropdownMenu.Item 
+                onClick={async (e) => { 
+                  e.stopPropagation(); 
+                  try {
+                    await supabase.from('vfs_nodes').update({ is_shared: true }).eq('id', node.id);
+                  } catch(err) {
+                    console.error('Failed to update share status', err);
+                  }
+                  const link = window.location.origin + '/share/' + btoa(node.id);
+                  navigator.clipboard.writeText(link);
+                  setToastMessage('Secure Share Link Copied to Clipboard');
+                  setTimeout(() => setToastMessage(null), 3000);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 cursor-pointer outline-none"
+              >
+                <Link className="w-4 h-4" /> Share link
+              </DropdownMenu.Item>
+              <DropdownMenu.Item 
+                onClick={(e) => { e.stopPropagation(); setInfoNode(node); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#1e1e5a]/40 text-zinc-300 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40 cursor-pointer outline-none"
+              >
+                <Info className="w-4 h-4" /> Details
+              </DropdownMenu.Item>
+              {!isRoot && (
+                <DropdownMenu.Item 
+                  onClick={(e) => { e.stopPropagation(); setDeleteNode(node); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-400 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40 cursor-pointer outline-none"
+                >
+                  <X className="w-4 h-4" /> Delete
+                </DropdownMenu.Item>
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     );
   };
@@ -357,7 +358,7 @@ export function FileExplorer({
                 }
               }}
             >
-              <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-indigo-400 bg-indigo-500/10 scale-[1.02]' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-[#1e1e5a]/40'}`}>
+              <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === folder.id ? 'border-2 border-indigo-400 bg-indigo-500/10 scale-[1.02] ring-2 ring-indigo-500 animate-pulse' : dragOverFolderId === folder.id ? 'border-2 border-indigo-500 ' : 'border border-[#1e1e5a]/40'}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center justify-center p-2 bg-[#0a0a1a]/60 rounded-lg border border-[#1e1e5a]/40">
                     <Folder className="w-8 h-8 text-zinc-400 fill-zinc-500/20" />
@@ -384,7 +385,7 @@ export function FileExplorer({
                   e.dataTransfer.setData("text/plain", file.id);
                 }}
               >
-                <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] border cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-indigo-400 bg-indigo-500/10 scale-[1.02]' : 'border-[#1e1e5a]/40'}`}>
+                <Card hoverable className={`h-full flex flex-col p-4 bg-[#141432] hover:bg-[#1a1a40] border cursor-pointer shadow-sm rounded-xl transition-all ${highlightedNodeId === file.id ? 'border-indigo-400 bg-indigo-500/10 scale-[1.02] ring-2 ring-indigo-500 animate-pulse' : 'border-[#1e1e5a]/40'}`}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center justify-center p-2 bg-[#0a0a1a]/60 rounded-lg border border-[#1e1e5a]/40">
                       {icon}
@@ -417,7 +418,7 @@ export function FileExplorer({
               <div
                 key={folder.id}
                 onClick={() => onNavigateFolder(folder.id)}
-                className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === folder.id ? 'bg-indigo-500/10' : 'hover:bg-[#1a1a40]'}`}
+                className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === folder.id ? 'bg-indigo-500/10 ring-2 ring-indigo-500 animate-pulse' : 'hover:bg-[#1a1a40]'}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnter={() => setDragOverFolderId(folder.id)}
                 onDragLeave={() => setDragOverFolderId(null)}
@@ -448,7 +449,7 @@ export function FileExplorer({
                 <div
                   key={file.id}
                   onClick={() => setPreviewNode(file)}
-                  className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === file.id ? 'bg-indigo-500/10' : 'hover:bg-[#1a1a40]'}`}
+                  className={`grid grid-cols-12 gap-4 p-4 items-center cursor-pointer transition-colors ${highlightedNodeId === file.id ? 'bg-indigo-500/10 ring-2 ring-indigo-500 animate-pulse' : 'hover:bg-[#1a1a40]'}`}
                   draggable={true}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", file.id);

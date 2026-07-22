@@ -14,7 +14,7 @@ interface ExecutiveDashboardProps {
   onSharedLinksClick?: () => void;
 }
 
-export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onNewFolderClick, onSharedLinksClick }: ExecutiveDashboardProps) {
+export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onNewFolderClick, onSharedLinksClick, onNavigateToFile }: ExecutiveDashboardProps) {
   const [localNodes, setLocalNodes] = useState<VFSNode[]>(vfsNodes);
 
   useEffect(() => {
@@ -178,7 +178,10 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
             {recentFiles.length > 0 ? (
               <div className="divide-y divide-white/5">
                 {recentFiles.map(file => (
-                  <div key={file.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+                  <div key={file.id} 
+                    className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                    onClick={() => onNavigateToFile?.(file.parentId || 'root', file.id)}
+                  >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="grid size-9 place-items-center rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0 text-xs font-bold">
                         {file.name.slice(0, 2).toUpperCase()}
