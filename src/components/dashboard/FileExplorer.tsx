@@ -267,7 +267,7 @@ export function FileExplorer({
           <DropdownMenu.Trigger asChild>
             <button
               data-testid={`context-menu-${node.name}`}
-              onClick={(e) => { e.preventDefault(); }}
+              onClick={(e) => { e.stopPropagation(); }}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors outline-none"
             >
               <span className="sr-only">Menu</span>
