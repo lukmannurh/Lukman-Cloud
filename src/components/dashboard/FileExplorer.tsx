@@ -71,7 +71,6 @@ export function FileExplorer({
   const [previewError, setPreviewError] = useState(false);
   const [archiveFiles, setArchiveFiles] = useState<string[]>([]);
   const [shareNode, setShareNode] = useState<VFSNode | null>(null);
-  const [deleteNode, setDeleteNode] = useState<VFSNode | null>(null);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -81,7 +80,6 @@ export function FileExplorer({
         setInfoNode(null);
         setRenameNode(null);
         setShareNode(null);
-        setDeleteNode(null);
         setPickerModalNode(null);
       }
     };
@@ -268,6 +266,8 @@ export function FileExplorer({
             <button
               data-testid={`context-menu-${node.name}`}
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors outline-none"
             >
               <span className="sr-only">Menu</span>
@@ -280,7 +280,7 @@ export function FileExplorer({
               align="end" 
               sideOffset={5}
               collisionPadding={16}
-              className="w-48 bg-[#141432] border border-[#1e1e5a]/60 shadow-xl rounded-xl overflow-hidden z-[9999] text-sm font-medium data-[state=open]:animate-[scaleIn_0.1s_ease-out]"
+              className="z-[9999] bg-slate-900 border border-slate-800 shadow-2xl rounded-xl p-1 min-w-[160px]"
             >
               <DropdownMenu.Item 
                 onClick={(e) => { e.stopPropagation(); setDownloadConfirmNode(node); }}
@@ -335,7 +335,7 @@ export function FileExplorer({
               </DropdownMenu.Item>
               {!isRoot && (
                 <DropdownMenu.Item 
-                  onClick={(e) => { e.stopPropagation(); setDeleteNode(node); }}
+                  onClick={(e) => { e.stopPropagation(); onDeleteNode(node); }}
                   className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-400 transition-colors flex items-center gap-2 border-t border-[#1e1e5a]/40 cursor-pointer outline-none"
                 >
                   <X className="w-4 h-4" /> Delete
@@ -735,56 +735,6 @@ export function FileExplorer({
                 className="px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
                 OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteNode && (
-        <div className="fixed inset-0 z-[60] bg-[#0a0a1a]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#141432] rounded-xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] ring-1 ring-white/5 border border-[#1e1e5a]/40">
-            <h3 className="text-lg font-bold text-zinc-100 mb-2">Delete {deleteNode.type === 'folder' ? 'Folder' : 'File'}</h3>
-            <p className="text-sm text-zinc-400 mb-6">
-              Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteNode.name}</span>? 
-            </p>
-            <div className="flex justify-end gap-3 w-full">
-              <button
-                onClick={() => setDeleteNode(null)}
-                className="px-4 py-2 rounded-lg font-medium text-zinc-400 hover:bg-[#1e1e5a]/40 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  const nodeToDel = deleteNode;
-                  setDeleteNode(null);
-                  setToastMessage(`Deleted ${nodeToDel.name}`);
-                  
-                  // Simulating Undo logic. In a real app we'd hold off on actual deletion for a few seconds.
-                  // For the sake of UI challenge:
-                  let undone = false;
-                  const timer = setTimeout(() => {
-                    if (!undone) {
-                      onDeleteNode(nodeToDel);
-                    }
-                  }, 4000);
-                  
-                  // Hacky way to inject undo state into toast
-                  const handleUndo = () => {
-                    undone = true;
-                    clearTimeout(timer);
-                    setToastMessage('Deletion undone');
-                    setTimeout(() => setToastMessage(null), 2000);
-                  };
-                  (window as any).__lastUndo = handleUndo;
-                  
-                  setTimeout(() => { if(!undone) setToastMessage(null) }, 4000);
-                }}
-                className="px-4 py-2 rounded-lg font-medium text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm"
-              >
-                Delete
               </button>
             </div>
           </div>
