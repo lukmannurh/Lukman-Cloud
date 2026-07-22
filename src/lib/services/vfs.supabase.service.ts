@@ -125,7 +125,8 @@ class VFSService {
     const { data, error, status } = await supabase
       .from('vfs_nodes')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .or('is_deleted.eq.false,is_deleted.is.null');
       
     console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
       
@@ -190,7 +191,8 @@ class VFSService {
     let query = supabase
       .from('vfs_nodes')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .or('is_deleted.eq.false,is_deleted.is.null');
       
     if (parentId === 'root' || parentId === null || parentId === undefined) {
       query = query.is('parent_id', null);
@@ -282,7 +284,7 @@ class VFSService {
       .eq('name', name)
       .eq('is_folder', true);
       
-    if (parentId === 'root' || parentId === null) fetchQuery = fetchQuery.is('parent_id', null);
+    if (parentId === 'root' || parentId === null || parentId === '') fetchQuery = fetchQuery.is('parent_id', null);
     else fetchQuery = fetchQuery.eq('parent_id', parentId);
     
     const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
@@ -296,9 +298,11 @@ class VFSService {
       .insert({
         name,
         path,
-        parent_id: parentId === 'root' ? null : parentId,
+        parent_id: (parentId === 'root' || parentId === '') ? null : parentId,
         is_folder: true,
         user_id: userId,
+        is_deleted: false,
+        deleted_at: null,
         raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
       })
       .select()
@@ -314,7 +318,7 @@ class VFSService {
           .eq('name', name)
           .eq('is_folder', true);
           
-        if (parentId === 'root') insertQuery = insertQuery.is('parent_id', null);
+        if (parentId === 'root' || parentId === null || parentId === '') insertQuery = insertQuery.is('parent_id', null);
         else insertQuery = insertQuery.eq('parent_id', parentId);
         
         const { data: fetchAfterInsert, error: fetchAfterErr } = await insertQuery.single();
@@ -346,7 +350,7 @@ class VFSService {
       .eq('name', fileNode.name)
       .eq('is_folder', false);
       
-    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+    const pid = (fileNode.parentId === 'root' || !fileNode.parentId || fileNode.parentId === '') ? null : fileNode.parentId;
     if (pid === null) fetchQuery = fetchQuery.is('parent_id', null);
     else fetchQuery = fetchQuery.eq('parent_id', pid);
     
@@ -381,12 +385,14 @@ class VFSService {
       .insert({
         name: fileNode.name,
         path,
-        parent_id: (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId,
+        parent_id: pid,
         size: fileNode.size || 0,
         is_folder: false,
-        telegram_channel_id: fileNode.telegramChannelId,
         user_id: userId,
-        raw_ref: fileNode.rawRef || { 
+        telegram_channel_id: fileNode.telegramChannelId,
+        is_deleted: false,
+        deleted_at: null,
+        raw_ref: { 
           googleDriveFileId: fileNode.googleDriveFileId,
           telegramMessageId: fileNode.telegramMessageId,
           createdAt: fileNode.createdAt || new Date().toISOString(), 

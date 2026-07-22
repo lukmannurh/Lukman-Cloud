@@ -89,3 +89,6 @@ verify_vercel.mjs
 upload_test.mjs
 walkthrough.md
 e2e_*.mjs
+.antigravity/brain/
+.playwright-mcp/
+artifacts/

@@ -1,62 +1,52 @@
-# Lukman Cloud Storage
+# Lukman Cloud
 
-A high-performance, decentralized virtual file system utilizing modern end-to-end client-side cryptographic key derivation for secure, unlimited cloud storage.
+**A modern, high-performance web cloud storage system.**
 
-## Overview
+Lukman Cloud is an advanced cloud storage application providing a seamless and highly responsive virtual file system (VFS). It empowers users with real-time storage management, elegant file hierarchy visualization, and deep integration with cloud backend providers.
 
-**Lukman Cloud** provides a seamless, high-speed, and completely secure file management ecosystem. Built for modern cloud infrastructure, it abstracts away complex storage routing to deliver an elegant, consumer-friendly interface. Data is securely pipelined to a decentralized architecture, ensuring absolute privacy and unmatched performance.
+## Key Features
 
-## Core Features
-
-- **Virtual File System:** Instant Copy, Move, and Rename frameworks across complex multi-layered virtual directory trees.
-- **Deep Predictive Search:** Instantly locate files across all directories with intelligent autocomplete and deep layout traversal.
-- **Live Telemetry:** Dynamic MB/s transfer calculation with precise runtime tracking and progress bars.
-- **Unified Quota Mapping:** Intelligent gauge matrix that seamlessly blends multiple storage nodes alongside our unlimited secure data pool into a unified UI.
-- **State-of-the-Art Security:** Built with strict schema protections, OAuth isolation, and dual-layer conflict resolution.
+- **Multi-User Authentication**: Securely support both Google OAuth users and instant Guest sessions via Better Auth.
+- **Telegram-Backed Chunked Uploads**: Experience ultra-fast, chunked file uploads utilizing GramJS for robust cloud storage via Telegram channels.
+- **Deep Subfolder Hierarchy**: Effortlessly navigate complex folder structures using the Supabase-powered VFS graph, complete with intuitive breadcrumbs.
+- **Dynamic File Size Formatting**: Intelligently renders file sizes in KB, MB, and GB based on precise threshold calculations for pristine readability.
+- **Modern Responsive Design**: Fully optimized for both Desktop and Mobile experiences with a premium glassmorphism interface, powered by Tailwind CSS and Radix UI primitives.
+- **Self-Healing State**: Rigorous React state isolation and synchronization mechanisms ensure your UI reflects exact database truth instantly.
 
 ## Tech Stack
 
-- **Frontend:** React 18, Vite, TypeScript
-- **Styling:** Tailwind CSS
-- **Core Processing:** Advanced High-Throughput Service Workers & Supabase Identity
-- **Testing:** Playwright E2E Self-Healing Matrix, Vitest
-- **Icons:** Lucide React
+- **Frontend**: React, Vite, TypeScript, Tailwind CSS, Radix UI.
+- **Backend/VFS**: Supabase (PostgreSQL), Supabase RPC, Better Auth (Google OAuth).
+- **Storage Backend**: GramJS (Telegram Cloud).
 
-## Local Installation Guide
+## Local Development Setup
 
-1. **Clone the Repository**
+1. **Clone and Install dependencies**
    ```bash
    git clone https://github.com/lukmannurh/Lukman-Cloud.git
    cd Lukman-Cloud
-   ```
-
-2. **Install Dependencies**
-   ```bash
    npm install
    ```
 
-3. **Configure Environment Variables**
-   Create a `.env.local` file in the root directory. Use the provided `.env.example` as a template.
-   *Ensure all sensitive keys are kept locally and never committed to version control.*
+2. **Configure Environment Variables**
+   Create a `.env` file based on `.env.example` (or configure locally):
+   ```env
+   VITE_SUPABASE_URL=your-supabase-url
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_TELEGRAM_API_ID=your-api-id
+   VITE_TELEGRAM_API_HASH=your-api-hash
+   VITE_TELEGRAM_BOT_TOKEN=your-bot-token
+   VITE_TELEGRAM_CHANNEL_ID=your-channel-id
+   ```
 
-4. **Start the Development Server**
+3. **Run the Development Server**
    ```bash
    npm run dev
    ```
-   Navigate to `http://localhost:5173` to access the Lukman Cloud Dashboard.
 
-5. **Run Diagnostics & Production Build**
-   ```bash
-   npm run build
-   ```
+## Deployment
 
-## Architecture & Security
-
-Security and scalability are paramount. The architecture ensures that all operational storage mechanics remain abstracted behind a proprietary service-worker layer, routing blocks intelligently without exposing the core protocol to the consumer interface. The application features a robust zero-leak identity layer protected by PostgREST schema constraints.
-
----
-*Developed for unparalleled scalability, reliability, and security.*
-
-## Architecture
-- Multi-bot parallel storage matrix architecture
-- Virtual File System layout with strict deterministic root tracking
+Lukman Cloud is fully optimized for Vercel. 
+1. Connect your GitHub repository to Vercel.
+2. Add your `VITE_...` environment variables in the Vercel project settings.
+3. Deploy! The Vercel build pipeline will automatically execute `npm run build` using the Vite production config.
