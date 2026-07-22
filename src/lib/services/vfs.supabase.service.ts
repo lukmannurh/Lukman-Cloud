@@ -127,6 +127,8 @@ class VFSService {
       .select('*')
       .eq('user_id', userId);
       
+    console.log('[VFS READ RESULT] Rows fetched from DB (loadRegistry):', data?.length, 'Error:', error);
+      
     if (error) {
       console.error('[FATAL] Supabase getNodes (loadRegistry) error:', error);
       throw error;
@@ -197,6 +199,7 @@ class VFSService {
     }
       
     const { data, error } = await query;
+    console.log('[VFS READ RESULT] Rows fetched from DB (getDirectoryContents):', data?.length, 'Error:', error);
       
     if (error) {
       console.error('[FATAL] Supabase getDirectoryContents error:', error);
