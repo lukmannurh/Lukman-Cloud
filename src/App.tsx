@@ -331,7 +331,7 @@ export default function App() {
 
         try {
           // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
-          await supabase.from('user').upsert({
+          const upsertPayload = {
             id: currentUser.id,
             name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
             email: currentUser.email || `${currentUser.id}@guest.local`,
@@ -340,9 +340,18 @@ export default function App() {
             emailVerified: true,
             createdAt: currentUser.createdAt || new Date().toISOString(),
             updatedAt: currentUser.updatedAt || new Date().toISOString()
-          }, { onConflict: 'id' });
+          };
+          console.log('[App] Attempting to upsert user to public schema:', upsertPayload);
+          
+          const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
+          
+          if (upsertError) {
+             console.error('[FATAL] Supabase user upsert error:', upsertError);
+          } else {
+             console.log('[App] User upsert successful');
+          }
         } catch (e) {
-          console.error('Auto-link failed', e);
+          console.error('[FATAL] Auto-link failed during user upsert:', e);
         }
 
         // Check onboarding guard for Google OAuth users ONLY (guests now auto-generate full names)

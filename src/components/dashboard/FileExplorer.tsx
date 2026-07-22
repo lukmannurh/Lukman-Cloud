@@ -258,12 +258,9 @@ export function FileExplorer({
           open={activeMenuNodeId === node.id}
           onOpenChange={(isOpen) => setActiveMenuNodeId(isOpen ? node.id : null)}
         >
-          <DropdownMenu.Trigger asChild>
+          <DropdownMenu.Trigger asChild onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
             <button
               data-testid={`context-menu-${node.name}`}
-              onClick={(e) => { e.stopPropagation(); }}
-              onPointerDown={(e) => { e.stopPropagation(); }}
-              onMouseDown={(e) => { e.stopPropagation(); }}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors outline-none"
             >
               <span className="sr-only">Menu</span>

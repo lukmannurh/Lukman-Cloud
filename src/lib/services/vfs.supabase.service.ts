@@ -122,7 +122,10 @@ class VFSService {
       .select('*')
       .eq('user_id', userId);
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase getNodes (loadRegistry) error:', error);
+      throw error;
+    }
     
     // If empty, return empty
     if (!data || data.length === 0) {
@@ -184,7 +187,10 @@ class VFSService {
       
     const { data, error } = await query;
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase getDirectoryContents error:', error);
+      throw error;
+    }
     let nodes = data.map(row => this.mapRowToNode(row));
     if (category) {
       nodes = this.filterByCategory(nodes, category);
@@ -214,7 +220,10 @@ class VFSService {
       .eq('id', id)
       .maybeSingle();
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase getNode error:', error);
+      throw error;
+    }
     return data ? this.mapRowToNode(data) : undefined;
   }
 
@@ -227,7 +236,10 @@ class VFSService {
       .eq('user_id', userId)
       .eq('is_folder', true);
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase getAllFolders error:', error);
+      throw error;
+    }
     return data.map(this.mapRowToNode);
   }
 
@@ -269,6 +281,7 @@ class VFSService {
       .single();
       
     if (error) {
+      console.error('[FATAL] Supabase createFolder error:', error);
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
         let insertQuery = supabase
           .from('vfs_nodes')
@@ -326,7 +339,10 @@ class VFSService {
         .eq('id', existing.id)
         .select()
         .single();
-      if (updateErr) throw updateErr;
+      if (updateErr) {
+        console.error('[FATAL] Supabase addFile (upsert) error:', updateErr);
+        throw updateErr;
+      }
       return this.mapRowToNode(updated);
     }
     
@@ -351,6 +367,7 @@ class VFSService {
       .single();
       
     if (error) {
+      console.error('[FATAL] Supabase addFile (insert) error:', error);
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
         let fetchAfterQuery = supabase
           .from('vfs_nodes')
@@ -403,7 +420,10 @@ class VFSService {
         .eq('user_id', userId)
         .in('id', idsToDelete);
         
-      if (error) throw error;
+      if (error) {
+        console.error('[FATAL] Supabase deleteNode error:', error);
+        throw error;
+      }
     }
     
     return deletedNodes;
