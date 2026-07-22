@@ -237,6 +237,7 @@ export function FileExplorer({
   }
 
   const folders = nodes.filter(e => e.type === 'folder');
+  const files = nodes.filter(e => e.type === 'file');
   const formatSize = (bytes: number | string | undefined | null) => {
     if (bytes === undefined || bytes === null) return '0 B';
     bytes = Number(bytes);
