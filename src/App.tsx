@@ -611,6 +611,7 @@ export default function App() {
       
       // Filter for the specific VFS viewport
       const nodes = globalRegistry.filter(n => n.parentId === folderId);
+      console.log('[React State Update] Setting nodes count:', nodes.length);
       setVfsNodes(nodes);
     } catch (err) {
       console.error('[App] Load directory error:', err);

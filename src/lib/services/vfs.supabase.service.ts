@@ -122,12 +122,12 @@ class VFSService {
     console.log('[VFS READ] Querying nodes (loadRegistry) for user_id:', userId);
 
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
-    const { data, error } = await supabase
+    const { data, error, status } = await supabase
       .from('vfs_nodes')
       .select('*')
       .eq('user_id', userId);
       
-    console.log('[VFS READ RESULT] Rows fetched from DB (loadRegistry):', data?.length, 'Error:', error);
+    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
       
     if (error) {
       console.error('[FATAL] Supabase getNodes (loadRegistry) error:', error);
@@ -198,8 +198,8 @@ class VFSService {
       query = query.eq('parent_id', parentId);
     }
       
-    const { data, error } = await query;
-    console.log('[VFS READ RESULT] Rows fetched from DB (getDirectoryContents):', data?.length, 'Error:', error);
+    const { data, error, status } = await query;
+    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
       
     if (error) {
       console.error('[FATAL] Supabase getDirectoryContents error:', error);
