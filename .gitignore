@@ -1,3 +1,9 @@
+.antigravity
+.antigravity/
+.antigravity/**
+*.tsbuildinfo
+.playwright-mcp/
+
 # Logs
 logs
 *.log
