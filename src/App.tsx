@@ -5,6 +5,7 @@ import { uploadService } from './lib/services/upload.service';
 import { downloadService } from './lib/services/download.service';
 import { accountPoolService } from './lib/services/accountPool.service';
 import { vfsService } from './lib/services/vfs.service';
+import { ensureUserExistsInDB } from './lib/services/vfs.supabase.service';
 import { initiateGoogleLogin } from './lib/googleAuth';
 import { LogOut } from 'lucide-react';
 import logoAsset from './assets/logo.webp';
@@ -380,11 +381,13 @@ export default function App() {
           setIsUserAuthenticated(true);
           setShowOnboarding(true);
           setSessionLoading(false);
+          setCurrentView('vfs');
         } else {
           setShowOnboarding(false);
           setActiveUser(currentUser);
           setIsUserAuthenticated(true);
           setSessionLoading(false);
+          setCurrentView('vfs');
         }
       } else {
         setActiveUser(null);
@@ -625,6 +628,9 @@ export default function App() {
   const loadDirectory = async (folderId: string) => {
     setLoadingFolder(true);
     try {
+      if (activeUser?.id) {
+        await ensureUserExistsInDB(activeUser.id, activeUser.email, activeUser.name);
+      }
       // Crawl the entire global VFS registry for the dashboard metrics
       const globalRegistry = await vfsService.loadRegistry(undefined, activeUser?.id);
       setAllFlattenedNodes(globalRegistry);

@@ -7,55 +7,85 @@ export function sanitizeParentId(pid?: string | null): string | null {
   return pid;
 }
 
+export async function ensureUserExistsInDB(userId: string, email?: string, name?: string) {
+  if (!userId) return;
+  try {
+    const upsertPayload = {
+      id: userId,
+      name: name || email?.split('@')[0] || 'User',
+      email: email || `${userId}@guest.local`,
+      username: email?.split('@')[0] || `user_${userId.substring(0, 6)}`,
+      emailVerified: true,
+      updatedAt: new Date().toISOString()
+    };
+    await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
+  } catch (err) {
+    console.warn('[VFS] ensureUserExistsInDB non-fatal notice:', err);
+  }
+}
+
 /**
  * Isolated Virtual File System (VFS) Service - Supabase Postgres Edition
  * Enforces rigid multi-tenant storage isolation.
  */
 class VFSService {
   private pendingFolderCreations = new Map<string, Promise<any>>();
-  private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
   
   private async getUserId(overrideUserId?: string): Promise<string> {
-    if (overrideUserId) return overrideUserId;
-
-    // 1. Try authoritative Supabase auth (getUser validates JWT server-side)
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user?.id) {
-        return user.id;
-      }
-    } catch (e) {
-      // getUser() failed, try getSession() as fallback
-    }
-
-    // 2. Fallback: try getSession() with brief retry for async init
-    let retries = 0;
-    while (retries < 5) {
+    let userIdToReturn: string | null = null;
+    if (overrideUserId) {
+      userIdToReturn = overrideUserId;
+    } else {
+      // 1. Try authoritative Supabase auth (getUser validates JWT server-side)
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (!error && session?.user?.id) {
-          return session.user.id;
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (!error && user?.id) {
+          userIdToReturn = user.id;
         }
-      } catch (e) {}
-      await new Promise(r => setTimeout(r, 200));
-      retries++;
+      } catch (e) {
+        // getUser() failed, try getSession() as fallback
+      }
+
+      // 2. Fallback: try getSession() with brief retry for async init
+      if (!userIdToReturn) {
+        let retries = 0;
+        while (retries < 5) {
+          try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (!error && session?.user?.id) {
+              userIdToReturn = session.user.id;
+              break;
+            }
+          } catch (e) {}
+          await new Promise(r => setTimeout(r, 200));
+          retries++;
+        }
+      }
+
+      // 3. Check for transient Guest session (works in production Vercel)
+      if (!userIdToReturn) {
+        const stored = localStorage.getItem('dev_session_user');
+        if (stored) {
+          try {
+            const guestUser = JSON.parse(stored);
+            if (guestUser && guestUser.id) userIdToReturn = guestUser.id;
+          } catch (e) {}
+        }
+      }
+
+      if (!userIdToReturn && (window as any).__MOCK_SESSION_ID__) {
+        userIdToReturn = (window as any).__MOCK_SESSION_ID__;
+      }
     }
 
-    // 3. Check for transient Guest session (works in production Vercel)
-    const stored = localStorage.getItem('dev_session_user');
-    if (stored) {
-      try {
-        const guestUser = JSON.parse(stored);
-        if (guestUser && guestUser.id) return guestUser.id;
-      } catch (e) {}
+    if (!userIdToReturn) {
+      throw new Error('Unauthorized: VFS access blocked due to missing session context.');
     }
 
-    if ((window as any).__MOCK_SESSION_ID__) {
-      return (window as any).__MOCK_SESSION_ID__;
-    }
-
-    throw new Error('Unauthorized: VFS access blocked due to missing session context.');
+    // GUARANTEE: Pre-hydrate user table row to satisfy foreign key vfs_nodes_user_id_fkey
+    await ensureUserExistsInDB(userIdToReturn);
+    return userIdToReturn;
   }
 
   private filterByCategory(nodes: VFSNode[], category: string): VFSNode[] {
@@ -430,12 +460,27 @@ class VFSService {
 
     console.log('[VFS] Inserting new file with sanitized payload:', payload);
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('vfs_nodes')
       .insert(payload)
       .select()
       .single();
       
+    if (error) {
+      // Graceful Schema Alignment: If mime_type column is missing from schema cache, retry without mime_type
+      if (error.message?.includes('mime_type') || error.message?.includes('schema cache') || error.code === 'PGRST204') {
+        console.warn('[VFS] mime_type column not found in schema cache. Retrying insert without mime_type...');
+        const { mime_type, ...payloadWithoutMime } = payload;
+        const retry = await supabase
+          .from('vfs_nodes')
+          .insert(payloadWithoutMime)
+          .select()
+          .single();
+        data = retry.data;
+        error = retry.error;
+      }
+    }
+
     if (error) {
       console.error('[FATAL] Supabase addFile 400 Bad Request / error:', error);
       throw error;
