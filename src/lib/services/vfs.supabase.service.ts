@@ -270,7 +270,7 @@ class VFSService {
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${name}` : `${parent.path}/${name}`;
-    const normalizedParentId = (parentId === 'root' || !parentId) ? null : parentId;
+    const normalizedParentId = sanitizeParentId(parentId);
     const cacheKey = `${userId}:${normalizedParentId}:${name}`;
 
     if (this.pendingFolderCreations.has(cacheKey)) {
@@ -346,7 +346,7 @@ class VFSService {
     const parent = await this.getNode(fileNode.parentId || 'root');
     if (!parent) throw new Error('Parent not found');
     
-    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+    const pid = sanitizeParentId(fileNode.parentId);
     
     // Google Drive Style Auto-Rename for Duplicate Files
     let finalName = fileNode.name;
