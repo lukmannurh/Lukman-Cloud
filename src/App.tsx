@@ -34,6 +34,7 @@ const Sidebar = ({
   setIsSidebarCollapsed,
   currentView,
   setCurrentView,
+  onNavigateView,
   setToastMessage,
   setDevSessionUser,
   setIsUserAuthenticated,
@@ -82,6 +83,7 @@ const Sidebar = ({
               </div>
             </div>
           </div>
+
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="hidden md:flex p-1 hover:bg-[#1e1e5a]/60 rounded-md text-zinc-400 hover:text-zinc-200"
@@ -113,7 +115,7 @@ const Sidebar = ({
           />
           
           <button 
-            onClick={() => { (onNavigateView || setCurrentView)('dashboard'); setIsMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateView) { onNavigateView('dashboard'); } else { setCurrentView('dashboard'); } setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
               ${currentView === 'dashboard' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Dashboard"
@@ -125,7 +127,7 @@ const Sidebar = ({
           </button>
           
           <button 
-            onClick={() => { (onNavigateView || setCurrentView)('vfs'); setIsMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateView) { onNavigateView('vfs'); } else { setCurrentView('vfs'); } setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
               ${currentView === 'vfs' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Virtual Storage"
@@ -137,7 +139,7 @@ const Sidebar = ({
           </button>
           
           <button 
-            onClick={() => { (onNavigateView || setCurrentView)('nodes'); setIsMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateView) { onNavigateView('nodes'); } else { setCurrentView('nodes'); } setIsMobileMenuOpen(false); }}
             className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg transition-colors font-medium overflow-hidden group relative z-10
               ${currentView === 'nodes' ? 'text-indigo-400 border-l-2 border-indigo-500' : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#141432]/50 border-l-2 border-transparent'}`}
             title="Storage Nodes"
