@@ -10,13 +10,11 @@ export function sanitizeParentId(pid?: string | null): string | null {
 export async function ensureUserExistsInDB(userId: string, email?: string, name?: string) {
   if (!userId) return;
   try {
-    const upsertPayload = {
+    const upsertPayload: any = {
       id: userId,
       name: name || email?.split('@')[0] || 'User',
       email: email || `${userId}@guest.local`,
-      username: email?.split('@')[0] || `user_${userId.substring(0, 6)}`,
-      emailVerified: true,
-      updatedAt: new Date().toISOString()
+      username: email?.split('@')[0] || `user_${userId.substring(0, 6)}`
     };
     await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
   } catch (err) {

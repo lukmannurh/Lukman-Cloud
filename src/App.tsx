@@ -335,15 +335,12 @@ export default function App() {
           hasUpsertedRef.current = true;
           try {
             // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
-            const upsertPayload = {
+            const upsertPayload: any = {
               id: currentUser.id,
               name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
               email: currentUser.email || `${currentUser.id}@guest.local`,
               username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
-              image: currentUser.image || null,
-              emailVerified: true,
-              createdAt: currentUser.createdAt || new Date().toISOString(),
-              updatedAt: currentUser.updatedAt || new Date().toISOString()
+              image: currentUser.image || null
             };
             const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
             
