@@ -416,10 +416,43 @@ export default function App() {
   const [accounts, setAccounts] = useState<PooledAccount[]>([]);
   const workerPoolRef = useRef<Worker[]>([]);
 
-  // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>('vfs');
+  // Defensive URL route helpers
+  const getViewFromPath = (): 'dashboard' | 'vfs' | 'nodes' => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('dashboard')) return 'dashboard';
+    if (path.includes('storage') || path.includes('nodes')) return 'nodes';
+    return 'vfs'; // Default fallback to My Drive / Files
+  };
+
+  const getFolderFromUrl = (): string => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('folder') || 'root';
+  };
+
+  // Navigation State initialized safely from URL
+  const [currentView, setCurrentView] = useState<'dashboard' | 'vfs' | 'nodes'>(getViewFromPath);
+  const [currentFolderId, setCurrentFolderId] = useState<string>(getFolderFromUrl);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Safe navigation handler that updates view AND URL without triggering useEffect render loops
+  const handleNavigateView = (view: 'dashboard' | 'vfs' | 'nodes', folderId?: string) => {
+    const targetFolder = folderId !== undefined ? folderId : (view === 'vfs' ? currentFolderId : 'root');
+    setCurrentView(view);
+    if (folderId !== undefined) {
+      setCurrentFolderId(targetFolder);
+    }
+
+    const targetPath = view === 'vfs' ? '/files' : view === 'nodes' ? '/storage' : `/${view}`;
+    const params = new URLSearchParams();
+    if (view === 'vfs' && targetFolder && targetFolder !== 'root') {
+      params.set('folder', targetFolder);
+    }
+    const newUrl = params.toString() ? `${targetPath}?${params.toString()}` : targetPath;
+    if (window.location.pathname + window.location.search !== newUrl) {
+      window.history.pushState(null, '', newUrl);
+    }
+  };
 
   // SEO / Dynamic Metadata
   useEffect(() => {
@@ -446,53 +479,25 @@ export default function App() {
   }, [currentView]);
 
   // VFS Explorer State
-  const [currentFolderId, setCurrentFolderId] = useState<string>('root');
   const activeFolderIdRef = useRef<string>('root');
   
   useEffect(() => {
     activeFolderIdRef.current = currentFolderId;
   }, [currentFolderId]);
 
-  // URL Routing & Deep Linking Sync
+  // Listen to browser back/forward buttons (popstate) safely
   useEffect(() => {
-    const parseUrlState = () => {
-      const path = window.location.pathname;
-      const params = new URLSearchParams(window.location.search);
-      const folderParam = params.get('folder');
-
-      if (path === '/dashboard') {
-        setCurrentView('dashboard');
-      } else if (path === '/storage' || path === '/nodes') {
-        setCurrentView('nodes');
-      } else if (path === '/files' || path === '/vfs' || path === '/') {
-        setCurrentView('vfs');
-      }
-
-      if (folderParam) {
-        setCurrentFolderId(folderParam);
-      }
+    const handlePopState = () => {
+      const view = getViewFromPath();
+      const folder = getFolderFromUrl();
+      setCurrentView(view);
+      setCurrentFolderId(folder);
     };
 
-    parseUrlState();
-
-    const handlePopState = () => parseUrlState();
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Update URL history state when view or folder changes
-  useEffect(() => {
-    if (sessionLoading) return;
-    const targetPath = currentView === 'vfs' ? '/files' : `/${currentView}`;
-    const params = new URLSearchParams();
-    if (currentView === 'vfs' && currentFolderId && currentFolderId !== 'root') {
-      params.set('folder', currentFolderId);
-    }
-    const newUrl = params.toString() ? `${targetPath}?${params.toString()}` : targetPath;
-    if (window.location.pathname + window.location.search !== newUrl) {
-      window.history.pushState(null, '', newUrl);
-    }
-  }, [currentView, currentFolderId, sessionLoading]);
   const [vfsNodes, setVfsNodes] = useState<VFSNode[]>([]);
   const [loadingFolder, setLoadingFolder] = useState<boolean>(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ id: 'root', name: 'My Drive' }]);
@@ -527,8 +532,6 @@ export default function App() {
   const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [deleteModalNode, setDeleteModalNode] = useState<VFSNode | null>(null);
-  const [moveModalNode, setMoveModalNode] = useState<VFSNode | null>(null);
-  const [allFolders, setAllFolders] = useState<VFSNode[]>([]);
 
 
   // Search and Sort States
@@ -1612,10 +1615,14 @@ export default function App() {
                         onDownloadFile={handleDownloadFile}
                         onFetchPreviewUrl={handleGetFileUrl}
                         onDeleteNode={(node) => setDeleteModalNode(node)}
-                  onMoveNode={async (node) => {
-                    setMoveModalNode(node);
-                    const folders = await vfsService.getAllFolders(activeUser?.id);
-                    setAllFolders(folders);
+                  onMoveNode={async (node, targetFolderId) => {
+                    try {
+                      await vfsService.moveNode(node.id, targetFolderId || 'root', activeUser?.id);
+                      loadDirectory(currentFolderId);
+                    } catch (e: any) {
+                      setToastMessage({ title: 'Error', message: e.message, type: 'error' });
+                      setTimeout(() => setToastMessage(null), 4000);
+                    }
                   }}
                   onCopyNode={async (node, targetFolderId) => {
                     try {
@@ -1841,60 +1848,6 @@ export default function App() {
               >
                 Delete
               </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Move Visual Picker Modal */}
-      {moveModalNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#141432] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[#1e1e5a]/60 flex flex-col max-h-[80vh]">
-            <div className="p-6 border-b border-[#1e1e5a]/40 shrink-0">
-              <h3 className="text-lg font-semibold text-zinc-100">Move {moveModalNode.name}</h3>
-              <p className="text-sm text-zinc-400 mt-1">Select a destination folder.</p>
-            </div>
-            <div className="overflow-y-auto p-2 bg-[#0a0a1a]/30 flex-1">
-              {allFolders.filter(f => f.id !== moveModalNode.id).length === 0 ? (
-                <div className="text-center p-8 text-sm text-zinc-400">No other folders available.</div>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  {allFolders
-                    .filter(f => f.id !== moveModalNode.id && !f.path.startsWith(moveModalNode.path + '/'))
-                    .sort((a, b) => a.path.localeCompare(b.path))
-                    .map(folder => {
-                      const depth = folder.path === '/' ? 0 : (folder.path.match(/\//g) || []).length;
-                      return (
-                        <button
-                          key={folder.id}
-                          onClick={async () => {
-                            try {
-                              await vfsService.moveNode(moveModalNode.id, folder.id, activeUser?.id);
-                              loadDirectory(currentFolderId);
-                              setMoveModalNode(null);
-                            } catch (e: any) {
-                              setToastMessage({ title: 'Error', message: e.message, type: 'error' });
-                              setTimeout(() => setToastMessage(null), 4000);
-                            }
-                          }}
-                          style={{ paddingLeft: `${depth * 1.5 + 0.75}rem`, paddingRight: '0.75rem', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}
-                          className="flex items-center gap-3 w-full text-left hover:bg-[#141432]/60 rounded-lg border border-transparent hover:border-[#1e1e5a]/40 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <span className="text-2xl shrink-0 opacity-70">
-                            {depth === 0 ? '' : ''}
-                          </span>
-                          <div className="truncate">
-                            <div className="font-medium text-zinc-200 text-sm truncate">{folder.name}</div>
-                            <div className="text-[10px] text-zinc-400 font-mono mt-0.5 truncate">{folder.path}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-            <div className="px-6 py-4 border-t border-[#1e1e5a]/40 flex justify-end shrink-0">
-              <Button variant="default" onClick={() => setMoveModalNode(null)}>Cancel</Button>
             </div>
           </div>
         </div>

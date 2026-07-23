@@ -41,7 +41,7 @@ interface FileExplorerProps {
 }
 
 export function FileExplorer({
-  nodes,
+  nodes = [],
   loading,
   onNavigateFolder,
   onDownloadFile,
@@ -56,6 +56,8 @@ export function FileExplorer({
   initialPreviewNodeId = null
 }: FileExplorerProps) {
   
+  const safeNodes = nodes || [];
+
   const [menuAlignment, setMenuAlignment] = useState<'top' | 'bottom'>('bottom');
   const [activeMenuNodeId, setActiveMenuNodeId] = useState<string | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
@@ -89,10 +91,10 @@ export function FileExplorer({
 
   useEffect(() => {
     if (initialPreviewNodeId) {
-      const target = nodes.find(n => n.id === initialPreviewNodeId);
+      const target = safeNodes.find(n => n.id === initialPreviewNodeId);
       if (target) setPreviewNode(target);
     }
-  }, [initialPreviewNodeId, nodes]);
+  }, [initialPreviewNodeId, safeNodes]);
 
 
 
