@@ -334,19 +334,20 @@ export default function App() {
         if (!hasUpsertedRef.current) {
           hasUpsertedRef.current = true;
           try {
-            // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
-            const upsertPayload: any = {
-              id: currentUser.id,
-              name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
-              email: currentUser.email || `${currentUser.id}@guest.local`,
-              username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
-              image: currentUser.image || null
-            };
-            const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
-            
-            if (upsertError) {
-               console.error('[FATAL] Supabase user upsert error:', upsertError);
-               hasUpsertedRef.current = false; // allow retry if failed
+            const { data: existingUser } = await supabase.from('user').select('id').eq('id', currentUser.id).maybeSingle();
+            if (!existingUser) {
+              const userPayload: any = {
+                id: currentUser.id,
+                name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
+                email: currentUser.email || `${currentUser.id}@guest.local`,
+                username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
+                image: currentUser.image || null
+              };
+              const { error: insertErr } = await supabase.from('user').insert(userPayload);
+              if (insertErr) {
+                console.error('[FATAL] Supabase user insert error:', insertErr);
+                hasUpsertedRef.current = false;
+              }
             }
           } catch (e) {
             console.error('[FATAL] Auto-link failed during user upsert:', e);

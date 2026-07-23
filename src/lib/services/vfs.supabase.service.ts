@@ -10,15 +10,18 @@ export function sanitizeParentId(pid?: string | null): string | null {
 export async function ensureUserExistsInDB(userId: string, email?: string, name?: string) {
   if (!userId) return;
   try {
-    const upsertPayload: any = {
-      id: userId,
-      name: name || email?.split('@')[0] || 'User',
-      email: email || `${userId}@guest.local`,
-      username: email?.split('@')[0] || `user_${userId.substring(0, 6)}`
-    };
-    await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
+    const { data: existingUser } = await supabase.from('user').select('id').eq('id', userId).maybeSingle();
+    if (!existingUser) {
+      const userPayload: any = {
+        id: userId,
+        name: name || email?.split('@')[0] || 'User',
+        email: email || `${userId}@guest.local`,
+        username: email?.split('@')[0] || `user_${userId.substring(0, 6)}`
+      };
+      await supabase.from('user').insert(userPayload);
+    }
   } catch (err) {
-    console.warn('[VFS] ensureUserExistsInDB non-fatal notice:', err);
+    console.warn('[VFS] ensureUserExistsInDB notice:', err);
   }
 }
 
