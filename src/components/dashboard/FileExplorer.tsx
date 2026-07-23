@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { VFSNode } from '../../types';
 import { Card } from '../ui/Card';
-import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X, AlertTriangle } from 'lucide-react';
+import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X, AlertTriangle, MoreVertical } from 'lucide-react';
 import { DirectoryPickerModal } from './DirectoryPickerModal';
 import { supabase } from '../../lib/services/supabaseClient';
 import { Skeleton } from '../ui/Skeleton';
@@ -261,10 +261,10 @@ export function FileExplorer({
           <DropdownMenu.Trigger asChild onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
             <button
               data-testid={`context-menu-${node.name}`}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-md transition-colors outline-none"
+              aria-label={`Context Menu for ${node.name}`}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e5a]/40 rounded-lg transition-colors focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
-              <span className="sr-only">Menu</span>
-              ⋮
+              <MoreVertical className="w-5 h-5" />
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>

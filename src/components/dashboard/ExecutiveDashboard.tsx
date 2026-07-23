@@ -55,7 +55,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
           Welcome back.
         </h2>
         <p className="mt-2 text-sm text-zinc-400 max-w-[60ch]">
-          Your storage is active and synchronized. All files are end-to-end encrypted.
+          Overview of your files, storage capacity, and recent activity.
         </p>
       </header>
 
@@ -74,7 +74,7 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
             </div>
             <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400 ring-1 ring-emerald-500/20">
               <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Connection verified
+              Storage Active
             </span>
           </div>
 
@@ -114,56 +114,44 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
           </div>
         </div>
 
-        {/* Empty spot to replace Right status cards, maybe just rely on auto-rows? */}
-
         {/* Quick Actions */}
         <div className="col-span-12 lg:col-span-4 rounded-3xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6 flex flex-col h-full">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-4">Quick actions</p>
           <div className="grid grid-cols-2 gap-3 flex-1">
-            <button onClick={onUploadClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group">
+            <button onClick={onUploadClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors mb-2">
                 <Upload className="w-4 h-4" />
               </span>
-              <div>
-                <p className="text-sm font-medium text-zinc-200">Upload Files</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Drag or select files</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-200 truncate whitespace-nowrap">Upload Files</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Select files to upload</p>
               </div>
             </button>
-            <button onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              // @ts-ignore
-              input.webkitdirectory = true;
-              input.onchange = (e) => {
-                // Not fully implemented here, would need to hook into onUploadClick somehow
-                // For now, it just clicks.
-              };
-              input.click();
-            }} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group">
+            <button onClick={onUploadFolderClick || onUploadClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors mb-2">
                 <FolderPlus className="w-4 h-4" />
               </span>
-              <div>
-                <p className="text-sm font-medium text-zinc-200">Upload Folder</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Batch directory upload</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-200 truncate whitespace-nowrap">Upload Folder</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Batch directory upload</p>
               </div>
             </button>
-            <button onClick={onNewFolderClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group">
+            <button onClick={onNewFolderClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors mb-2">
                 <Folder className="w-4 h-4" />
               </span>
-              <div>
-                <p className="text-sm font-medium text-zinc-200">New Folder</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Create directory</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-200 truncate whitespace-nowrap">New Folder</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Create directory</p>
               </div>
             </button>
-            <button onClick={onSharedLinksClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group">
+            <button onClick={onSharedLinksClick} className="p-3.5 bg-[#0a0a1a]/60 hover:bg-[#0a0a1a] rounded-xl border border-[#1e1e5a]/40 hover:border-indigo-500/50 transition-all flex flex-col justify-between text-left group focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors mb-2">
                 <Share2 className="w-4 h-4" />
               </span>
-              <div>
-                <p className="text-sm font-medium text-zinc-200">Shared Links</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Manage public access</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-200 truncate whitespace-nowrap">Shared Links</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Manage public access</p>
               </div>
             </button>
           </div>

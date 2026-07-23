@@ -7,7 +7,7 @@ import { accountPoolService } from './lib/services/accountPool.service';
 import { vfsService } from './lib/services/vfs.service';
 import { ensureUserExistsInDB } from './lib/services/vfs.supabase.service';
 import { initiateGoogleLogin } from './lib/googleAuth';
-import { LogOut } from 'lucide-react';
+import { LogOut, LayoutDashboard, Folder, HardDrive, Plus, ChevronDown, Check } from 'lucide-react';
 import logoAsset from './assets/logo.webp';
 
 import { BetterAuthForm } from './components/auth/BetterAuthForm';
@@ -452,6 +452,47 @@ export default function App() {
   useEffect(() => {
     activeFolderIdRef.current = currentFolderId;
   }, [currentFolderId]);
+
+  // URL Routing & Deep Linking Sync
+  useEffect(() => {
+    const parseUrlState = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const folderParam = params.get('folder');
+
+      if (path === '/dashboard') {
+        setCurrentView('dashboard');
+      } else if (path === '/storage' || path === '/nodes') {
+        setCurrentView('nodes');
+      } else if (path === '/files' || path === '/vfs' || path === '/') {
+        setCurrentView('vfs');
+      }
+
+      if (folderParam) {
+        setCurrentFolderId(folderParam);
+      }
+    };
+
+    parseUrlState();
+
+    const handlePopState = () => parseUrlState();
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Update URL history state when view or folder changes
+  useEffect(() => {
+    if (sessionLoading) return;
+    const targetPath = currentView === 'vfs' ? '/files' : `/${currentView}`;
+    const params = new URLSearchParams();
+    if (currentView === 'vfs' && currentFolderId && currentFolderId !== 'root') {
+      params.set('folder', currentFolderId);
+    }
+    const newUrl = params.toString() ? `${targetPath}?${params.toString()}` : targetPath;
+    if (window.location.pathname + window.location.search !== newUrl) {
+      window.history.pushState(null, '', newUrl);
+    }
+  }, [currentView, currentFolderId, sessionLoading]);
   const [vfsNodes, setVfsNodes] = useState<VFSNode[]>([]);
   const [loadingFolder, setLoadingFolder] = useState<boolean>(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ id: 'root', name: 'My Drive' }]);
@@ -1291,7 +1332,7 @@ export default function App() {
           setAccounts={setAccounts}
           allFlattenedNodes={allFlattenedNodes}
         />
-        <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-[#0a0a1a] flex flex-col`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-200 ease-in-out ${isSidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-64'} ml-0 bg-[#0a0a1a] flex flex-col pb-20 md:pb-6`}>
           <div className="w-full flex-1 min-w-0 pl-6 lg:pl-8 pr-6 lg:pr-8 py-4 md:py-6 space-y-6">
           {currentView === 'dashboard' && (
             <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.3s_ease-out]">
@@ -1645,20 +1686,62 @@ export default function App() {
         </div>
       </main>
 
+      {/* Mobile Bottom Navigation Bar */}
+      <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 border-t border-slate-800 flex justify-around items-center py-2 px-4 z-50 backdrop-blur-lg">
+        <button
+          type="button"
+          onClick={() => setCurrentView('dashboard')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all focus:ring-2 focus:ring-indigo-500 focus:outline-none ${currentView === 'dashboard' ? 'text-indigo-400 bg-indigo-500/10 font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span className="text-[11px]">Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCurrentView('vfs')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all focus:ring-2 focus:ring-indigo-500 focus:outline-none ${currentView === 'vfs' ? 'text-indigo-400 bg-indigo-500/10 font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <Folder className="w-5 h-5" />
+          <span className="text-[11px]">My Drive</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCurrentView('nodes')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all focus:ring-2 focus:ring-indigo-500 focus:outline-none ${currentView === 'nodes' ? 'text-indigo-400 bg-indigo-500/10 font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <HardDrive className="w-5 h-5" />
+          <span className="text-[11px]">Storage</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setNewFolderModalOpen(true)}
+          className="flex flex-col items-center justify-center w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition-all focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          aria-label="Create New Folder"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+      </nav>
+
       {/* MODALS */}
       
       {/* New Folder Modal */}
       {newFolderModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 animate-[fadeIn_0.15s_ease-out]">
+          <div className="bg-slate-900/90 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-800 text-slate-100 backdrop-blur-xl">
             <div className="p-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Create New Folder</h3>
+              <h3 className="text-lg font-bold text-slate-100 mb-4">Create New Folder</h3>
+              <label htmlFor="new-folder-input" className="sr-only">Folder Name</label>
               <input 
+                id="new-folder-input"
                 type="text" 
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="Folder Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder-slate-400 bg-white"
+                aria-label="Folder Name"
+                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
                 autoFocus
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
@@ -1676,11 +1759,18 @@ export default function App() {
                 }}
               />
             </div>
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <Button variant="default" onClick={() => setNewFolderModalOpen(false)}>Cancel</Button>
-              <Button 
-                variant="primary" 
+            <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-800 flex justify-end gap-3">
+              <button 
+                type="button"
+                onClick={() => setNewFolderModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all focus:ring-2 focus:ring-slate-600 focus:outline-none"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
                 disabled={!newFolderName.trim()}
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all shadow-md focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={async () => {
                   if (newFolderName.trim()) {
                     try {
@@ -1697,7 +1787,7 @@ export default function App() {
                 }}
               >
                 Create
-              </Button>
+              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PooledAccount, VFSNode } from '../../types';
-import { FileStack, ShieldCheck, RefreshCw } from 'lucide-react';
+import { FileStack, ShieldCheck, RefreshCw, File, Folder, Database } from 'lucide-react';
 import logoAsset from '../../assets/logo.webp';
 import { supabase } from '../../lib/services/supabaseClient';
 import { calculateStorageBreakdown } from '../../lib/file-categories';
@@ -140,33 +140,29 @@ export function StorageNodes({
         </div>
       </section>
 
-      {/* Status row */}
+      {/* Dynamic Status row */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {[
           {
-            icon: <ShieldCheck className="size-4" />,
-            iconBg: 'bg-emerald-500/10 text-emerald-400',
-            label: 'Reliability',
-            value: '100%',
-            sub: 'Operational / Optimal',
-          },
-          {
-            icon: <RefreshCw className="size-4" />,
-            iconBg: 'bg-sky-500/10 text-sky-400',
-            label: 'Sync status',
-            value: accounts.length > 0 && activeTransfers.length > 0 ? 'Syncing' : 'Idle',
-            sub: 'Standby · ready when needed',
-          },
-          {
-            icon: (
-              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-              </svg>
-            ),
+            icon: <File className="size-4" />,
             iconBg: 'bg-indigo-500/10 text-indigo-400',
-            label: 'Encryption',
-            value: 'AES-256',
-            sub: 'End-to-end · active',
+            label: 'Total Files',
+            value: `${localNodes.filter(n => n.type === 'file').length} Files`,
+            sub: 'Stored in cloud database',
+          },
+          {
+            icon: <Folder className="size-4" />,
+            iconBg: 'bg-emerald-500/10 text-emerald-400',
+            label: 'Total Folders',
+            value: `${localNodes.filter(n => n.type === 'folder').length} Folders`,
+            sub: 'Active file system directories',
+          },
+          {
+            icon: <Database className="size-4" />,
+            iconBg: 'bg-sky-500/10 text-sky-400',
+            label: 'Storage Provider',
+            value: 'Supabase Storage',
+            sub: 'Active & connected',
           },
         ].map(({ icon, iconBg, label, value, sub }) => (
           <div key={label} className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-5">

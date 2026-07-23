@@ -95,11 +95,11 @@ export function DirectoryPickerModal({ isOpen, onClose, onConfirm, title }: Dire
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh] animate-[scaleIn_0.2s_ease-out]">
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-slate-800">{title}</h3>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+    <div className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-slate-900/90 border border-slate-800 text-slate-100 backdrop-blur-xl rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh] animate-[scaleIn_0.2s_ease-out]">
+        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+          <h3 className="text-lg font-bold text-slate-100">{title}</h3>
+          <button onClick={onClose} aria-label="Close dialog" className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors focus:ring-2 focus:ring-slate-600 focus:outline-none">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -107,18 +107,18 @@ export function DirectoryPickerModal({ isOpen, onClose, onConfirm, title }: Dire
         <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="flex justify-center items-center py-8">
-              <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-2 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin"></div>
             </div>
           ) : (
             <div className="flex flex-col">
               <div 
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${selectedFolderId === 'root' || selectedFolderId === null ? 'bg-blue-100 text-blue-700' : 'hover:bg-slate-100 text-slate-700'}`}
+                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-colors ${selectedFolderId === 'root' || selectedFolderId === null ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'hover:bg-slate-800/60 text-slate-300'}`}
                 onClick={() => setSelectedFolderId('root')}
               >
-                <div className="w-4 h-4 shrink-0 flex items-center justify-center cursor-pointer hover:bg-slate-200 rounded" onClick={(e) => toggleFolder('root', e)}>
+                <div className="w-4 h-4 shrink-0 flex items-center justify-center cursor-pointer hover:bg-slate-700 rounded" onClick={(e) => toggleFolder('root', e)}>
                   {expandedFolders.has('root') ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                 </div>
-                <Folder className={`w-4 h-4 ${selectedFolderId === 'root' || selectedFolderId === null ? 'text-blue-500 fill-blue-500/20' : 'text-slate-400 fill-slate-400/20'}`} />
+                <Folder className={`w-4 h-4 ${selectedFolderId === 'root' || selectedFolderId === null ? 'text-indigo-400 fill-indigo-400/20' : 'text-slate-400 fill-slate-400/20'}`} />
                 <span className="text-sm font-medium">My Drive</span>
               </div>
               {expandedFolders.has('root') && renderTree('root', 1)}
@@ -126,10 +126,10 @@ export function DirectoryPickerModal({ isOpen, onClose, onConfirm, title }: Dire
           )}
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+        <div className="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/50 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors"
+            className="px-4 py-2 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-slate-600 focus:outline-none text-sm"
           >
             Cancel
           </button>
@@ -138,7 +138,7 @@ export function DirectoryPickerModal({ isOpen, onClose, onConfirm, title }: Dire
               onConfirm(selectedFolderId);
               onClose();
             }}
-            className="px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-lg font-medium text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-md focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
           >
             {title.includes('Move') ? 'Move Here' : 'Copy Here'}
           </button>

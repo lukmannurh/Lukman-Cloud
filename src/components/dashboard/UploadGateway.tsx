@@ -99,15 +99,15 @@ export function UploadGateway({ onUpload, disabled = false, requiresAuth = false
       </div>
 
       {isDragging && !disabled && (
-        <div className="fixed inset-0 z-50 bg-indigo-600/10 border-4 border-dashed border-indigo-500 backdrop-blur-xs flex items-center justify-center pointer-events-none transition-all duration-200">
-           <div className="bg-white/90 p-8 rounded-2xl shadow-2xl flex flex-col items-center">
-             <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
+        <div className="fixed inset-0 z-50 bg-indigo-600/20 border-4 border-dashed border-indigo-500 backdrop-blur-md flex items-center justify-center pointer-events-none transition-all duration-200">
+           <div className="bg-slate-900/90 border border-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center backdrop-blur-xl text-slate-100">
+             <div className="w-20 h-20 bg-indigo-500/15 text-indigo-400 rounded-full flex items-center justify-center mb-4 ring-1 ring-indigo-500/30">
                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                </svg>
              </div>
-             <h2 className="text-2xl font-bold text-slate-800">Drop files to upload</h2>
-             <p className="text-slate-400 mt-2">Release to securely encrypt and sync</p>
+             <h2 className="text-2xl font-bold text-slate-100">Drop files to upload</h2>
+             <p className="text-slate-400 mt-2">Release to securely store in Lukman Cloud</p>
            </div>
         </div>
       )}
