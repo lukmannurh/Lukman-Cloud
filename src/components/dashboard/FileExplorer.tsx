@@ -699,14 +699,17 @@ export function FileExplorer({
 
       {/* Rename Modal */}
       {renameNode && (
-        <div className="fixed inset-0 z-[60] bg-[#0a0a1a]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#141432] rounded-xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] ring-1 ring-white/5 border border-[#1e1e5a]/40">
-            <h3 className="text-lg font-medium text-zinc-100 mb-4">Rename</h3>
+        <div className="fixed inset-0 z-[60] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900/90 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col animate-[scaleIn_0.2s_ease-out] border border-slate-800 text-slate-100 backdrop-blur-xl">
+            <h3 className="text-lg font-bold text-slate-100 mb-4">Rename</h3>
+            <label htmlFor="rename-input" className="sr-only">New Name</label>
             <input 
+              id="rename-input"
               type="text" 
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
-              className="w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 mb-6 font-medium shadow-sm"
+              aria-label="New Name"
+              className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all mb-6 font-medium"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -717,17 +720,19 @@ export function FileExplorer({
             />
             <div className="flex justify-end gap-3 w-full">
               <button
+                type="button"
                 onClick={() => setRenameNode(null)}
-                className="px-4 py-2 rounded-lg font-medium text-zinc-400 hover:bg-[#1e1e5a]/40 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all focus:ring-2 focus:ring-slate-600 focus:outline-none"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
                   onRenameNode(renameNode, renameInput);
                   setRenameNode(null);
                 }}
-                className="px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all shadow-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 OK
               </button>
