@@ -150,21 +150,13 @@ class VFSService {
     }
 
     const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (loadRegistry):', !!session?.access_token);
-    
-    console.log('[VFS READ] Querying nodes (loadRegistry) for user_id:', userId);
 
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
-    const { data, error, status } = await supabase
+    const { data, error } = await supabase
       .from('vfs_nodes')
       .select('*')
       .eq('user_id', userId)
       .or('is_deleted.eq.false,is_deleted.is.null');
-      
-    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
       
     if (error) {
       console.error('[FATAL] Supabase getNodes (loadRegistry) error:', error);
@@ -218,12 +210,6 @@ class VFSService {
   async getDirectoryContents(parentId: string | null, category?: string, overrideUserId?: string): Promise<VFSNode[]> {
     const userId = await this.getUserId(overrideUserId);
     
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (getDirectoryContents):', !!session?.access_token);
-    
-    console.log('[VFS READ] Querying nodes (getDirectoryContents) for user_id:', userId, 'parentId:', parentId);
-    
     let query = supabase
       .from('vfs_nodes')
       .select('*')
@@ -237,8 +223,7 @@ class VFSService {
       query = query.eq('parent_id', sanitizedPid);
     }
       
-    const { data, error, status } = await query;
-    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
+    const { data, error } = await query;
       
     if (error) {
       console.error('[FATAL] Supabase getDirectoryContents error:', error);
@@ -332,7 +317,6 @@ class VFSService {
       const { data: existingFolders } = await fetchQuery;
 
       if (existingFolders && existingFolders.length > 0) {
-        console.log('[VFS] Folder already exists, returning existing node:', existingFolders[0].id);
         return this.mapRowToNode(existingFolders[0]);
       }
       
@@ -347,8 +331,6 @@ class VFSService {
         raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
       };
 
-      console.log('[VFS] Inserting new folder with payload:', payload);
-
       const { data, error } = await supabase
         .from('vfs_nodes')
         .insert(payload)
@@ -357,7 +339,6 @@ class VFSService {
         
       if (error) {
         if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
-          console.log('[VFS] 409 Conflict caught during insert. Re-querying existing folder...');
           let insertQuery = supabase
             .from('vfs_nodes')
             .select('*')
@@ -457,8 +438,6 @@ class VFSService {
           modifiedAt: new Date().toISOString()
         }
     };
-
-    console.log('[VFS] Inserting new file with sanitized payload:', payload);
 
     let { data, error } = await supabase
       .from('vfs_nodes')

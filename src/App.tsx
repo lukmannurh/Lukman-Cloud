@@ -345,15 +345,11 @@ export default function App() {
               createdAt: currentUser.createdAt || new Date().toISOString(),
               updatedAt: currentUser.updatedAt || new Date().toISOString()
             };
-            console.log('[App] Attempting to upsert user to public schema:', upsertPayload);
-            
             const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
             
             if (upsertError) {
                console.error('[FATAL] Supabase user upsert error:', upsertError);
                hasUpsertedRef.current = false; // allow retry if failed
-            } else {
-               console.log('[App] User upsert successful');
             }
           } catch (e) {
             console.error('[FATAL] Auto-link failed during user upsert:', e);
@@ -637,7 +633,6 @@ export default function App() {
       
       // Filter for the specific VFS viewport
       const nodes = globalRegistry.filter(n => n.parentId === folderId);
-      console.log('[React State Update] Setting nodes count:', nodes.length);
       setVfsNodes(nodes);
     } catch (err) {
       console.error('[App] Load directory error:', err);
