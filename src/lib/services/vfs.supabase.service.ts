@@ -2,6 +2,11 @@ import { VFSNode } from '../../types';
 import { supabase } from './supabaseClient';
 import { retrieveCredential, storeCredential } from './storage.service';
 
+export function sanitizeParentId(pid?: string | null): string | null {
+  if (!pid || pid === 'root' || pid === 'null' || pid === 'undefined' || pid === '') return null;
+  return pid;
+}
+
 /**
  * Isolated Virtual File System (VFS) Service - Supabase Postgres Edition
  * Enforces rigid multi-tenant storage isolation.
@@ -195,10 +200,11 @@ class VFSService {
       .eq('user_id', userId)
       .or('is_deleted.eq.false,is_deleted.is.null');
       
-    if (parentId === 'root' || parentId === null || parentId === undefined) {
+    const sanitizedPid = sanitizeParentId(parentId);
+    if (sanitizedPid === null) {
       query = query.is('parent_id', null);
     } else {
-      query = query.eq('parent_id', parentId);
+      query = query.eq('parent_id', sanitizedPid);
     }
       
     const { data, error, status } = await query;
