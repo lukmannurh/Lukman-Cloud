@@ -280,6 +280,7 @@ export default function App() {
   const [onboardingError, setOnboardingError] = useState('');
   const [devSessionUser, setDevSessionUser] = useState<any>(null);
   const [sharedNodeId, setSharedNodeId] = useState<string | null>(null);
+  const hasUpsertedRef = useRef(false);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -329,29 +330,34 @@ export default function App() {
           currentUser.image = currentUser.user_metadata?.avatar_url;
         }
 
-        try {
-          // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
-          const upsertPayload = {
-            id: currentUser.id,
-            name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
-            email: currentUser.email || `${currentUser.id}@guest.local`,
-            username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
-            image: currentUser.image || null,
-            emailVerified: true,
-            createdAt: currentUser.createdAt || new Date().toISOString(),
-            updatedAt: currentUser.updatedAt || new Date().toISOString()
-          };
-          console.log('[App] Attempting to upsert user to public schema:', upsertPayload);
-          
-          const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
-          
-          if (upsertError) {
-             console.error('[FATAL] Supabase user upsert error:', upsertError);
-          } else {
-             console.log('[App] User upsert successful');
+        if (!hasUpsertedRef.current) {
+          hasUpsertedRef.current = true;
+          try {
+            // Unconditionally upsert to public user table for foreign key constraints (vfs_nodes)
+            const upsertPayload = {
+              id: currentUser.id,
+              name: currentUser.name || currentUser.email?.split('@')[0] || 'Guest User',
+              email: currentUser.email || `${currentUser.id}@guest.local`,
+              username: currentUser.username || currentUser.email?.split('@')[0] || `guest_${currentUser.id.substring(0,6)}`,
+              image: currentUser.image || null,
+              emailVerified: true,
+              createdAt: currentUser.createdAt || new Date().toISOString(),
+              updatedAt: currentUser.updatedAt || new Date().toISOString()
+            };
+            console.log('[App] Attempting to upsert user to public schema:', upsertPayload);
+            
+            const { error: upsertError } = await supabase.from('user').upsert(upsertPayload, { onConflict: 'id' });
+            
+            if (upsertError) {
+               console.error('[FATAL] Supabase user upsert error:', upsertError);
+               hasUpsertedRef.current = false; // allow retry if failed
+            } else {
+               console.log('[App] User upsert successful');
+            }
+          } catch (e) {
+            console.error('[FATAL] Auto-link failed during user upsert:', e);
+            hasUpsertedRef.current = false;
           }
-        } catch (e) {
-          console.error('[FATAL] Auto-link failed during user upsert:', e);
         }
 
         // Purge any stale local storage VFS cache keys on user login so directory queries fetch fresh DB records
@@ -745,7 +751,7 @@ export default function App() {
 
     const folderCreationPromises = new Map<string, Promise<string>>();
 
-    const ensurePathExists = async (pathStr: string, rootFolderId: string): Promise<string> => {
+    const ensurePathExists = async (pathStr: string, rootFolderId: string | null): Promise<string | null> => {
       if (!pathStr || pathStr === '') return rootFolderId;
       const parts = pathStr.split('/');
       // The last part is the filename, we only want directories
@@ -818,8 +824,9 @@ export default function App() {
 
         try {
           // Dynamically evaluate parent_id at the moment of insertion
-          const activeTargetFolderId = activeFolderIdRef.current === 'root' ? null : activeFolderIdRef.current;
-          const targetParentId = await ensurePathExists(file.webkitRelativePath, activeTargetFolderId as any);
+          const folderId = activeFolderIdRef.current;
+          const activeTargetFolderId = (folderId === 'root' || !folderId) ? null : folderId;
+          const targetParentId = await ensurePathExists(file.webkitRelativePath, activeTargetFolderId);
           
           console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId: targetParentId, size: file.size });
           const newFileNode = await vfsService.addFile({
