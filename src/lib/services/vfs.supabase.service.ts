@@ -263,18 +263,12 @@ class VFSService {
     return data.map(this.mapRowToNode);
   }
 
-  async createFolder(name: string, parentId: string | null, overrideUserId?: string): Promise<VFSNode> {
-    const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (createFolder):', !!session?.access_token);
-    
+  async createFolder(name: string, parentId: string): Promise<VFSNode> {
+    const userId = await this.getUserId();
     const parent = await this.getNode(parentId);
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${name}` : `${parent.path}/${name}`;
-    console.log('[VFS WRITE] Inserting folder with user_id:', userId, 'name:', name);
     
     // Boundary check to prevent 409 Conflict
     let fetchQuery = supabase
@@ -284,7 +278,7 @@ class VFSService {
       .eq('name', name)
       .eq('is_folder', true);
       
-    if (parentId === 'root' || parentId === null || parentId === '') fetchQuery = fetchQuery.is('parent_id', null);
+    if (parentId === 'root') fetchQuery = fetchQuery.is('parent_id', null);
     else fetchQuery = fetchQuery.eq('parent_id', parentId);
     
     const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
@@ -298,18 +292,15 @@ class VFSService {
       .insert({
         name,
         path,
-        parent_id: (parentId === 'root' || parentId === '') ? null : parentId,
+        parent_id: parentId === 'root' ? null : parentId,
         is_folder: true,
         user_id: userId,
-        is_deleted: false,
-        deleted_at: null,
         raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
       })
       .select()
       .single();
       
     if (error) {
-      console.error('[FATAL] Supabase createFolder error:', error);
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
         let insertQuery = supabase
           .from('vfs_nodes')
@@ -318,7 +309,7 @@ class VFSService {
           .eq('name', name)
           .eq('is_folder', true);
           
-        if (parentId === 'root' || parentId === null || parentId === '') insertQuery = insertQuery.is('parent_id', null);
+        if (parentId === 'root') insertQuery = insertQuery.is('parent_id', null);
         else insertQuery = insertQuery.eq('parent_id', parentId);
         
         const { data: fetchAfterInsert, error: fetchAfterErr } = await insertQuery.single();
@@ -329,18 +320,12 @@ class VFSService {
     return this.mapRowToNode(data);
   }
 
-  async addFile(fileNode: Omit<VFSNode, 'children'>, overrideUserId?: string): Promise<VFSNode> {
-    const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (addFile):', !!session?.access_token);
-    
-    const parent = await this.getNode(fileNode.parentId);
+  async addFile(fileNode: Omit<VFSNode, 'children'>): Promise<VFSNode> {
+    const userId = await this.getUserId();
+    const parent = await this.getNode(fileNode.parentId || 'root');
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
-    console.log('[VFS WRITE] Inserting file node with user_id:', userId, 'name:', fileNode.name);
     
     // Boundary check to prevent 409 Conflict
     let fetchQuery = supabase
@@ -350,7 +335,7 @@ class VFSService {
       .eq('name', fileNode.name)
       .eq('is_folder', false);
       
-    const pid = (fileNode.parentId === 'root' || !fileNode.parentId || fileNode.parentId === '') ? null : fileNode.parentId;
+    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
     if (pid === null) fetchQuery = fetchQuery.is('parent_id', null);
     else fetchQuery = fetchQuery.eq('parent_id', pid);
     
@@ -373,10 +358,7 @@ class VFSService {
         .eq('id', existing.id)
         .select()
         .single();
-      if (updateErr) {
-        console.error('[FATAL] Supabase addFile (upsert) error:', updateErr);
-        throw updateErr;
-      }
+      if (updateErr) throw updateErr;
       return this.mapRowToNode(updated);
     }
     
@@ -385,14 +367,12 @@ class VFSService {
       .insert({
         name: fileNode.name,
         path,
-        parent_id: pid,
+        parent_id: (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId,
         size: fileNode.size || 0,
         is_folder: false,
-        user_id: userId,
         telegram_channel_id: fileNode.telegramChannelId,
-        is_deleted: false,
-        deleted_at: null,
-        raw_ref: { 
+        user_id: userId,
+        raw_ref: fileNode.rawRef || { 
           googleDriveFileId: fileNode.googleDriveFileId,
           telegramMessageId: fileNode.telegramMessageId,
           createdAt: fileNode.createdAt || new Date().toISOString(), 
@@ -403,7 +383,6 @@ class VFSService {
       .single();
       
     if (error) {
-      console.error('[FATAL] Supabase addFile (insert) error:', error);
       if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
         let fetchAfterQuery = supabase
           .from('vfs_nodes')

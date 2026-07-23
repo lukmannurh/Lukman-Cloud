@@ -698,7 +698,6 @@ export default function App() {
 
   // ── Upload Logic (Telegram-Primary, GDrive Optional Mirror) ───────────────
   const handleUploadFiles = async (files: File[]) => {
-    const batchTargetFolderId = activeFolderIdRef.current;
 
     // Ensure the Telegram worker is warm
     if (workerPoolRef.current.length === 0) {
@@ -749,9 +748,7 @@ export default function App() {
       workerPoolRef.current = BOT_POOL.map((token, i) => createWorker(token, i));
     }
 
-    const folderCreationPromises = new Map<string, Promise<string>>();
-
-    const ensurePathExists = async (pathStr: string, rootFolderId: string | null): Promise<string | null> => {
+    const ensurePathExists = async (pathStr: string, rootFolderId: string): Promise<string> => {
       if (!pathStr || pathStr === '') return rootFolderId;
       const parts = pathStr.split('/');
       // The last part is the filename, we only want directories
@@ -759,22 +756,13 @@ export default function App() {
       if (parts.length === 0) return rootFolderId;
 
       let currentId = rootFolderId;
-      let currentPath = '';
-
       for (const part of parts) {
-        currentPath = currentPath ? `${currentPath}/${part}` : part;
-        
-        if (!folderCreationPromises.has(currentPath)) {
-          folderCreationPromises.set(currentPath, (async (parentId: string, folderName: string) => {
-            const folders = await vfsService.getAllFolders(activeUser?.id);
-            let existing = folders.find(f => f.parentId === parentId && f.name === folderName);
-            if (!existing) {
-              existing = await vfsService.createFolder(folderName, parentId, activeUser?.id);
-            }
-            return existing.id;
-          })(currentId, part));
+        const folders = await vfsService.getAllFolders();
+        let existing = folders.find(f => f.parentId === currentId && f.name === part);
+        if (!existing) {
+          existing = await vfsService.createFolder(part, currentId);
         }
-        currentId = await folderCreationPromises.get(currentPath)!;
+        currentId = existing.id;
       }
       return currentId;
     };
@@ -822,39 +810,30 @@ export default function App() {
           }
         );
 
-        try {
-          // Dynamically evaluate parent_id at the moment of insertion
-          const folderId = activeFolderIdRef.current;
-          const activeTargetFolderId = (folderId === 'root' || !folderId) ? null : folderId;
-          const targetParentId = await ensurePathExists(file.webkitRelativePath, activeTargetFolderId);
-          
-          console.log('[VFS Persistence] Inserting file node:', { name: file.name, parentId: targetParentId, size: file.size });
-          const newFileNode = await vfsService.addFile({
-            id: crypto.randomUUID(),
-            name: file.name,
-            type: 'file',
-            path: '',
-            parentId: targetParentId,
-            size: file.size,
-            mimeType: file.type || 'application/octet-stream',
-            createdAt: new Date().toISOString(),
-            modifiedAt: new Date().toISOString(),
-            storageRef: { 
-              provider: 'telegram', 
-              channel_id: (tgRef as TelegramRef).channelId,
-              message_id: (tgRef as TelegramRef).chunks[0]?.messageId,
-              fileId: (tgRef as TelegramRef).channelId
-            },
-            rawRef: tgRef as TelegramRef,
-            telegramChannelId: (tgRef as TelegramRef).channelId
-          }, activeUser?.id);
-          
-          console.log('[VFS Persistence] Insert success! Waiting for batch to complete...');
-          
-        } catch (err: any) {
-          console.error('[VFS Persistence ERROR] Failed to record metadata in Supabase:', err);
-          alert(`Failed to save ${file.name} to database: ${err.message}`);
-        }
+        const targetParentId = await ensurePathExists(file.webkitRelativePath, currentFolderId);
+
+        const newFileNode = await vfsService.addFile({
+          id: crypto.randomUUID(),
+          name: file.name,
+          type: 'file',
+          path: '',
+          parentId: targetParentId,
+          size: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          createdAt: new Date().toISOString(),
+          modifiedAt: new Date().toISOString(),
+          storageRef: { 
+            provider: 'telegram', 
+            channel_id: (tgRef as TelegramRef).channelId,
+            message_id: (tgRef as TelegramRef).chunks[0]?.messageId,
+            fileId: (tgRef as TelegramRef).channelId
+          },
+          rawRef: tgRef as TelegramRef,
+          telegramChannelId: (tgRef as TelegramRef).channelId
+        });
+
+        // Force-refresh VFS registry so new files appear instantly in UI
+        await loadDirectory(currentFolderId);
 
         // ── SECONDARY: Google Drive Mirror (if toggle is ON) ─────────────────
         if (gdriveMirrorEnabled && accounts.length > 0) {
@@ -871,15 +850,20 @@ export default function App() {
           }
         }
 
-        // Progressive Instant Insertion:
-        // Immediately remove completed items from active queues so the total upload count decrements 
-        // in real-time, and the completed file appears instantly via the loadDirectory() call above.
-        setActiveTransfers(prev => prev.filter(t => t.id !== txId));
-        setActiveUploadsTracker(prev => {
-          const next = { ...prev };
-          next[txId] = { ...next[txId], status: 'success', progress: 100 };
-          return next;
-        });
+        setActiveTransfers(prev => prev.map(t =>
+          t.id === txId ? { ...t, status: 'Complete', progress: 100 } : t
+        ));
+        setActiveUploadsTracker(prev => ({
+          ...prev,
+          [txId]: { ...prev[txId], status: 'success', progress: 100 }
+        }));
+        setTimeout(() => {
+          setActiveUploadsTracker(prev => {
+            const allSuccess = Object.values(prev).every(u => u.status === 'success');
+            return allSuccess ? {} : prev;
+          });
+        }, 4000);
+        setTimeout(() => setActiveTransfers(prev => prev.filter(t => t.id !== txId)), 3000);
 
       } catch (err: any) {
         console.error('[Upload] Telegram process failed:', err);
@@ -903,9 +887,6 @@ export default function App() {
       uploadWorkers.push(processNext());
     }
     await Promise.all(uploadWorkers);
-    
-    // Trigger a SINGLE final refresh AFTER all items in the batch upload queue have completely finished processing
-    await loadDirectory(batchTargetFolderId);
   };
 
   const handleGetFileUrl = async (fileNode: VFSNode, isNativeStream = false): Promise<string> => {
@@ -1683,7 +1664,7 @@ export default function App() {
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId, activeUser?.id);
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
@@ -1704,7 +1685,7 @@ export default function App() {
                 onClick={async () => {
                   if (newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId, activeUser?.id);
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
