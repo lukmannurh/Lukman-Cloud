@@ -10,11 +10,13 @@ interface ExecutiveDashboardProps {
   activeTransfers: TransferTask[];
   vfsNodes: VFSNode[];
   onUploadClick?: () => void;
+  onUploadFolderClick?: () => void;
   onNewFolderClick?: () => void;
   onSharedLinksClick?: () => void;
+  onNavigateToFile?: (parentId: string, fileId: string) => void;
 }
 
-export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onNewFolderClick, onSharedLinksClick, onNavigateToFile }: ExecutiveDashboardProps) {
+export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onUploadFolderClick, onNewFolderClick, onSharedLinksClick, onNavigateToFile }: ExecutiveDashboardProps) {
   const [localNodes, setLocalNodes] = useState<VFSNode[]>(vfsNodes);
 
   useEffect(() => {
