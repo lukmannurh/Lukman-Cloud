@@ -89,6 +89,10 @@ verify_vercel.mjs
 upload_test.mjs
 walkthrough.md
 e2e_*.mjs
-.antigravity/brain/
+.antigravity/
 .playwright-mcp/
+brain/
 artifacts/
+
+# Build & TypeScript Build Info
+*.tsbuildinfo
