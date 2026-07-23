@@ -354,6 +354,20 @@ export default function App() {
           console.error('[FATAL] Auto-link failed during user upsert:', e);
         }
 
+        // Purge any stale local storage VFS cache keys on user login so directory queries fetch fresh DB records
+        try {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('vfs_') || key.includes('cache'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+        } catch (e) {
+          console.error('[App] Failed to purge VFS cache:', e);
+        }
+
         // Check onboarding guard for Google OAuth users ONLY (guests now auto-generate full names)
         if (!currentUser?.username) {
           setActiveUser(currentUser);
@@ -1559,12 +1573,12 @@ export default function App() {
                         onDeleteNode={(node) => setDeleteModalNode(node)}
                   onMoveNode={async (node) => {
                     setMoveModalNode(node);
-                    const folders = await vfsService.getAllFolders();
+                    const folders = await vfsService.getAllFolders(activeUser?.id);
                     setAllFolders(folders);
                   }}
                   onCopyNode={async (node, targetFolderId) => {
                     try {
-                      await vfsService.copyNode(node.id, targetFolderId || 'root');
+                      await vfsService.copyNode(node.id, targetFolderId || 'root', activeUser?.id);
                       loadDirectory(currentFolderId);
                     } catch (e: any) {
                       setToastMessage({ title: 'Error', message: e.message, type: 'error' });
@@ -1573,7 +1587,7 @@ export default function App() {
                   }}
                   onRenameNode={async (node, newName) => {
                     try {
-                      await vfsService.renameNode(node.id, newName);
+                      await vfsService.renameNode(node.id, newName, activeUser?.id);
                       loadDirectory(currentFolderId);
                     } catch (e: any) {
                       setToastMessage({ title: 'Error', message: e.message, type: 'error' });
@@ -1582,7 +1596,7 @@ export default function App() {
                   }}
                   onMoveToFolder={async (nodeId, targetFolderId) => {
                      try {
-                       await vfsService.moveNode(nodeId, targetFolderId);
+                       await vfsService.moveNode(nodeId, targetFolderId, activeUser?.id);
                        loadDirectory(currentFolderId);
                      } catch(e: any) {
                        setToastMessage({ title: 'Error', message: e.message, type: 'error' });
@@ -1649,7 +1663,7 @@ export default function App() {
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId, activeUser?.id);
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
@@ -1670,7 +1684,7 @@ export default function App() {
                 onClick={async () => {
                   if (newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      await vfsService.createFolder(newFolderName.trim(), currentFolderId, activeUser?.id);
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
@@ -1713,7 +1727,7 @@ export default function App() {
                   const node = deleteModalNode;
                   setDeleteModalNode(null);
                   
-                  await vfsService.deleteNode(node.id);
+                  await vfsService.deleteNode(node.id, activeUser?.id);
                   loadDirectory(currentFolderId);
                   
                   // Handle physical deletion based on provider
@@ -1765,7 +1779,7 @@ export default function App() {
                           key={folder.id}
                           onClick={async () => {
                             try {
-                              await vfsService.moveNode(moveModalNode.id, folder.id);
+                              await vfsService.moveNode(moveModalNode.id, folder.id, activeUser?.id);
                               loadDirectory(currentFolderId);
                               setMoveModalNode(null);
                             } catch (e: any) {
