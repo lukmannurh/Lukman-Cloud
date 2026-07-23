@@ -293,32 +293,41 @@ class VFSService {
         .eq('is_folder', true)
         .or('is_deleted.eq.false,is_deleted.is.null');
         
-      if (normalizedParentId === null) fetchQuery = fetchQuery.is('parent_id', null);
-      else fetchQuery = fetchQuery.eq('parent_id', normalizedParentId);
-      
-      const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
-
-      if (existing) {
-        return this.mapRowToNode(existing);
+      if (normalizedParentId === null) {
+        fetchQuery = fetchQuery.is('parent_id', null);
+      } else {
+        fetchQuery = fetchQuery.eq('parent_id', normalizedParentId);
       }
       
+      const { data: existingFolders } = await fetchQuery;
+
+      if (existingFolders && existingFolders.length > 0) {
+        console.log('[VFS] Folder already exists, returning existing node:', existingFolders[0].id);
+        return this.mapRowToNode(existingFolders[0]);
+      }
+      
+      const payload = {
+        name,
+        path,
+        parent_id: normalizedParentId,
+        is_folder: true,
+        user_id: userId,
+        is_deleted: false,
+        deleted_at: null,
+        raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
+      };
+
+      console.log('[VFS] Inserting new folder with payload:', payload);
+
       const { data, error } = await supabase
         .from('vfs_nodes')
-        .insert({
-          name,
-          path,
-          parent_id: normalizedParentId,
-          is_folder: true,
-          user_id: userId,
-          is_deleted: false,
-          deleted_at: null,
-          raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
-        })
+        .insert(payload)
         .select()
         .single();
         
       if (error) {
         if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
+          console.log('[VFS] 409 Conflict caught during insert. Re-querying existing folder...');
           let insertQuery = supabase
             .from('vfs_nodes')
             .select('*')
@@ -327,11 +336,16 @@ class VFSService {
             .eq('is_folder', true)
             .or('is_deleted.eq.false,is_deleted.is.null');
             
-          if (normalizedParentId === null) insertQuery = insertQuery.is('parent_id', null);
-          else insertQuery = insertQuery.eq('parent_id', normalizedParentId);
+          if (normalizedParentId === null) {
+            insertQuery = insertQuery.is('parent_id', null);
+          } else {
+            insertQuery = insertQuery.eq('parent_id', normalizedParentId);
+          }
           
-          const { data: fetchAfterInsert } = await insertQuery.single();
-          if (fetchAfterInsert) return this.mapRowToNode(fetchAfterInsert);
+          const { data: fetchAfterInsert } = await insertQuery;
+          if (fetchAfterInsert && fetchAfterInsert.length > 0) {
+             return this.mapRowToNode(fetchAfterInsert[0]);
+          }
         }
         throw error;
       }
@@ -390,17 +404,20 @@ class VFSService {
     fileNode.name = checkName;
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
     
-    const { data, error } = await supabase
-      .from('vfs_nodes')
-      .insert({
+    // Validate and sanitize ALL insert parameters
+    if (!userId || typeof userId !== 'string') throw new Error('Invalid user_id payload');
+    const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (pid !== null && !isUUID.test(pid)) throw new Error(`Invalid parent_id UUID payload: ${pid}`);
+
+    const payload = {
         name: fileNode.name,
         path,
         parent_id: pid,
         is_folder: false,
-        size: fileNode.size,
+        size: Math.round(Number(fileNode.size)) || 0,
         mime_type: fileNode.mimeType,
-        user_id: userId,
-        telegram_channel_id: fileNode.telegramChannelId,
+        user_id: String(userId),
+        telegram_channel_id: fileNode.telegramChannelId || null,
         is_deleted: false,
         deleted_at: null,
         raw_ref: { 
@@ -409,11 +426,20 @@ class VFSService {
           createdAt: fileNode.createdAt || new Date().toISOString(), 
           modifiedAt: new Date().toISOString()
         }
-      })
+    };
+
+    console.log('[VFS] Inserting new file with sanitized payload:', payload);
+
+    const { data, error } = await supabase
+      .from('vfs_nodes')
+      .insert(payload)
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('[FATAL] Supabase addFile 400 Bad Request / error:', error);
+      throw error;
+    }
     return this.mapRowToNode(data);
   }
 
