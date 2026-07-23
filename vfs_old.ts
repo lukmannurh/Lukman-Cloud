@@ -7,37 +7,11 @@ import { retrieveCredential, storeCredential } from './storage.service';
  * Enforces rigid multi-tenant storage isolation.
  */
 class VFSService {
-  private pendingFolderCreations = new Map<string, Promise<any>>();
   private memoryCache: VFSNode[] | null = null;
   private readonly STORAGE_KEY = 'vfs_registry';
   
-  private async getUserId(overrideUserId?: string): Promise<string> {
-    if (overrideUserId) return overrideUserId;
-
-    // 1. Try authoritative Supabase auth (getUser validates JWT server-side)
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user?.id) {
-        return user.id;
-      }
-    } catch (e) {
-      // getUser() failed, try getSession() as fallback
-    }
-
-    // 2. Fallback: try getSession() with brief retry for async init
-    let retries = 0;
-    while (retries < 5) {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (!error && session?.user?.id) {
-          return session.user.id;
-        }
-      } catch (e) {}
-      await new Promise(r => setTimeout(r, 200));
-      retries++;
-    }
-
-    // 3. Check for transient Guest session (works in production Vercel)
+  private async getUserId(): Promise<string> {
+    // Check for transient Guest session first (works in production Vercel)
     const stored = localStorage.getItem('dev_session_user');
     if (stored) {
       try {
@@ -50,7 +24,21 @@ class VFSService {
       return (window as any).__MOCK_SESSION_ID__;
     }
 
-    throw new Error('Unauthorized: VFS access blocked due to missing session context.');
+    let retries = 0;
+    while (retries < 15) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!error && session?.user?.id) {
+        return session.user.id;
+      }
+      await new Promise(r => setTimeout(r, 100));
+      retries++;
+    }
+
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session || !session.user || !session.user.id) {
+      throw new Error('Unauthorized: VFS access blocked due to missing session context.');
+    }
+    return session.user.id;
   }
 
   private filterByCategory(nodes: VFSNode[], category: string): VFSNode[] {
@@ -97,16 +85,19 @@ class VFSService {
     };
   }
 
-  async loadRegistry(category?: string, overrideUserId?: string): Promise<VFSNode[]> {
+  async loadRegistry(category?: string): Promise<VFSNode[]> {
     if (import.meta.env.MODE === 'test') {
       if (this.memoryCache) return this.memoryCache;
       const data = await retrieveCredential(this.STORAGE_KEY as any);
       if (data) {
-        this.memoryCache = JSON.parse(data);
-        return this.memoryCache!;
+        try {
+          const nodes = JSON.parse(data);
+          this.memoryCache = nodes;
+          return nodes;
+        } catch (e) {}
       }
       const rootNode: VFSNode = {
-        id: 'root', name: 'Root', type: 'folder', path: '/', parentId: null, size: 0,
+        id: 'root', name: 'Root', type: 'folder', path: '/', parentId: null, children: [],
         createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString()
       };
       this.memoryCache = [rootNode];
@@ -114,27 +105,15 @@ class VFSService {
       return this.memoryCache;
     }
 
-    const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (loadRegistry):', !!session?.access_token);
-    
-    console.log('[VFS READ] Querying nodes (loadRegistry) for user_id:', userId);
+    const userId = await this.getUserId();
 
     // Strict isolation rule: ALWAYS append .eq('user_id', userId)
-    const { data, error, status } = await supabase
+    const { data, error } = await supabase
       .from('vfs_nodes')
       .select('*')
-      .eq('user_id', userId)
-      .or('is_deleted.eq.false,is_deleted.is.null');
+      .eq('user_id', userId);
       
-    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
-      
-    if (error) {
-      console.error('[FATAL] Supabase getNodes (loadRegistry) error:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     // If empty, return empty
     if (!data || data.length === 0) {
@@ -159,7 +138,7 @@ class VFSService {
     const calculateSize = (nodeId: string): number => {
       const node = nodeMap.get(nodeId);
       if (!node) return 0;
-      if (node.type === 'file') return Number(node.size) || 0;
+      if (node.type === 'file') return node.size || 0;
       let total = 0;
       if (node.children) {
         node.children.forEach(childId => {
@@ -180,34 +159,23 @@ class VFSService {
 
 
 
-  async getDirectoryContents(parentId: string | null, category?: string, overrideUserId?: string): Promise<VFSNode[]> {
-    const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (getDirectoryContents):', !!session?.access_token);
-    
-    console.log('[VFS READ] Querying nodes (getDirectoryContents) for user_id:', userId, 'parentId:', parentId);
+  async getDirectoryContents(parentId: string, category?: string): Promise<VFSNode[]> {
+    const userId = await this.getUserId();
     
     let query = supabase
       .from('vfs_nodes')
       .select('*')
-      .eq('user_id', userId)
-      .or('is_deleted.eq.false,is_deleted.is.null');
+      .eq('user_id', userId);
       
-    if (parentId === 'root' || parentId === null || parentId === undefined) {
+    if (parentId === 'root') {
       query = query.is('parent_id', null);
     } else {
       query = query.eq('parent_id', parentId);
     }
       
-    const { data, error, status } = await query;
-    console.log('[VFS RAW READ OUT]', { rows: data?.length, error, status, targetUserId: userId });
+    const { data, error } = await query;
       
-    if (error) {
-      console.error('[FATAL] Supabase getDirectoryContents error:', error);
-      throw error;
-    }
+    if (error) throw error;
     let nodes = data.map(row => this.mapRowToNode(row));
     if (category) {
       nodes = this.filterByCategory(nodes, category);
@@ -215,8 +183,8 @@ class VFSService {
     return nodes;
   }
 
-  async getNode(id: string | null): Promise<VFSNode | undefined> {
-    if (id === 'root' || id === null) {
+  async getNode(id: string): Promise<VFSNode | undefined> {
+    if (id === 'root') {
       return {
         id: 'root',
         name: 'Root',
@@ -237,19 +205,12 @@ class VFSService {
       .eq('id', id)
       .maybeSingle();
       
-    if (error) {
-      console.error('[FATAL] Supabase getNode error:', error);
-      throw error;
-    }
+    if (error) throw error;
     return data ? this.mapRowToNode(data) : undefined;
   }
 
-  async getAllFolders(overrideUserId?: string): Promise<VFSNode[]> {
-    const userId = await this.getUserId(overrideUserId);
-    
-    // Explicitly wake up Supabase Session to attach JWT for RLS
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[VFS Auth Check] Active Session Token Present (getAllFolders):', !!session?.access_token);
+  async getAllFolders(): Promise<VFSNode[]> {
+    const userId = await this.getUserId();
     
     const { data, error } = await supabase
       .from('vfs_nodes')
@@ -257,10 +218,7 @@ class VFSService {
       .eq('user_id', userId)
       .eq('is_folder', true);
       
-    if (error) {
-      console.error('[FATAL] Supabase getAllFolders error:', error);
-      throw error;
-    }
+    if (error) throw error;
     return data.map(this.mapRowToNode);
   }
 
@@ -270,75 +228,55 @@ class VFSService {
     if (!parent) throw new Error('Parent not found');
     
     const path = parent.path === '/' ? `/${name}` : `${parent.path}/${name}`;
-    const normalizedParentId = (parentId === 'root' || !parentId) ? null : parentId;
-    const cacheKey = `${userId}:${normalizedParentId}:${name}`;
+    
+    // Boundary check to prevent 409 Conflict
+    let fetchQuery = supabase
+      .from('vfs_nodes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('name', name)
+      .eq('is_folder', true);
+      
+    if (parentId === 'root') fetchQuery = fetchQuery.is('parent_id', null);
+    else fetchQuery = fetchQuery.eq('parent_id', parentId);
+    
+    const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
 
-    if (this.pendingFolderCreations.has(cacheKey)) {
-      return this.pendingFolderCreations.get(cacheKey)!;
+    if (existing) {
+      return this.mapRowToNode(existing);
     }
-
-    const creationPromise = (async () => {
-      // Boundary check to prevent duplicate folders and 409 Conflict
-      let fetchQuery = supabase
-        .from('vfs_nodes')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('name', name)
-        .eq('is_folder', true)
-        .or('is_deleted.eq.false,is_deleted.is.null');
-        
-      if (normalizedParentId === null) fetchQuery = fetchQuery.is('parent_id', null);
-      else fetchQuery = fetchQuery.eq('parent_id', normalizedParentId);
+    
+    const { data, error } = await supabase
+      .from('vfs_nodes')
+      .insert({
+        name,
+        path,
+        parent_id: parentId === 'root' ? null : parentId,
+        is_folder: true,
+        user_id: userId,
+        raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
+      })
+      .select()
+      .single();
       
-      const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
-
-      if (existing) {
-        return this.mapRowToNode(existing);
-      }
-      
-      const { data, error } = await supabase
-        .from('vfs_nodes')
-        .insert({
-          name,
-          path,
-          parent_id: normalizedParentId,
-          is_folder: true,
-          user_id: userId,
-          is_deleted: false,
-          deleted_at: null,
-          raw_ref: { createdAt: new Date().toISOString(), modifiedAt: new Date().toISOString() }
-        })
-        .select()
-        .single();
-        
-      if (error) {
-        if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
-          let insertQuery = supabase
-            .from('vfs_nodes')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('name', name)
-            .eq('is_folder', true)
-            .or('is_deleted.eq.false,is_deleted.is.null');
-            
-          if (normalizedParentId === null) insertQuery = insertQuery.is('parent_id', null);
-          else insertQuery = insertQuery.eq('parent_id', normalizedParentId);
+    if (error) {
+      if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
+        let insertQuery = supabase
+          .from('vfs_nodes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('name', name)
+          .eq('is_folder', true);
           
-          const { data: fetchAfterInsert } = await insertQuery.single();
-          if (fetchAfterInsert) return this.mapRowToNode(fetchAfterInsert);
-        }
-        throw error;
+        if (parentId === 'root') insertQuery = insertQuery.is('parent_id', null);
+        else insertQuery = insertQuery.eq('parent_id', parentId);
+        
+        const { data: fetchAfterInsert, error: fetchAfterErr } = await insertQuery.single();
+        if (fetchAfterInsert) return this.mapRowToNode(fetchAfterInsert);
       }
-      return this.mapRowToNode(data);
-    })();
-
-    this.pendingFolderCreations.set(cacheKey, creationPromise);
-    try {
-      const result = await creationPromise;
-      return result;
-    } finally {
-      this.pendingFolderCreations.delete(cacheKey);
+      throw error;
     }
+    return this.mapRowToNode(data);
   }
 
   async addFile(fileNode: Omit<VFSNode, 'children'>): Promise<VFSNode> {
@@ -346,68 +284,81 @@ class VFSService {
     const parent = await this.getNode(fileNode.parentId || 'root');
     if (!parent) throw new Error('Parent not found');
     
-    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
-    
-    // Google Drive Style Auto-Rename for Duplicate Files
-    let finalName = fileNode.name;
-    let extension = '';
-    const lastDot = fileNode.name.lastIndexOf('.');
-    if (lastDot !== -1 && lastDot !== 0) {
-      extension = fileNode.name.substring(lastDot);
-      finalName = fileNode.name.substring(0, lastDot);
-    }
-    
-    let counter = 0;
-    let isNameUnique = false;
-    let checkName = fileNode.name;
-    
-    while (!isNameUnique) {
-      let fetchQuery = supabase
-        .from('vfs_nodes')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('name', checkName)
-        .eq('is_folder', false)
-        .or('is_deleted.eq.false,is_deleted.is.null');
-        
-      if (pid === null) fetchQuery = fetchQuery.is('parent_id', null);
-      else fetchQuery = fetchQuery.eq('parent_id', pid);
-      
-      const { data: existing } = await fetchQuery.maybeSingle();
-      if (existing) {
-        counter++;
-        checkName = `${finalName} (${counter})${extension}`;
-      } else {
-        isNameUnique = true;
-      }
-    }
-    fileNode.name = checkName;
     const path = parent.path === '/' ? `/${fileNode.name}` : `${parent.path}/${fileNode.name}`;
+    
+    // Boundary check to prevent 409 Conflict
+    let fetchQuery = supabase
+      .from('vfs_nodes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('name', fileNode.name)
+      .eq('is_folder', false);
+      
+    const pid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+    if (pid === null) fetchQuery = fetchQuery.is('parent_id', null);
+    else fetchQuery = fetchQuery.eq('parent_id', pid);
+    
+    const { data: existing, error: fetchErr } = await fetchQuery.maybeSingle();
+
+    if (existing) {
+      // Upsert pattern: Update the existing file entry
+      const { data: updated, error: updateErr } = await supabase
+        .from('vfs_nodes')
+        .update({
+          size: fileNode.size || existing.size,
+          telegram_channel_id: fileNode.telegramChannelId || existing.telegram_channel_id,
+          raw_ref: { 
+            googleDriveFileId: fileNode.googleDriveFileId || existing.raw_ref?.googleDriveFileId,
+            telegramMessageId: fileNode.telegramMessageId || existing.raw_ref?.telegramMessageId,
+            createdAt: existing.raw_ref?.createdAt || fileNode.createdAt, 
+            modifiedAt: new Date().toISOString()
+          }
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (updateErr) throw updateErr;
+      return this.mapRowToNode(updated);
+    }
     
     const { data, error } = await supabase
       .from('vfs_nodes')
       .insert({
         name: fileNode.name,
         path,
-        parent_id: pid,
+        parent_id: (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId,
+        size: fileNode.size || 0,
         is_folder: false,
-        size: fileNode.size,
-        mime_type: fileNode.mimeType,
-        user_id: userId,
         telegram_channel_id: fileNode.telegramChannelId,
-        is_deleted: false,
-        deleted_at: null,
-        raw_ref: { 
+        user_id: userId,
+        raw_ref: fileNode.rawRef || { 
           googleDriveFileId: fileNode.googleDriveFileId,
           telegramMessageId: fileNode.telegramMessageId,
           createdAt: fileNode.createdAt || new Date().toISOString(), 
-          modifiedAt: new Date().toISOString()
+          modifiedAt: fileNode.modifiedAt || new Date().toISOString()
         }
       })
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      if (error.code === '23505' || error.message?.includes('409') || error.message?.includes('duplicate key')) {
+        let fetchAfterQuery = supabase
+          .from('vfs_nodes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('name', fileNode.name)
+          .eq('is_folder', false);
+          
+        const afterPid = (fileNode.parentId === 'root' || !fileNode.parentId) ? null : fileNode.parentId;
+        if (afterPid === null) fetchAfterQuery = fetchAfterQuery.is('parent_id', null);
+        else fetchAfterQuery = fetchAfterQuery.eq('parent_id', afterPid);
+        
+        const { data: fallbackFetch, error: fallbackErr } = await fetchAfterQuery.single();
+        if (fallbackFetch) return this.mapRowToNode(fallbackFetch);
+      }
+      throw error;
+    }
     return this.mapRowToNode(data);
   }
 
@@ -443,10 +394,7 @@ class VFSService {
         .eq('user_id', userId)
         .in('id', idsToDelete);
         
-      if (error) {
-        console.error('[FATAL] Supabase deleteNode error:', error);
-        throw error;
-      }
+      if (error) throw error;
     }
     
     return deletedNodes;
@@ -476,10 +424,7 @@ class VFSService {
       .select()
       .single();
       
-    if (error) {
-      console.error('[FATAL] Supabase moveNode error:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     // We also should recursively update paths for children if it's a folder, 
     // but for now we update the parent reference which is the main foreign key.
@@ -533,10 +478,7 @@ class VFSService {
       .select()
       .single();
       
-    if (error) {
-      console.error('[FATAL] Supabase renameNode error:', error);
-      throw error;
-    }
+    if (error) throw error;
     return this.mapRowToNode(data);
   }
 }
