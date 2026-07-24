@@ -86,8 +86,14 @@ export interface VFSNode {
   mimeType?: string;
   createdAt?: string;
   modifiedAt?: string;
-  rawRef?: GoogleDriveRef | TelegramRef; // Hold original reference for advanced operations (e.g., Telegram chunks)
+  rawRef?: GoogleDriveRef | TelegramRef | any; // Hold original reference for advanced operations (e.g., Telegram chunks)
   telegramChannelId?: string; // Resolved destination Channel ID for downstream fetching
+  telegramMessageId?: number; // Single message ID
+  googleDriveFileId?: string;
+  parts?: any;
+  blocks?: any;
+  telegramFileId?: string | number | null;
+  telegram_file_id?: string | number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

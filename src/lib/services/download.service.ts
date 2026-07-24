@@ -36,6 +36,10 @@ export const parseParts = (node: any): TelegramChunkInfo[] => {
     if (res.length > 0) return res;
   }
   if (node.raw_ref?.chunks) {
+    const res = extractChunks(node.rawRef.chunks);
+    if (res.length > 0) return res;
+  }
+  if (node.raw_ref?.chunks) {
     const res = extractChunks(node.raw_ref.chunks);
     if (res.length > 0) return res;
   }
@@ -169,7 +173,22 @@ export class DownloadService {
     
     if (onProgress) onProgress(0, '');
 
-    const chunks = parseParts(ref);
+    let chunks = parseParts(ref);
+    if ((!chunks || chunks.length === 0) && ref?.id) {
+      console.warn('[VFS] Fallback: Fetching raw record from DB for node', ref.id);
+      const { supabase } = await import('./supabaseClient');
+      const { data: dbNode } = await supabase.from('vfs_nodes').select('*').eq('id', ref.id).maybeSingle();
+      if (dbNode) {
+        chunks = parseParts({
+          rawRef: dbNode.raw_ref,
+          parts: dbNode.parts,
+          blocks: dbNode.blocks,
+          telegram_file_id: dbNode.telegram_file_id || dbNode.telegramfileid,
+          size: dbNode.size
+        });
+      }
+    }
+
     if (!chunks || chunks.length === 0) {
       throw new Error("File metadata or storage blocks are missing from VFS record");
     }
@@ -310,7 +329,22 @@ export class DownloadService {
     
     if (onProgress) onProgress(0, '');
 
-    const chunks = parseParts(ref);
+    let chunks = parseParts(ref);
+    if ((!chunks || chunks.length === 0) && ref?.id) {
+      console.warn('[VFS] Fallback: Fetching raw record from DB for node', ref.id);
+      const { supabase } = await import('./supabaseClient');
+      const { data: dbNode } = await supabase.from('vfs_nodes').select('*').eq('id', ref.id).maybeSingle();
+      if (dbNode) {
+        chunks = parseParts({
+          rawRef: dbNode.raw_ref,
+          parts: dbNode.parts,
+          blocks: dbNode.blocks,
+          telegram_file_id: dbNode.telegram_file_id || dbNode.telegramfileid,
+          size: dbNode.size
+        });
+      }
+    }
+
     if (!chunks || chunks.length === 0) {
       throw new Error("File metadata or storage blocks are missing from VFS record");
     }

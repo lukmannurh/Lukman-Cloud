@@ -4,7 +4,9 @@ import { retrieveCredential, storeCredential } from './storage.service';
 import { parseParts } from './download.service';
 
 export function sanitizeParentId(pid?: string | null): string | null {
-  if (!pid || pid === 'root' || pid === 'null' || pid === 'undefined' || pid === '') return null;
+  if (!pid || pid === 'root' || pid === 'null' || pid === 'undefined' || pid.trim() === '') {
+    return null;
+  }
   return pid;
 }
 
@@ -154,8 +156,10 @@ class VFSService {
       createdAt: rawRef?.createdAt || new Date().toISOString(),
       modifiedAt: rawRef?.modifiedAt || new Date().toISOString(),
       rawRef: rawRef,
-      parts: row.parts || chunks,
-      blocks: row.blocks || chunks,
+      parts: row.parts ? (typeof row.parts === 'string' ? JSON.parse(row.parts) : row.parts) : chunks,
+      blocks: row.blocks ? (typeof row.blocks === 'string' ? JSON.parse(row.blocks) : row.blocks) : chunks,
+      telegramFileId: row.telegram_file_id || row.telegramfileid || null,
+      telegram_file_id: row.telegram_file_id || row.telegramfileid || null,
       children: []
     };
   }
@@ -470,7 +474,7 @@ class VFSService {
       modifiedAt: new Date().toISOString()
     };
 
-    const payload = {
+    const payload: any = {
         name: fileNode.name,
         path,
         parent_id: pid,
@@ -479,9 +483,12 @@ class VFSService {
         mime_type: fileNode.mimeType || 'application/octet-stream',
         user_id: String(userId),
         telegram_channel_id: channelId,
+        telegram_file_id: fileNode.telegramFileId || fileNode.telegram_file_id || mainMsgId || null,
         is_deleted: false,
         deleted_at: null,
-        raw_ref: rawRefToSave
+        raw_ref: rawRefToSave,
+        blocks: chunksArray ? (typeof chunksArray === 'string' ? chunksArray : JSON.stringify(chunksArray)) : null,
+        parts: chunksArray ? (typeof chunksArray === 'string' ? chunksArray : JSON.stringify(chunksArray)) : null
     };
 
     let { data, error } = await supabase
@@ -491,13 +498,12 @@ class VFSService {
       .single();
       
     if (error) {
-      // Graceful Schema Alignment: If mime_type column is missing from schema cache, retry without mime_type
-      if (error.message?.includes('mime_type') || error.message?.includes('schema cache') || error.code === 'PGRST204') {
-        console.warn('[VFS] mime_type column not found in schema cache. Retrying insert without mime_type...');
-        const { mime_type, ...payloadWithoutMime } = payload;
+      if (error.message?.includes('mime_type') || error.message?.includes('schema cache') || error.message?.includes('blocks') || error.code === 'PGRST204') {
+        console.warn('[VFS] Schema alignment failed on insert. Retrying payload without unmapped columns...');
+        const { mime_type, blocks, parts, ...fallbackPayload } = payload;
         const retry = await supabase
           .from('vfs_nodes')
-          .insert(payloadWithoutMime)
+          .insert(fallbackPayload)
           .select()
           .single();
         data = retry.data;
