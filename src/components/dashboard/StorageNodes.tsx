@@ -13,21 +13,23 @@ export interface TransferTask {
 }
 
 interface StorageNodesProps {
-  accounts: PooledAccount[];
-  vfsNodes: VFSNode[];
-  onAddAccount: () => void;
-  activeTransfers: TransferTask[];
+  accounts?: PooledAccount[];
+  vfsNodes?: VFSNode[];
+  onAddAccount?: () => void;
+  activeTransfers?: TransferTask[];
   onNavigateToFile?: (parentId: string, fileId: string) => void;
 }
 
 export function StorageNodes({
-  accounts,
-  vfsNodes,
-  onAddAccount,
-  activeTransfers,
+  accounts = [],
+  vfsNodes = [],
+  onAddAccount = () => {},
+  activeTransfers = [],
   onNavigateToFile
 }: StorageNodesProps) {
-  // Secure configurations are now globally hardcoded.
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeNodes = Array.isArray(vfsNodes) ? vfsNodes : [];
+  const safeTransfers = Array.isArray(activeTransfers) ? activeTransfers : [];
 
   const formatSize = (bytes: number | string | undefined | null) => {
     if (bytes === undefined || bytes === null) return '0 B';
@@ -50,15 +52,15 @@ export function StorageNodes({
   let totalUsage = 0;
   let hasUnlimited = false;
 
-  accounts.forEach(acc => {
-    if (acc.totalQuota === 0) hasUnlimited = true;
-    totalLimit += acc.totalQuota;
-    totalUsage += acc.usedQuota;
+  safeAccounts.forEach(acc => {
+    if (acc?.totalQuota === 0) hasUnlimited = true;
+    totalLimit += acc?.totalQuota || 0;
+    totalUsage += acc?.usedQuota || 0;
   });
 
   const aggregatePercent = (totalLimit > 0 && !hasUnlimited) ? Math.min(100, Math.round((totalUsage / totalLimit) * 100)) : 0;
 
-  const categories = calculateStorageBreakdown(vfsNodes || []);
+  const categories = calculateStorageBreakdown(safeNodes);
   const totalComputed = categories.total;
 
   const imagePct = totalComputed > 0 ? (categories.images / totalComputed) * 100 : 0;
@@ -66,8 +68,8 @@ export function StorageNodes({
   const videoPct = totalComputed > 0 ? (categories.videos / totalComputed) * 100 : 0;
   const systemPct = totalComputed > 0 ? (categories.other / totalComputed) * 100 : 0;
   
-  const top10Files = (vfsNodes || [])
-    .filter(n => n.type === 'file')
+  const top10Files = safeNodes
+    .filter(n => n && n.type === 'file')
     .sort((a, b) => (b.size || 0) - (a.size || 0))
     .slice(0, 10);
 
@@ -147,14 +149,14 @@ export function StorageNodes({
             icon: <File className="size-4" />,
             iconBg: 'bg-indigo-500/10 text-indigo-400',
             label: 'Total Files',
-            value: `${localNodes.filter(n => n.type === 'file').length} Files`,
+            value: `${safeNodes.filter(n => n?.type === 'file').length} Files`,
             sub: 'Stored in cloud database',
           },
           {
             icon: <Folder className="size-4" />,
             iconBg: 'bg-emerald-500/10 text-emerald-400',
             label: 'Total Folders',
-            value: `${localNodes.filter(n => n.type === 'folder').length} Folders`,
+            value: `${safeNodes.filter(n => n?.type === 'folder').length} Folders`,
             sub: 'Active file system directories',
           },
           {
@@ -208,11 +210,11 @@ export function StorageNodes({
       )}
 
       {/* Active Transfers */}
-      {activeTransfers.length > 0 && (
+      {safeTransfers.length > 0 && (
         <section className="rounded-2xl bg-[#141432]/20 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-6">
           <h3 className="text-sm font-medium text-zinc-200 mb-4">Active Operations</h3>
           <div className="flex flex-col gap-3">
-            {activeTransfers.map(tx => (
+            {safeTransfers.map(tx => (
               <div key={tx.id} className="bg-[#0a0a1a]/50 p-4 border border-[#1e1e5a]/40 rounded-xl">
                 <div className="flex justify-between text-xs font-medium text-zinc-300 mb-1.5 truncate">
                   <span className="truncate max-w-[220px]">{tx.name}</span>

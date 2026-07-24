@@ -6,9 +6,9 @@ import { FolderPlus, UploadCloud, Share2, CheckCircle2, ShieldCheck, Upload, Fol
 import { calculateStorageBreakdown, calculateTotalStorage } from '../../lib/file-categories';
 
 interface ExecutiveDashboardProps {
-  accounts: PooledAccount[];
-  activeTransfers: TransferTask[];
-  vfsNodes: VFSNode[];
+  accounts?: PooledAccount[];
+  activeTransfers?: TransferTask[];
+  vfsNodes?: VFSNode[];
   onUploadClick?: () => void;
   onUploadFolderClick?: () => void;
   onNewFolderClick?: () => void;
@@ -16,17 +16,28 @@ interface ExecutiveDashboardProps {
   onNavigateToFile?: (parentId: string, fileId: string) => void;
 }
 
-export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUploadClick, onUploadFolderClick, onNewFolderClick, onSharedLinksClick, onNavigateToFile }: ExecutiveDashboardProps) {
-  const [localNodes, setLocalNodes] = useState<VFSNode[]>(vfsNodes);
+export function ExecutiveDashboard({ 
+  accounts = [], 
+  activeTransfers = [], 
+  vfsNodes = [], 
+  onUploadClick = () => {}, 
+  onUploadFolderClick = () => {}, 
+  onNewFolderClick = () => {}, 
+  onSharedLinksClick = () => {}, 
+  onNavigateToFile = () => {} 
+}: ExecutiveDashboardProps) {
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeNodes = Array.isArray(vfsNodes) ? vfsNodes : [];
+  const [localNodes, setLocalNodes] = useState<VFSNode[]>(safeNodes);
 
   useEffect(() => {
-    setLocalNodes(vfsNodes);
+    setLocalNodes(Array.isArray(vfsNodes) ? vfsNodes : []);
   }, [vfsNodes]);
 
-  const totalQuota = accounts.reduce((sum, acc) => sum + (acc.totalQuota || 0), 0);
+  const totalQuota = safeAccounts.reduce((sum, acc) => sum + (acc?.totalQuota || 0), 0);
   
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+    if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -42,9 +53,9 @@ export function ExecutiveDashboard({ accounts, activeTransfers, vfsNodes, onUplo
   const pct = totalQuota > 0 ? (totalBytes / totalQuota) * 100 : 0;
   
   // Sort for recent activity
-  const recentFiles = [...localNodes]
-    .filter(n => n.type === 'file')
-    .sort((a, b) => new Date(b.modifiedAt || b.createdAt).getTime() - new Date(a.modifiedAt || a.createdAt).getTime())
+  const recentFiles = [...(localNodes || [])]
+    .filter(n => n && n.type === 'file')
+    .sort((a, b) => new Date(b.modifiedAt || b.createdAt || 0).getTime() - new Date(a.modifiedAt || a.createdAt || 0).getTime())
     .slice(0, 4);
 
   return (
