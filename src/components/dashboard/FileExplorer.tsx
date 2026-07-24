@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { VFSNode } from '../../types';
 import { Card } from '../ui/Card';
-import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X, AlertTriangle, MoreVertical } from 'lucide-react';
+import { ImageIcon, VideoIcon, FileAudio, FileText, FileArchive, Folder, File, Download, Copy, Edit2, Link, Info, X, AlertTriangle, MoreVertical, RefreshCw, Loader2 } from 'lucide-react';
 import { DirectoryPickerModal } from './DirectoryPickerModal';
 import { supabase } from '../../lib/services/supabaseClient';
 import { Skeleton } from '../ui/Skeleton';
@@ -109,38 +109,39 @@ export function FileExplorer({
     }
 
     let isMounted = true;
+    let timeoutId: any = null;
+
     setIsFetchingPreview(true);
     setPreviewError(false);
     setArchiveFiles([]);
 
     const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-    const isVideo = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'ogg'].includes(ext);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+    const isVideo = ['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'].includes(ext);
+    const isPdf = ext === 'pdf';
 
-    if (!isImage && !isVideo) {
+    if (!isImage && !isVideo && !isPdf) {
       setPreviewError(true);
       setIsFetchingPreview(false);
       return;
     }
 
-    const timeoutPromise = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Preview timed out')), 7000));
+    const timeoutPromise = new Promise<string>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Preview timed out after 7 seconds'));
+      }, 7000);
+    });
     
     Promise.race([onFetchPreviewUrl(previewNode), timeoutPromise])
       .then(async (url) => {
-        const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
-        let finalUrl = url;
-        
-        // Depromoted PDF blob conversion - direct download only
-        if (ext === 'pdf') {
-          // Intentionally omitting PDF-to-Blob conversion for CSP stability
-        }
+        if (timeoutId) clearTimeout(timeoutId);
 
         if (!isMounted) {
-          URL.revokeObjectURL(finalUrl);
+          if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
           return;
         }
 
-        setPreviewUrl(finalUrl);
+        setPreviewUrl(url);
         setIsFetchingPreview(false);
 
         // Check for archive
@@ -148,7 +149,6 @@ export function FileExplorer({
         
         if (isArchive && ext === 'zip') {
           try {
-            // Lazy load JSZip only when needed
             const JSZip = (await import('jszip')).default;
             const res = await fetch(url);
             const blob = await res.blob();
@@ -162,20 +162,21 @@ export function FileExplorer({
         }
       })
       .catch((err) => {
+        if (timeoutId) clearTimeout(timeoutId);
         console.error('Preview fetch failed', err);
         if (isMounted) {
           setIsFetchingPreview(false);
           setPreviewError(true);
         }
-        // Forcefully reset active download/decryption percentage variable modal strictly to 0
         window.dispatchEvent(new CustomEvent('preview-timeout'));
       });
 
     return () => {
       isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewNode?.id]);
+  }, [previewNode?.id, previewNode]);
 
   if (loading) {
     return (
@@ -517,59 +518,93 @@ export function FileExplorer({
             {/* Content Section */}
             <div className="flex-1 overflow-y-auto bg-[#0a0a1a]/40 rounded-xl border border-[#1e1e5a]/40 flex flex-col relative min-h-[400px]">
               {isFetchingPreview ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-                  <p className="text-zinc-400 font-medium tracking-tight">Decrypting Secure Stream...</p>
+                <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center p-8 relative overflow-hidden bg-slate-900/80 border border-slate-800 rounded-xl">
+                  {/* Glassmorphic Pulse Background */}
+                  <div className="absolute inset-0 bg-slate-800/60 animate-pulse rounded-xl" />
+                  
+                  {/* Status Pill */}
+                  <div className="relative z-10 flex items-center gap-3 bg-slate-950/80 border border-slate-800 px-5 py-3 rounded-full backdrop-blur-md shadow-2xl">
+                    <RefreshCw className="w-5 h-5 text-indigo-400 animate-spin" />
+                    <span className="text-sm font-medium text-slate-200 tracking-wide">
+                      Decrypting secure preview stream...
+                    </span>
+                  </div>
                 </div>
               ) : previewError ? (
-                <div className="m-auto text-center p-8">
-                  <div className="w-24 h-24 bg-rose-500/10 text-rose-500 shadow-sm border border-rose-500/20 rounded-2xl mx-auto flex items-center justify-center mb-4">
-                    <AlertTriangle className="w-8 h-8 text-rose-400" />
+                <div className="m-auto text-center p-8 flex flex-col items-center justify-center max-w-lg">
+                  <div className="w-20 h-20 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-rose-500/5">
+                    <AlertTriangle className="w-10 h-10 text-rose-400" />
                   </div>
-                  <h4 className="text-lg font-bold text-zinc-200 mb-2">Decryption Failed</h4>
-                  <p className="text-sm text-zinc-400 max-w-sm mx-auto">
-                    Failed to decrypt the secure preview stream. The storage block may be incomplete or you are experiencing connectivity issues.
+                  <h4 className="text-xl font-bold text-slate-100 mb-2">Decryption Failed</h4>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
+                    Failed to decrypt the secure preview stream within 7 seconds. The storage block may be incomplete or you are experiencing connectivity issues.
                   </p>
+                  <div className="flex items-center justify-center gap-3 w-full max-w-xs">
+                    <button
+                      onClick={() => setDownloadConfirmNode(previewNode)}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <Download className="w-4 h-4" /> Download
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsFetchingPreview(true);
+                        setPreviewError(false);
+                        setPreviewNode({ ...previewNode });
+                      }}
+                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-5 py-2.5 rounded-xl font-semibold border border-slate-700 transition-all flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-600"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Retry Preview
+                    </button>
+                  </div>
                 </div>
               ) : previewUrl ? (
                 (() => {
                   const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
-                  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
-                  const isVideo = ['mp4', 'webm', 'ogg', 'mkv'].includes(ext);
+                  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+                  const isVideo = ['mp4', 'webm', 'mov', 'mkv', 'avi', 'ogg'].includes(ext);
                   const isPdf = ext === 'pdf';
-                  const isArchive = ['zip', 'rar', 'tar', 'gz'].includes(ext);
 
                   if (isImage) {
                     return (
-                      <div className="w-full h-full p-4 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden">
-                        <img src={previewUrl} alt={previewNode.name} loading="lazy" className="max-h-[65vh] w-auto object-contain mx-auto rounded-lg shadow-sm" onError={() => setPreviewError(true)} />
+                      <div className="w-full h-full p-4 flex items-center justify-center bg-slate-950 rounded-xl overflow-hidden min-h-[400px]">
+                        <img 
+                          src={previewUrl} 
+                          alt={previewNode.name} 
+                          loading="lazy" 
+                          className="max-h-[75vh] w-auto object-contain mx-auto rounded-lg shadow-xl" 
+                          onError={() => setPreviewError(true)} 
+                        />
                       </div>
                     );
                   }
                   
                   if (isVideo) {
                     return (
-                      <div className="w-full h-full p-4 flex items-center justify-center bg-black rounded-xl overflow-hidden">
-                        <video src={previewUrl} controls className="w-full max-h-[65vh] rounded-lg shadow-sm" onError={() => setPreviewError(true)} />
+                      <div className="w-full h-full p-4 flex items-center justify-center bg-black rounded-xl overflow-hidden min-h-[400px]">
+                        <video 
+                          src={previewUrl} 
+                          controls 
+                          autoPlay 
+                          className="max-h-[75vh] w-full rounded-lg shadow-xl" 
+                          onError={() => setPreviewError(true)} 
+                        />
                       </div>
                     );
                   }
 
                   if (isPdf) {
                     return (
-                      <div className="w-full h-[300px] bg-slate-900/50 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-6 text-center">
-                         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4">
-                           <FileText className="w-8 h-8 text-rose-400" />
-                         </div>
-                         <h3 className="text-white font-medium mb-2">Secure PDF storage</h3>
-                         <p className="text-slate-400 text-sm max-w-sm">
-                           PDF Preview is deactivated for maximum system performance. Please use the direct download option below to read this document.
-                         </p>
+                      <div className="w-full h-full p-2 flex items-center justify-center bg-slate-950 rounded-xl overflow-hidden min-h-[400px]">
+                        <iframe 
+                          src={`${previewUrl}#toolbar=0`} 
+                          className="w-full h-[75vh] rounded-lg border-0 bg-slate-950" 
+                          title={previewNode.name}
+                          onError={() => setPreviewError(true)}
+                        />
                       </div>
                     );
                   }
-
-
 
                   return (
                     <div className="text-center m-auto p-12 bg-[#141432] rounded-2xl shadow-sm border border-[#1e1e5a]/40 max-w-lg">
@@ -583,12 +618,10 @@ export function FileExplorer({
                         Preview Unavailable for this file extension. Please use the direct high-speed download process below.
                       </p>
                       <button
-                        onClick={() => handleDownloadClick(previewNode)}
+                        onClick={() => setDownloadConfirmNode(previewNode)}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-md hover:shadow-lg transition-all w-full flex items-center justify-center gap-2"
                       >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
+                        <Download className="w-5 h-5" />
                         Initiate Secure Download
                       </button>
                     </div>
