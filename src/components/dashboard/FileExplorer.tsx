@@ -7,6 +7,14 @@ import { supabase } from '../../lib/services/supabaseClient';
 import { Skeleton } from '../ui/Skeleton';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
+const isPreviewableFile = (filename: string, mimeType?: string) => {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+  const videoExts = ['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'];
+  const pdfExts = ['pdf'];
+  return [...imageExts, ...videoExts, ...pdfExts].includes(ext);
+};
+
 const getFileIconInfo = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
@@ -111,21 +119,18 @@ export function FileExplorer({
     let isMounted = true;
     let timeoutId: any = null;
 
+    if (!isPreviewableFile(previewNode.name, previewNode.mimeType)) {
+      setIsFetchingPreview(false);
+      setPreviewError(false);
+      setArchiveFiles([]);
+      return;
+    }
+
     setIsFetchingPreview(true);
     setPreviewError(false);
     setArchiveFiles([]);
 
     const ext = previewNode.name.split('.').pop()?.toLowerCase() || '';
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
-    const isVideo = ['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'].includes(ext);
-    const isPdf = ext === 'pdf';
-
-    if (!isImage && !isVideo && !isPdf) {
-      setPreviewError(true);
-      setIsFetchingPreview(false);
-      return;
-    }
-
     const timeoutPromise = new Promise<string>((_, reject) => {
       timeoutId = setTimeout(() => {
         reject(new Error('Preview timed out after 7 seconds'));
@@ -143,23 +148,6 @@ export function FileExplorer({
 
         setPreviewUrl(url);
         setIsFetchingPreview(false);
-
-        // Check for archive
-        const isArchive = ['zip', 'rar', 'tar', 'gz'].includes(ext);
-        
-        if (isArchive && ext === 'zip') {
-          try {
-            const JSZip = (await import('jszip')).default;
-            const res = await fetch(url);
-            const blob = await res.blob();
-            const zip = await JSZip.loadAsync(blob);
-            const files = Object.keys(zip.files).filter(f => !zip.files[f].dir);
-            if (isMounted) setArchiveFiles(files);
-          } catch (e) {
-            console.error('Failed to parse zip archive for preview', e);
-            if (isMounted) setArchiveFiles([]);
-          }
-        }
       })
       .catch((err) => {
         if (timeoutId) clearTimeout(timeoutId);
@@ -517,7 +505,23 @@ export function FileExplorer({
 
             {/* Content Section */}
             <div className="flex-1 overflow-y-auto bg-[#0a0a1a]/40 rounded-xl border border-[#1e1e5a]/40 flex flex-col relative min-h-[400px]">
-              {isFetchingPreview ? (
+              {!isPreviewableFile(previewNode.name, previewNode.mimeType) ? (
+                <div className="m-auto text-center p-8 flex flex-col items-center justify-center max-w-lg">
+                  <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-indigo-500/5">
+                    <File className="w-10 h-10 text-indigo-400" />
+                  </div>
+                  <h4 className="text-xl font-bold text-slate-100 mb-2">Preview Not Available</h4>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
+                    Preview is only supported for Images, Videos, and PDF documents. Download this file to view its contents.
+                  </p>
+                  <button
+                    onClick={() => setDownloadConfirmNode(previewNode)}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <Download className="w-4 h-4" /> Download File
+                  </button>
+                </div>
+              ) : isFetchingPreview ? (
                 <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center p-8 relative overflow-hidden bg-slate-900/80 border border-slate-800 rounded-xl">
                   {/* Glassmorphic Pulse Background */}
                   <div className="absolute inset-0 bg-slate-800/60 animate-pulse rounded-xl" />
@@ -607,22 +611,19 @@ export function FileExplorer({
                   }
 
                   return (
-                    <div className="text-center m-auto p-12 bg-[#141432] rounded-2xl shadow-sm border border-[#1e1e5a]/40 max-w-lg">
-                      <div className="w-20 h-20 bg-[#0a0a1a]/60 text-zinc-400 rounded-2xl mx-auto flex items-center justify-center mb-6 border border-[#1e1e5a]/40 shadow-inner">
-                        <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
+                    <div className="m-auto text-center p-8 flex flex-col items-center justify-center max-w-lg">
+                      <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-indigo-500/5">
+                        <File className="w-10 h-10 text-indigo-400" />
                       </div>
-                      <h4 className="text-xl font-bold text-zinc-200 mb-3 tracking-tight">Preview Unavailable</h4>
-                      <p className="text-sm text-zinc-400 max-w-md mx-auto mb-8 leading-relaxed">
-                        Preview Unavailable for this file extension. Please use the direct high-speed download process below.
+                      <h4 className="text-xl font-bold text-slate-100 mb-2">Preview Not Available</h4>
+                      <p className="text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
+                        Preview is only supported for Images, Videos, and PDF documents. Download this file to view its contents.
                       </p>
                       <button
                         onClick={() => setDownloadConfirmNode(previewNode)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-md hover:shadow-lg transition-all w-full flex items-center justify-center gap-2"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <Download className="w-5 h-5" />
-                        Initiate Secure Download
+                        <Download className="w-4 h-4" /> Download File
                       </button>
                     </div>
                   );

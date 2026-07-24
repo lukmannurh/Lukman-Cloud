@@ -934,10 +934,25 @@ export default function App() {
     await Promise.all(uploadWorkers);
   };
 
+  const resolveMimeType = (filename: string, existingMime?: string): string => {
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg'].includes(ext)) return 'image/jpeg';
+    if (ext === 'png') return 'image/png';
+    if (ext === 'webp') return 'image/webp';
+    if (ext === 'gif') return 'image/gif';
+    if (ext === 'svg') return 'image/svg+xml';
+    if (ext === 'mp4') return 'video/mp4';
+    if (ext === 'webm') return 'video/webm';
+    if (ext === 'mov') return 'video/quicktime';
+    if (ext === 'pdf') return 'application/pdf';
+    return existingMime && existingMime !== 'application/octet-stream' ? existingMime : 'application/octet-stream';
+  };
+
   const handleGetFileUrl = async (fileNode: VFSNode, isNativeStream = false): Promise<string> => {
     if (accounts.length === 0 && !isTelegramRef(fileNode.rawRef as any)) {
       throw new Error('No accounts configured for Google Drive node');
     }
+    const targetMime = resolveMimeType(fileNode.name, fileNode.mimeType);
     const txId = crypto.randomUUID();
     setActiveTransfers(prev => [...prev, { id: txId, name: `Fetching ${fileNode.name}`, status: 'Downloading...', progress: 0 }]);
     setDownloadProgress({ status: 'decrypting', progress: 0, fileName: fileNode.name });
@@ -953,7 +968,7 @@ export default function App() {
             provider: 'google_drive',
             accountId: fileNode.storageRef?.accountId || accounts[0]?.id,
             fileId: fileNode.storageRef?.fileId || '',
-            mimeType: fileNode.mimeType || ''
+            mimeType: targetMime
           } as any;
         } else if (fileNode.storageRef?.provider === 'telegram' || fileNode.storageRef?.message_id) {
           ref = {
@@ -974,7 +989,7 @@ export default function App() {
             blobUrl = await downloadService.downloadFromGoogleDrive(ref, targetAccount.accessToken, (progress) => {
               setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, progress: progress * 100 } : t));
               setDownloadProgress(prev => ({ ...prev, progress: progress * 100 }));
-            }, fileNode.mimeType);
+            }, targetMime);
           } catch (err: any) {
             if (err.message && err.message.includes('HTTP 401') && targetAccount.refreshToken) {
               console.warn('[App] 401 Unauthenticated - Triggering silent OAuth token refresh');
@@ -1079,7 +1094,7 @@ export default function App() {
               const displayStatus = speedText ? `Downloading (core node) • ${speedText}` : `Downloading (core node)`;
               setActiveTransfers(prev => prev.map(t => t.id === txId ? { ...t, status: displayStatus, progress: pct } : t));
               setDownloadProgress(prev => ({ ...prev, progress: pct }));
-            }, fileNode.mimeType, fileNode.telegramChannelId);
+            }, targetMime, fileNode.telegramChannelId);
           }
         } else {
           throw new Error('Unknown storage provider reference (post-fallback)');
