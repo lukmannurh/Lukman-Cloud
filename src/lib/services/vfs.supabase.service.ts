@@ -509,6 +509,7 @@ class VFSService {
       console.error('[FATAL] Supabase addFile 400 Bad Request / error:', error);
       throw error;
     }
+    console.log('[VFS INSERTED NODE]:', data);
     return this.mapRowToNode(data);
   }
 

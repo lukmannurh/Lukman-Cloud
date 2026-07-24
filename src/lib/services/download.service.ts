@@ -35,6 +35,10 @@ export const parseParts = (node: any): TelegramChunkInfo[] => {
     const res = extractChunks(node.rawRef.chunks);
     if (res.length > 0) return res;
   }
+  if (node.raw_ref?.chunks) {
+    const res = extractChunks(node.raw_ref.chunks);
+    if (res.length > 0) return res;
+  }
   if (node.chunks) {
     const res = extractChunks(node.chunks);
     if (res.length > 0) return res;
@@ -69,7 +73,8 @@ export const parseParts = (node: any): TelegramChunkInfo[] => {
   const singleMsgId = Number(
     node.messageId || node.message_id || 
     node.telegramMessageId || node.telegram_message_id ||
-    node.storageRef?.message_id || node.rawRef?.messageId || node.rawRef?.telegramMessageId || 0
+    node.storageRef?.message_id || node.rawRef?.messageId || node.raw_ref?.messageId ||
+    node.rawRef?.telegramMessageId || node.raw_ref?.telegramMessageId || 0
   );
 
   if (singleMsgId > 0) {
@@ -79,8 +84,9 @@ export const parseParts = (node: any): TelegramChunkInfo[] => {
     }];
   }
 
-  if (node.telegram_file_id || node.telegramFileId) {
-    const fileIdNum = Number(node.telegram_file_id || node.telegramFileId);
+  const fileId = node.telegram_file_id || node.telegramFileId || node.rawRef?.telegram_file_id || node.raw_ref?.telegram_file_id || node.rawRef?.telegramFileId || node.raw_ref?.telegramFileId;
+  if (fileId) {
+    const fileIdNum = Number(fileId);
     if (!isNaN(fileIdNum) && fileIdNum > 0) {
       return [{ messageId: fileIdNum, chunkSize: Number(node.size || 0) }];
     }
