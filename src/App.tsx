@@ -877,6 +877,13 @@ export default function App() {
           telegramChannelId: (tgRef as TelegramRef).channelId
         });
 
+        if (newFileNode) {
+          if (targetParentId === currentFolderId) {
+            setVfsNodes(prev => [...prev.filter(n => n.id !== newFileNode.id), newFileNode]);
+          }
+          setAllFlattenedNodes(prev => [...prev.filter(n => n.id !== newFileNode.id), newFileNode]);
+        }
+
         // Force-refresh VFS registry so new files appear instantly in UI
         await loadDirectory(currentFolderId);
 
@@ -1655,7 +1662,7 @@ export default function App() {
                   }}
                   onRenameNode={async (node, newName) => {
                     try {
-                      setNodes(prev => prev.map(n => n.id === node.id ? { ...n, name: newName } : n));
+                      setVfsNodes(prev => prev.map(n => n.id === node.id ? { ...n, name: newName } : n));
                       await vfsService.renameNode(node.id, newName, activeUser?.id);
                       await loadDirectory(currentFolderId);
                     } catch (e: any) {
@@ -1777,7 +1784,8 @@ export default function App() {
                     try {
                       const created = await vfsService.createFolder(newFolderName.trim(), currentFolderId);
                       if (created) {
-                        setNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                        setVfsNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                        setAllFlattenedNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
                       }
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
@@ -1808,7 +1816,8 @@ export default function App() {
                     try {
                       const created = await vfsService.createFolder(newFolderName.trim(), currentFolderId);
                       if (created) {
-                        setNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                        setVfsNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                        setAllFlattenedNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
                       }
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
