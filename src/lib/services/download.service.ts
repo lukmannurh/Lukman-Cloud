@@ -13,6 +13,82 @@ import streamSaver from 'streamsaver';
 
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3';
 
+export interface TelegramChunkInfo {
+  messageId: number;
+  chunkSize: number;
+  chunkIndex?: number;
+}
+
+export const parseParts = (node: any): TelegramChunkInfo[] => {
+  if (!node) return [];
+
+  const extractChunks = (arr: any[]): TelegramChunkInfo[] => {
+    if (!Array.isArray(arr) || arr.length === 0) return [];
+    return arr.map((c: any, index: number) => ({
+      messageId: Number(c.messageId || c.message_id || c.id || c.telegram_message_id || 0),
+      chunkSize: Number(c.chunkSize || c.chunk_size || c.size || c.chunk_bytes || 0),
+      chunkIndex: Number(c.chunkIndex ?? c.chunk_index ?? index)
+    })).filter(c => c.messageId > 0 || c.chunkSize > 0);
+  };
+
+  if (node.rawRef?.chunks) {
+    const res = extractChunks(node.rawRef.chunks);
+    if (res.length > 0) return res;
+  }
+  if (node.chunks) {
+    const res = extractChunks(node.chunks);
+    if (res.length > 0) return res;
+  }
+
+  if (node.parts) {
+    if (Array.isArray(node.parts)) {
+      const res = extractChunks(node.parts);
+      if (res.length > 0) return res;
+    } else if (typeof node.parts === 'string') {
+      try {
+        const parsed = JSON.parse(node.parts);
+        const res = extractChunks(parsed);
+        if (res.length > 0) return res;
+      } catch (e) {}
+    }
+  }
+
+  if (node.blocks) {
+    if (Array.isArray(node.blocks)) {
+      const res = extractChunks(node.blocks);
+      if (res.length > 0) return res;
+    } else if (typeof node.blocks === 'string') {
+      try {
+        const parsed = JSON.parse(node.blocks);
+        const res = extractChunks(parsed);
+        if (res.length > 0) return res;
+      } catch (e) {}
+    }
+  }
+
+  const singleMsgId = Number(
+    node.messageId || node.message_id || 
+    node.telegramMessageId || node.telegram_message_id ||
+    node.storageRef?.message_id || node.rawRef?.messageId || node.rawRef?.telegramMessageId || 0
+  );
+
+  if (singleMsgId > 0) {
+    return [{
+      messageId: singleMsgId,
+      chunkSize: Number(node.size || node.chunkSize || 0)
+    }];
+  }
+
+  if (node.telegram_file_id || node.telegramFileId) {
+    const fileIdNum = Number(node.telegram_file_id || node.telegramFileId);
+    if (!isNaN(fileIdNum) && fileIdNum > 0) {
+      return [{ messageId: fileIdNum, chunkSize: Number(node.size || 0) }];
+    }
+  }
+
+  return [];
+};
+
 export class DownloadService {
   
   /**
@@ -48,35 +124,37 @@ export class DownloadService {
       return URL.createObjectURL(finalBlob);
     }
 
-    let loaded = 0;
-    const stream = new ReadableStream({
-      async start(controller) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          loaded += value.byteLength;
-          if (total > 0 && onProgress) {
-             onProgress(Math.min(1.0, Math.max(0, loaded / total)));
-          }
-          controller.enqueue(value);
-        }
-        controller.close();
+    let receivedLength = 0;
+    const chunksArr: Uint8Array[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunksArr.push(value);
+      receivedLength += value.length;
+      if (total > 0 && onProgress) {
+        onProgress(receivedLength / total);
       }
-    });
-    
-    const blob = await new Response(stream).blob();
-    const finalBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
+    }
+
+    const fullBuffer = new Uint8Array(receivedLength);
+    let position = 0;
+    for (const chunk of chunksArr) {
+      fullBuffer.set(chunk, position);
+      position += chunk.length;
+    }
+
+    const blob = mimeType ? new Blob([fullBuffer], { type: mimeType }) : new Blob([fullBuffer]);
     if (onProgress) onProgress(1.0);
-    return URL.createObjectURL(finalBlob);
+    return URL.createObjectURL(blob);
   }
 
   /**
-   * Streams a multi-part file from Telegram via the GramJS Web Worker.
-   * Concatenates the chunks and performs a strict SHA-256 reliability check
-   * against the original pre-upload hash to guarantee data purity.
+   * Streams a file from Telegram using multi-part chunks.
+   * Concatenates the chunks and performs a strict SHA-256 reliability check.
    */
   public async downloadFromTelegram(
-    ref: TelegramRef, 
+    ref: TelegramRef | any, 
     workers: Worker[],
     onProgress?: (progress: number, speedText?: string) => void,
     mimeType?: string,
@@ -85,11 +163,16 @@ export class DownloadService {
     
     if (onProgress) onProgress(0, '');
 
-    const activeChannelId = explicitChannelId || ref.channelId;
+    const chunks = parseParts(ref);
+    if (!chunks || chunks.length === 0) {
+      throw new Error("File metadata or storage blocks are missing from VFS record");
+    }
+
+    const activeChannelId = explicitChannelId || ref?.channelId || ref?.telegram_channel_id || ref?.storageRef?.channel_id || '';
 
     // 1. Single Chunk Bypass: Instantly resolve to Blob URL without ReadableStream pooling
-    if (ref.chunks.length === 1) {
-      const chunk = ref.chunks[0];
+    if (chunks.length === 1) {
+      const chunk = chunks[0];
       const activeWorker = workers[0];
       const requestId = crypto.randomUUID();
       
@@ -130,11 +213,11 @@ export class DownloadService {
         let loadedBytes = 0;
         let lastTime = Date.now();
         let lastLoaded = 0;
-        const totalSize = ref.chunks.reduce((acc, c) => acc + c.chunkSize, 0);
+        const totalSize = chunks.reduce((acc, c) => acc + c.chunkSize, 0) || Number(ref.size || 0);
 
         let currentWorkerIndex = 0;
-        for (let i = 0; i < ref.chunks.length; i++) {
-          const chunk = ref.chunks[i];
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
           
           // Skip round-robin if there is only 1 temporary worker (anonymous single-session download)
           const activeWorker = workers.length === 1 ? workers[0] : workers[currentWorkerIndex];
@@ -152,7 +235,7 @@ export class DownloadService {
 
                 if (msg.type === 'DOWNLOAD_PROGRESS') {
                   const currentLoaded = loadedBytes + (msg.progress * chunk.chunkSize);
-                  const overallProgress = currentLoaded / totalSize;
+                  const overallProgress = totalSize > 0 ? currentLoaded / totalSize : 0.5;
                   
                   // Calculate Speed
                   const now = Date.now();
@@ -202,8 +285,6 @@ export class DownloadService {
     const blob = await response.blob();
     const finalBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
     
-    // Note: Client-Side SHA-256 is skipped here because computing it on the final blob 
-    // requires loading it into memory. Pure streaming reliability should be handled via a worker.
     if (onProgress) onProgress(1.0, '');
     return URL.createObjectURL(finalBlob);
   }
@@ -213,7 +294,7 @@ export class DownloadService {
    * bypassing RAM hoarding entirely.
    */
   public async streamDownloadFromTelegram(
-    ref: TelegramRef, 
+    ref: TelegramRef | any, 
     workers: Worker[],
     fileName: string,
     fileSize: number,
@@ -223,7 +304,12 @@ export class DownloadService {
     
     if (onProgress) onProgress(0, '');
 
-    const activeChannelId = explicitChannelId || ref.channelId;
+    const chunks = parseParts(ref);
+    if (!chunks || chunks.length === 0) {
+      throw new Error("File metadata or storage blocks are missing from VFS record");
+    }
+
+    const activeChannelId = explicitChannelId || ref?.channelId || ref?.telegram_channel_id || ref?.storageRef?.channel_id || '';
     
     streamSaver.mitm = window.location.origin + '/mitm.html?v=2';
     const fileStream = streamSaver.createWriteStream(fileName, {
@@ -235,11 +321,11 @@ export class DownloadService {
     let loadedBytes = 0;
     let lastTime = Date.now();
     let lastLoaded = 0;
-    const totalSize = ref.chunks.reduce((acc, c) => acc + c.chunkSize, 0);
+    const totalSize = chunks.reduce((acc, c) => acc + c.chunkSize, 0) || fileSize || 0;
 
     let currentWorkerIndex = 0;
-    for (let i = 0; i < ref.chunks.length; i++) {
-      const chunk = ref.chunks[i];
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
       
       const activeWorker = workers.length === 1 ? workers[0] : workers[currentWorkerIndex];
       if (workers.length > 1) {
@@ -256,7 +342,7 @@ export class DownloadService {
 
             if (msg.type === 'DOWNLOAD_PROGRESS') {
               const currentLoaded = loadedBytes + (msg.progress * chunk.chunkSize);
-              const overallProgress = currentLoaded / totalSize;
+              const overallProgress = totalSize > 0 ? currentLoaded / totalSize : 0.5;
               
               const now = Date.now();
               const deltaT = (now - lastTime) / 1000;

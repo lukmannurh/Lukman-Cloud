@@ -1,6 +1,7 @@
 import { VFSNode } from '../../types';
 import { supabase } from './supabaseClient';
 import { retrieveCredential, storeCredential } from './storage.service';
+import { parseParts } from './download.service';
 
 export function sanitizeParentId(pid?: string | null): string | null {
   if (!pid || pid === 'root' || pid === 'null' || pid === 'undefined' || pid === '') return null;
@@ -116,6 +117,27 @@ class VFSService {
    * Helper to map a database row to a VFSNode object
    */
   private mapRowToNode(row: any): VFSNode {
+    const chunks = parseParts(row);
+    let rawRef = row.raw_ref;
+
+    if (!rawRef || typeof rawRef !== 'object') {
+      rawRef = {
+        provider: 'telegram',
+        channelId: row.telegram_channel_id || '',
+        chunks: chunks,
+        messageId: chunks[0]?.messageId || 0
+      };
+    } else {
+      const existingChunks = rawRef.chunks && Array.isArray(rawRef.chunks) && rawRef.chunks.length > 0 ? rawRef.chunks : chunks;
+      rawRef = {
+        ...rawRef,
+        provider: rawRef.provider || 'telegram',
+        channelId: rawRef.channelId || row.telegram_channel_id || '',
+        chunks: existingChunks,
+        messageId: rawRef.messageId || rawRef.telegramMessageId || existingChunks[0]?.messageId || 0
+      };
+    }
+
     return {
       id: row.id,
       name: row.name,
@@ -123,13 +145,15 @@ class VFSService {
       path: row.path,
       parentId: row.parent_id === null ? 'root' : row.parent_id,
       size: row.size,
-      telegramChannelId: row.telegram_channel_id,
-      googleDriveFileId: row.raw_ref?.googleDriveFileId,
-      telegramMessageId: row.raw_ref?.telegramMessageId,
-      createdAt: row.raw_ref?.createdAt || new Date().toISOString(),
-      modifiedAt: row.raw_ref?.modifiedAt || new Date().toISOString(),
-      rawRef: row.raw_ref,
-      children: [] // Children are dynamically populated if needed, or fetched via queries
+      telegramChannelId: row.telegram_channel_id || rawRef.channelId,
+      googleDriveFileId: rawRef?.googleDriveFileId,
+      telegramMessageId: rawRef?.telegramMessageId || rawRef?.messageId || chunks[0]?.messageId,
+      createdAt: rawRef?.createdAt || new Date().toISOString(),
+      modifiedAt: rawRef?.modifiedAt || new Date().toISOString(),
+      rawRef: rawRef,
+      parts: row.parts || chunks,
+      blocks: row.blocks || chunks,
+      children: []
     };
   }
 
@@ -421,6 +445,28 @@ class VFSService {
     const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (pid !== null && !isUUID.test(pid)) throw new Error(`Invalid parent_id UUID payload: ${pid}`);
 
+    const chunksArray = fileNode.rawRef?.chunks || (fileNode as any).chunks || (fileNode as any).parts || (fileNode as any).blocks || [];
+    const mainMsgId = fileNode.telegramMessageId || fileNode.storageRef?.message_id || fileNode.rawRef?.messageId || chunksArray[0]?.messageId;
+    const channelId = fileNode.telegramChannelId || fileNode.storageRef?.channel_id || fileNode.rawRef?.channelId || null;
+
+    const rawRefToSave = fileNode.rawRef ? {
+      ...fileNode.rawRef,
+      channelId: fileNode.rawRef.channelId || channelId,
+      chunks: fileNode.rawRef.chunks && fileNode.rawRef.chunks.length > 0 ? fileNode.rawRef.chunks : chunksArray,
+      messageId: fileNode.rawRef.messageId || mainMsgId,
+      createdAt: fileNode.createdAt || new Date().toISOString(),
+      modifiedAt: new Date().toISOString()
+    } : { 
+      provider: 'telegram',
+      channelId: channelId,
+      chunks: chunksArray,
+      messageId: mainMsgId,
+      googleDriveFileId: fileNode.googleDriveFileId,
+      telegramMessageId: mainMsgId,
+      createdAt: fileNode.createdAt || new Date().toISOString(), 
+      modifiedAt: new Date().toISOString()
+    };
+
     const payload = {
         name: fileNode.name,
         path,
@@ -429,15 +475,12 @@ class VFSService {
         size: Math.round(Number(fileNode.size)) || 0,
         mime_type: fileNode.mimeType,
         user_id: String(userId),
-        telegram_channel_id: fileNode.telegramChannelId || null,
+        telegram_channel_id: channelId,
         is_deleted: false,
         deleted_at: null,
-        raw_ref: { 
-          googleDriveFileId: fileNode.googleDriveFileId,
-          telegramMessageId: fileNode.telegramMessageId,
-          createdAt: fileNode.createdAt || new Date().toISOString(), 
-          modifiedAt: new Date().toISOString()
-        }
+        raw_ref: rawRefToSave,
+        parts: chunksArray,
+        blocks: chunksArray
     };
 
     let { data, error } = await supabase
