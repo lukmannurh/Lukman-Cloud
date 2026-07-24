@@ -119,6 +119,9 @@ class VFSService {
   private mapRowToNode(row: any): VFSNode {
     const chunks = parseParts(row);
     let rawRef = row.raw_ref;
+    if (typeof rawRef === 'string') {
+      try { rawRef = JSON.parse(rawRef); } catch (e) {}
+    }
 
     if (!rawRef || typeof rawRef !== 'object') {
       rawRef = {
@@ -473,14 +476,12 @@ class VFSService {
         parent_id: pid,
         is_folder: false,
         size: Math.round(Number(fileNode.size)) || 0,
-        mime_type: fileNode.mimeType,
+        mime_type: fileNode.mimeType || 'application/octet-stream',
         user_id: String(userId),
         telegram_channel_id: channelId,
         is_deleted: false,
         deleted_at: null,
-        raw_ref: rawRefToSave,
-        parts: chunksArray,
-        blocks: chunksArray
+        raw_ref: rawRefToSave
     };
 
     let { data, error } = await supabase
