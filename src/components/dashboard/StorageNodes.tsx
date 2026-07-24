@@ -92,14 +92,13 @@ export function StorageNodes({
             <div>
               <h2 className="text-xl font-semibold text-zinc-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Lukman Cloud Storage</h2>
               <p className="text-sm text-zinc-400">
-                Primary cloud storage active and fully encrypted. Status:{' '}
-                <span className="text-emerald-400">Secure &amp; Synchronized</span>.
+                Manage your storage usage, total files, and folder organization in your personal cloud.
               </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400 ring-1 ring-emerald-500/20">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Synchronized
+            Active Plan
           </span>
         </div>
 
@@ -110,7 +109,6 @@ export function StorageNodes({
               {formatSize(totalComputed)}{' '}
               <span className="text-zinc-600 text-lg md:text-xl">/ {totalLimit > 0 ? formatSize(totalLimit) : 'Unlimited'}</span>
             </p>
-            <p className="text-[11px] text-zinc-400">Secure pool</p>
           </div>
 
           <div className="flex h-3 gap-0.5 overflow-hidden rounded-full">
@@ -150,21 +148,21 @@ export function StorageNodes({
             iconBg: 'bg-indigo-500/10 text-indigo-400',
             label: 'Total Files',
             value: `${safeNodes.filter(n => n?.type === 'file').length} Files`,
-            sub: 'Stored in cloud database',
+            sub: 'Uploaded files',
           },
           {
             icon: <Folder className="size-4" />,
             iconBg: 'bg-emerald-500/10 text-emerald-400',
             label: 'Total Folders',
             value: `${safeNodes.filter(n => n?.type === 'folder').length} Folders`,
-            sub: 'Active file system directories',
+            sub: 'Active directories',
           },
           {
             icon: <Database className="size-4" />,
             iconBg: 'bg-sky-500/10 text-sky-400',
-            label: 'Storage Provider',
-            value: 'Supabase Storage',
-            sub: 'Active & connected',
+            label: 'Account Plan',
+            value: 'Lukman Cloud Vault',
+            sub: 'Unlimited Tier',
           },
         ].map(({ icon, iconBg, label, value, sub }) => (
           <div key={label} className="rounded-2xl bg-[#141432]/30 ring-1 ring-white/5 border border-[#1e1e5a]/30 p-5">
