@@ -949,9 +949,6 @@ export default function App() {
   };
 
   const handleGetFileUrl = async (fileNode: VFSNode, isNativeStream = false): Promise<string> => {
-    if (accounts.length === 0 && !isTelegramRef(fileNode.rawRef as any)) {
-      throw new Error('No accounts configured for Google Drive node');
-    }
     const targetMime = resolveMimeType(fileNode.name, fileNode.mimeType);
     const txId = crypto.randomUUID();
     setActiveTransfers(prev => [...prev, { id: txId, name: `Fetching ${fileNode.name}`, status: 'Downloading...', progress: 0 }]);
@@ -961,23 +958,27 @@ export default function App() {
       let blobUrl: string;
       let ref = fileNode.rawRef;
       
-      // Fallback: gracefully handle missing rawRef or provider
-      if (!ref || (!isGoogleDriveRef(ref as any) && !isTelegramRef(ref as any))) {
-        if (fileNode.storageRef?.provider === 'gdrive' || fileNode.storageRef?.fileId) {
+      // Fallback: gracefully handle missing rawRef or provider, routing to Telegram Core Worker
+      if (!ref || (!isGoogleDriveRef(ref as any) && !isTelegramRef(ref as any)) || (!accounts.length && isGoogleDriveRef(ref as any))) {
+        if (fileNode.storageRef?.provider === 'telegram' || fileNode.storageRef?.message_id || fileNode.telegramChannelId || !accounts.length) {
+          ref = {
+            provider: 'telegram',
+            channel_id: fileNode.storageRef?.channel_id || fileNode.telegramChannelId || '',
+            message_id: fileNode.storageRef?.message_id || 0
+          } as any;
+        } else if (fileNode.storageRef?.provider === 'gdrive' || fileNode.storageRef?.fileId) {
           ref = {
             provider: 'google_drive',
             accountId: fileNode.storageRef?.accountId || accounts[0]?.id,
             fileId: fileNode.storageRef?.fileId || '',
             mimeType: targetMime
           } as any;
-        } else if (fileNode.storageRef?.provider === 'telegram' || fileNode.storageRef?.message_id) {
+        } else {
           ref = {
             provider: 'telegram',
-            channel_id: fileNode.storageRef?.channel_id || fileNode.telegramChannelId || '',
-            message_id: fileNode.storageRef?.message_id || 0
+            channel_id: fileNode.telegramChannelId || '',
+            message_id: 0
           } as any;
-        } else {
-          throw new Error('Unknown storage provider reference');
         }
       }
 
@@ -1654,11 +1655,13 @@ export default function App() {
                   }}
                   onRenameNode={async (node, newName) => {
                     try {
+                      setNodes(prev => prev.map(n => n.id === node.id ? { ...n, name: newName } : n));
                       await vfsService.renameNode(node.id, newName, activeUser?.id);
-                      loadDirectory(currentFolderId);
+                      await loadDirectory(currentFolderId);
                     } catch (e: any) {
                       setToastMessage({ title: 'Error', message: e.message, type: 'error' });
                       setTimeout(() => setToastMessage(null), 4000);
+                      loadDirectory(currentFolderId);
                     }
                   }}
                   onMoveToFolder={async (nodeId, targetFolderId) => {
@@ -1772,7 +1775,10 @@ export default function App() {
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      const created = await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      if (created) {
+                        setNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                      }
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
@@ -1800,7 +1806,10 @@ export default function App() {
                 onClick={async () => {
                   if (newFolderName.trim()) {
                     try {
-                      await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      const created = await vfsService.createFolder(newFolderName.trim(), currentFolderId);
+                      if (created) {
+                        setNodes(prev => [...prev.filter(n => n.id !== created.id), created]);
+                      }
                       await loadDirectory(currentFolderId);
                       setNewFolderModalOpen(false);
                       setNewFolderName('');
